@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:scoreio/common/ui/tokens/spacing.dart';
 import 'package:scoreio/features/scoring/presentation/cubit/scoring_state.dart';
 
 class TotalsBar extends StatelessWidget {
@@ -42,7 +43,7 @@ class TotalsBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        padding: const EdgeInsets.fromLTRB(Spacing.md, 10, Spacing.md, 0),
         decoration: BoxDecoration(
           color: cs.surfaceContainerHighest,
           border: Border(top: BorderSide(color: cs.outlineVariant)),
@@ -78,9 +79,33 @@ class TotalsBar extends StatelessWidget {
             const SizedBox(width: 10),
 
             // Right: totals button
-            FilledButton.tonal(
-              onPressed: onShowTotals,
-              child: const Text('Totals'),
+            Material(
+              color: cs.primary,
+              borderRadius: BorderRadius.circular(999),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: onShowTotals,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.leaderboard, size: 18, color: cs.onPrimary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Totals',
+                        style: text.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: cs.onPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -155,121 +180,118 @@ class TotalsSheet extends StatelessWidget {
 
     // Sort based on win condition: lowest wins = ascending, highest wins = descending
     final sorted = [...state.playerScores]
-      ..sort((a, b) => state.lowestScoreWins
-          ? a.total.compareTo(b.total)
-          : b.total.compareTo(a.total));
+      ..sort(
+        (a, b) => state.lowestScoreWins
+            ? a.total.compareTo(b.total)
+            : b.total.compareTo(a.total),
+      );
 
     final top = sorted.isEmpty ? null : sorted.first.total;
 
     // Compute ranks with ties (players with same score share the same rank)
     final ranks = _computeRanks(sorted);
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Row(
-              children: [
-                Text(
-                  'Totals',
-                  style: text.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        children: [
+          // Header
+          Row(
+            children: [
+              Text(
+                'Totals',
+                style: text.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: cs.outlineVariant),
+                ),
+                child: Text(
+                  '${sorted.length} players',
+                  style: text.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // List
+          Expanded(
+            child: ListView.separated(
+              shrinkWrap: false,
+              physics: const ClampingScrollPhysics(),
+              itemCount: sorted.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final ps = sorted[index];
+                final name = _fullName(ps);
+                final isLeader = top != null && ps.total == top;
+                final rank = ranks[index];
+
+                return DecoratedBox(
                   decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(999),
+                    color: isLeader ? cs.primaryContainer : cs.surface,
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: cs.outlineVariant),
                   ),
-                  child: Text(
-                    '${sorted.length} players',
-                    style: text.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // List
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: sorted.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final ps = sorted[index];
-                  final name = _fullName(ps);
-                  final isLeader = top != null && ps.total == top;
-                  final rank = ranks[index];
-
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: isLeader ? cs.primaryContainer : cs.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: cs.outlineVariant),
+                    leading: _RankBadge(rank: rank),
+                    title: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: isLeader ? cs.onPrimaryContainer : null,
+                      ),
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
+                    subtitle: Text(
+                      _subtitleForRank(rank),
+                      style: text.labelMedium?.copyWith(
+                        color: isLeader
+                            ? cs.onPrimaryContainer.withValues(alpha: 0.85)
+                            : cs.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
                         vertical: 6,
                       ),
-                      leading: _RankBadge(rank: rank),
-                      title: Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: text.titleSmall?.copyWith(
+                      decoration: BoxDecoration(
+                        color: isLeader
+                            ? cs.onPrimaryContainer.withValues(alpha: 0.12)
+                            : cs.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: cs.outlineVariant),
+                      ),
+                      child: Text(
+                        ps.total.toString(),
+                        style: text.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: isLeader ? cs.onPrimaryContainer : null,
                         ),
                       ),
-                      subtitle: Text(
-                        _subtitleForRank(rank),
-                        style: text.labelMedium?.copyWith(
-                          color: isLeader
-                              ? cs.onPrimaryContainer.withValues(alpha: 0.85)
-                              : cs.onSurfaceVariant,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isLeader
-                              ? cs.onPrimaryContainer.withValues(alpha: 0.12)
-                              : cs.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: cs.outlineVariant),
-                        ),
-                        child: Text(
-                          ps.total.toString(),
-                          style: text.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: isLeader ? cs.onPrimaryContainer : null,
-                          ),
-                        ),
-                      ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-
-            const SizedBox(height: 8),
-          ],
-        ),
+          ),
+          SizedBox(height: MediaQuery.paddingOf(context).bottom),
+        ],
       ),
     );
   }

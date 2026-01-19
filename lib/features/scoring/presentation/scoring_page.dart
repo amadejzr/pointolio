@@ -131,8 +131,13 @@ class ScoringScreen extends StatelessWidget {
   void _showTotalsSheet(BuildContext context, ScoringState state) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       showDragHandle: true,
-      builder: (_) => TotalsSheet(state: state),
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.80,
+        child: TotalsSheet(state: state),
+      ),
     );
   }
 }
@@ -319,46 +324,6 @@ class ErrorView extends StatelessWidget {
 /// - When horizontally scrolled, a small sticky left column appears (initials)
 /// - Tap initials => shows full name (so you always know who is who)
 
-class TotalsBar extends StatelessWidget {
-  const TotalsBar({super.key, required this.state, required this.onShowTotals});
-
-  final ScoringState state;
-  final VoidCallback onShowTotals;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:  EdgeInsets.only(left: 16, right:16, top: 12, bottom: MediaQuery.paddingOf(context).bottom),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Players: ${state.playerScores.length} • Rounds: ${state.roundCount}',
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: 10),
-          FilledButton.tonal(
-            onPressed: onShowTotals,
-            child: const Text('Totals'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
 class AddRoundSheet extends StatefulWidget {
   const AddRoundSheet({super.key, required this.state, required this.onSave});
 
@@ -423,14 +388,14 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
               ],
             ),
             const SizedBox(height: 12),
-        
+
             ...widget.state.playerScores.map((ps) {
               final name = [
                 ps.player.firstName,
                 if ((ps.player.lastName ?? '').trim().isNotEmpty)
                   ps.player.lastName!.trim(),
               ].join(' ');
-        
+
               final ctrl = _controllers[ps.gamePlayer.id]!;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -463,7 +428,7 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
                 ),
               );
             }),
-        
+
             const SizedBox(height: 12),
             Row(
               children: [
