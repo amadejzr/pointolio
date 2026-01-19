@@ -36,6 +36,24 @@ class AppTheme {
     const r18 = BorderRadius.all(Radius.circular(18));
 
     return ThemeData(
+      popupMenuTheme: PopupMenuThemeData(
+  color: colorScheme.surfaceContainerHighest,
+  elevation: 6,
+  shadowColor: colorScheme.shadow.withValues(alpha: 0.18),
+  surfaceTintColor: Colors.transparent, // keeps it “clean” in M3
+
+  shape: RoundedRectangleBorder(
+    borderRadius: r16,
+    side: BorderSide(
+      color: colorScheme.outlineVariant.withValues(alpha: 0.9),
+      width: 1,
+    ),
+  ),
+  textStyle: Typography.material2021().black.bodyMedium?.copyWith(
+        color: colorScheme.onSurface,
+        fontWeight: FontWeight.w600,
+      ),
+),
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,

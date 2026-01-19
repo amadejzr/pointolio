@@ -5,6 +5,7 @@ import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_cubit.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
 import 'package:scoreio/features/home/presentation/widgets/game_card.dart';
+import 'package:scoreio/features/home/presentation/widgets/home_menu.dart';
 import 'package:scoreio/router/app_router.dart';
 
 class HomePage extends StatelessWidget {
@@ -66,6 +67,9 @@ class _HomeView extends StatelessWidget {
                 TextButton(
                   onPressed: () => context.read<HomeCubit>().exitEditMode(),
                   child: const Text('Done'),
+                )
+              else
+                HomeOverflowMenu(
                 ),
             ],
           ),
