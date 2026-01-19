@@ -52,6 +52,14 @@ class HomeCubit extends Cubit<HomeState> {
     }
   }
 
+  void toggleEditMode() {
+    emit(state.copyWith(isEditing: !state.isEditing));
+  }
+
+  void exitEditMode() {
+    emit(state.copyWith(isEditing: false));
+  }
+
   @override
   Future<void> close() {
     _gamesSubscription?.cancel();

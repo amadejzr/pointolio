@@ -20,11 +20,13 @@ class HomeState extends Equatable {
   final List<GameWithPlayerCount> games;
   final HomeStatus status;
   final String? errorMessage;
+  final bool isEditing;
 
   const HomeState({
     this.games = const [],
     this.status = HomeStatus.initial,
     this.errorMessage,
+    this.isEditing = false,
   });
 
   factory HomeState.initial() => const HomeState();
@@ -33,14 +35,16 @@ class HomeState extends Equatable {
     List<GameWithPlayerCount>? games,
     HomeStatus? status,
     String? errorMessage,
+    bool? isEditing,
   }) {
     return HomeState(
       games: games ?? this.games,
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
+      isEditing: isEditing ?? this.isEditing,
     );
   }
 
   @override
-  List<Object?> get props => [games, status, errorMessage];
+  List<Object?> get props => [games, status, errorMessage, isEditing];
 }
