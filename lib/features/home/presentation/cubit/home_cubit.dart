@@ -22,9 +22,11 @@ class HomeCubit extends Cubit<HomeState> {
         final gamesWithCounts = <GameWithPlayerCount>[];
         for (final game in games) {
           final count = await _gameRepository.getPlayerCount(game.id);
+          final gameType = await _gameRepository.getGameType(game.gameTypeId);
           gamesWithCounts.add(GameWithPlayerCount(
             game: game,
             playerCount: count,
+            gameType: gameType,
           ));
         }
         emit(state.copyWith(

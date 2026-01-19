@@ -35,6 +35,30 @@ class $GameTypesTable extends GameTypes
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _lowestScoreWinsMeta = const VerificationMeta(
+    'lowestScoreWins',
+  );
+  @override
+  late final GeneratedColumn<bool> lowestScoreWins = GeneratedColumn<bool>(
+    'lowest_score_wins',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("lowest_score_wins" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -48,7 +72,13 @@ class $GameTypesTable extends GameTypes
     defaultValue: currentDateAndTime,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, name, createdAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    lowestScoreWins,
+    color,
+    createdAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -71,6 +101,21 @@ class $GameTypesTable extends GameTypes
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('lowest_score_wins')) {
+      context.handle(
+        _lowestScoreWinsMeta,
+        lowestScoreWins.isAcceptableOrUnknown(
+          data['lowest_score_wins']!,
+          _lowestScoreWinsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
     }
     if (data.containsKey('created_at')) {
       context.handle(
@@ -99,6 +144,14 @@ class $GameTypesTable extends GameTypes
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      lowestScoreWins: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}lowest_score_wins'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -115,10 +168,14 @@ class $GameTypesTable extends GameTypes
 class GameType extends DataClass implements Insertable<GameType> {
   final int id;
   final String name;
+  final bool lowestScoreWins;
+  final int? color;
   final DateTime createdAt;
   const GameType({
     required this.id,
     required this.name,
+    required this.lowestScoreWins,
+    this.color,
     required this.createdAt,
   });
   @override
@@ -126,6 +183,10 @@ class GameType extends DataClass implements Insertable<GameType> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
+    map['lowest_score_wins'] = Variable<bool>(lowestScoreWins);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<int>(color);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -134,6 +195,10 @@ class GameType extends DataClass implements Insertable<GameType> {
     return GameTypesCompanion(
       id: Value(id),
       name: Value(name),
+      lowestScoreWins: Value(lowestScoreWins),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
       createdAt: Value(createdAt),
     );
   }
@@ -146,6 +211,8 @@ class GameType extends DataClass implements Insertable<GameType> {
     return GameType(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      lowestScoreWins: serializer.fromJson<bool>(json['lowestScoreWins']),
+      color: serializer.fromJson<int?>(json['color']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -155,19 +222,33 @@ class GameType extends DataClass implements Insertable<GameType> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
+      'lowestScoreWins': serializer.toJson<bool>(lowestScoreWins),
+      'color': serializer.toJson<int?>(color),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
 
-  GameType copyWith({int? id, String? name, DateTime? createdAt}) => GameType(
+  GameType copyWith({
+    int? id,
+    String? name,
+    bool? lowestScoreWins,
+    Value<int?> color = const Value.absent(),
+    DateTime? createdAt,
+  }) => GameType(
     id: id ?? this.id,
     name: name ?? this.name,
+    lowestScoreWins: lowestScoreWins ?? this.lowestScoreWins,
+    color: color.present ? color.value : this.color,
     createdAt: createdAt ?? this.createdAt,
   );
   GameType copyWithCompanion(GameTypesCompanion data) {
     return GameType(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      lowestScoreWins: data.lowestScoreWins.present
+          ? data.lowestScoreWins.value
+          : this.lowestScoreWins,
+      color: data.color.present ? data.color.value : this.color,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -177,44 +258,58 @@ class GameType extends DataClass implements Insertable<GameType> {
     return (StringBuffer('GameType(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('lowestScoreWins: $lowestScoreWins, ')
+          ..write('color: $color, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, createdAt);
+  int get hashCode => Object.hash(id, name, lowestScoreWins, color, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is GameType &&
           other.id == this.id &&
           other.name == this.name &&
+          other.lowestScoreWins == this.lowestScoreWins &&
+          other.color == this.color &&
           other.createdAt == this.createdAt);
 }
 
 class GameTypesCompanion extends UpdateCompanion<GameType> {
   final Value<int> id;
   final Value<String> name;
+  final Value<bool> lowestScoreWins;
+  final Value<int?> color;
   final Value<DateTime> createdAt;
   const GameTypesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.lowestScoreWins = const Value.absent(),
+    this.color = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   GameTypesCompanion.insert({
     this.id = const Value.absent(),
     required String name,
+    this.lowestScoreWins = const Value.absent(),
+    this.color = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : name = Value(name);
   static Insertable<GameType> custom({
     Expression<int>? id,
     Expression<String>? name,
+    Expression<bool>? lowestScoreWins,
+    Expression<int>? color,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (lowestScoreWins != null) 'lowest_score_wins': lowestScoreWins,
+      if (color != null) 'color': color,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -222,11 +317,15 @@ class GameTypesCompanion extends UpdateCompanion<GameType> {
   GameTypesCompanion copyWith({
     Value<int>? id,
     Value<String>? name,
+    Value<bool>? lowestScoreWins,
+    Value<int?>? color,
     Value<DateTime>? createdAt,
   }) {
     return GameTypesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
+      lowestScoreWins: lowestScoreWins ?? this.lowestScoreWins,
+      color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -240,6 +339,12 @@ class GameTypesCompanion extends UpdateCompanion<GameType> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
+    if (lowestScoreWins.present) {
+      map['lowest_score_wins'] = Variable<bool>(lowestScoreWins.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -251,6 +356,8 @@ class GameTypesCompanion extends UpdateCompanion<GameType> {
     return (StringBuffer('GameTypesCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('lowestScoreWins: $lowestScoreWins, ')
+          ..write('color: $color, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1870,12 +1977,16 @@ typedef $$GameTypesTableCreateCompanionBuilder =
     GameTypesCompanion Function({
       Value<int> id,
       required String name,
+      Value<bool> lowestScoreWins,
+      Value<int?> color,
       Value<DateTime> createdAt,
     });
 typedef $$GameTypesTableUpdateCompanionBuilder =
     GameTypesCompanion Function({
       Value<int> id,
       Value<String> name,
+      Value<bool> lowestScoreWins,
+      Value<int?> color,
       Value<DateTime> createdAt,
     });
 
@@ -1919,6 +2030,16 @@ class $$GameTypesTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get lowestScoreWins => $composableBuilder(
+    column: $table.lowestScoreWins,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1972,6 +2093,16 @@ class $$GameTypesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get lowestScoreWins => $composableBuilder(
+    column: $table.lowestScoreWins,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -1992,6 +2123,14 @@ class $$GameTypesTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<bool> get lowestScoreWins => $composableBuilder(
+    column: $table.lowestScoreWins,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -2052,17 +2191,28 @@ class $$GameTypesTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<bool> lowestScoreWins = const Value.absent(),
+                Value<int?> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
-              }) =>
-                  GameTypesCompanion(id: id, name: name, createdAt: createdAt),
+              }) => GameTypesCompanion(
+                id: id,
+                name: name,
+                lowestScoreWins: lowestScoreWins,
+                color: color,
+                createdAt: createdAt,
+              ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
+                Value<bool> lowestScoreWins = const Value.absent(),
+                Value<int?> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => GameTypesCompanion.insert(
                 id: id,
                 name: name,
+                lowestScoreWins: lowestScoreWins,
+                color: color,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0

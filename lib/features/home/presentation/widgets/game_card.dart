@@ -21,6 +21,9 @@ class GameCard extends StatelessWidget {
   int get _playerCount => gameWithPlayerCount.playerCount;
   DateTime get _gameDate => gameWithPlayerCount.game.gameDate;
   String? get _gameType => gameWithPlayerCount.game.gameTypeNameSnapshot;
+  int? get _gameTypeColor => gameWithPlayerCount.gameType?.color;
+  bool get _lowestScoreWins =>
+      gameWithPlayerCount.gameType?.lowestScoreWins ?? false;
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -39,13 +42,17 @@ class GameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    final hasColor = _gameTypeColor != null;
+    final color = hasColor ? Color(_gameTypeColor!) : cs.primaryContainer;
 
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colorScheme.outlineVariant, width: 1),
+        side: BorderSide(color: cs.outlineVariant, width: 1),
       ),
       child: InkWell(
         onTap: isEditing ? null : onTap,
@@ -55,16 +62,29 @@ class GameCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
+              // Color indicator
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
+                  color: color,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  Icons.sports_esports_outlined,
-                  color: colorScheme.onPrimaryContainer,
+                child: Center(
+                  child: hasColor
+                      ? Text(
+                          _gameType?.isNotEmpty == true
+                              ? _gameType![0].toUpperCase()
+                              : '?',
+                          style: tt.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        )
+                      : Icon(
+                          Icons.sports_esports_outlined,
+                          color: cs.onPrimaryContainer,
+                        ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -74,16 +94,28 @@ class GameCard extends StatelessWidget {
                   children: [
                     Text(
                       _title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: tt.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '${_gameType != null ? '$_gameType • ' : ''}$_playerCount players • ${_formatDate(_gameDate)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                    Row(
+                      children: [
+                        if (_gameType != null) ...[
+                          _WinConditionChip(lowestScoreWins: _lowestScoreWins),
+                          const SizedBox(width: 8),
+                        ],
+                        Expanded(
+                          child: Text(
+                            '${_gameType != null ? '$_gameType • ' : ''}$_playerCount players • ${_formatDate(_gameDate)}',
+                            style: tt.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -92,7 +124,7 @@ class GameCard extends StatelessWidget {
                 TextButton(
                   onPressed: onDelete,
                   style: TextButton.styleFrom(
-                    foregroundColor: colorScheme.error,
+                    foregroundColor: cs.error,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -100,11 +132,32 @@ class GameCard extends StatelessWidget {
                   child: const Text('Delete'),
                 )
               else
-                Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _WinConditionChip extends StatelessWidget {
+  const _WinConditionChip({required this.lowestScoreWins});
+
+  final bool lowestScoreWins;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = lowestScoreWins ? Icons.arrow_downward : Icons.arrow_upward;
+    final color = lowestScoreWins ? Colors.blue : Colors.orange;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Icon(icon, size: 12, color: color),
     );
   }
 }

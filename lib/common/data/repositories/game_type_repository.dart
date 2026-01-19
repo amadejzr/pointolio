@@ -29,7 +29,11 @@ class GameTypeRepository {
         .getSingleOrNull();
   }
 
-  Future<int> add(String name) async {
+  Future<int> add(
+    String name, {
+    bool lowestScoreWins = false,
+    int? color,
+  }) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) throw ArgumentError('Game type name is empty');
 
@@ -38,7 +42,11 @@ class GameTypeRepository {
     if (existing != null) return existing.id;
 
     return _db.into(_db.gameTypes).insert(
-          GameTypesCompanion.insert(name: trimmed),
+          GameTypesCompanion.insert(
+            name: trimmed,
+            lowestScoreWins: Value(lowestScoreWins),
+            color: Value(color),
+          ),
         );
   }
 

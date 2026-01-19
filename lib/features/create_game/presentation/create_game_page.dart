@@ -9,6 +9,8 @@ import 'package:scoreio/common/data/repositories/player_repository.dart';
 import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_state.dart';
+import 'package:scoreio/features/create_game/presentation/widgets/game_type_picker_sheet.dart';
+import 'package:scoreio/features/create_game/presentation/widgets/new_game_type_bottom_sheet/new_game_type_bottom_sheet.dart';
 
 class CreateGamePage extends StatelessWidget {
   const CreateGamePage({super.key});
@@ -100,16 +102,12 @@ class _CreateGameViewState extends State<_CreateGameView> {
                 Row(
                   children: [
                     Expanded(
-                      child: _PickerField(
-                        value: state.selectedGameType?.name ?? '',
-                        placeholder: 'Choose game type',
-                        leading: Icons.category_outlined,
+                      child: _GameTypePickerField(
+                        gameType: state.selectedGameType,
                         onTap: () async {
-                          final selected = await _showPickerSheet<GameType>(
-                            context: context,
-                            title: 'Game types',
-                            items: state.availableGameTypes,
-                            itemLabel: (t) => t.name,
+                          final selected = await GameTypePickerSheet.show(
+                            context,
+                            gameTypes: state.availableGameTypes,
                           );
                           if (selected != null) cubit.setGameType(selected);
                         },
@@ -251,13 +249,14 @@ class _CreateGameViewState extends State<_CreateGameView> {
     BuildContext context,
     CreateGameCubit cubit,
   ) async {
-    final result = await showDialog<String>(
-      context: context,
-      builder: (_) => _AddGameTypeDialog(),
-    );
+    final result = await NewGameTypeBottomSheet.show(context);
 
-    if (result != null && result.trim().isNotEmpty) {
-      cubit.addNewGameType(result);
+    if (result != null && result.name.trim().isNotEmpty) {
+      cubit.addNewGameType(
+        result.name,
+        lowestScoreWins: result.lowestScoreWins,
+        color: result.color,
+      );
     }
   }
 
@@ -331,6 +330,105 @@ class _PickerField extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     color: hasValue ? cs.onSurface : cs.onSurfaceVariant,
                   ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ========================= GAME TYPE PICKER FIELD =========================
+
+class _GameTypePickerField extends StatelessWidget {
+  const _GameTypePickerField({required this.gameType, required this.onTap});
+
+  final GameType? gameType;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final hasValue = gameType != null;
+    final hasColor = gameType?.color != null;
+    final color = hasColor ? Color(gameType!.color!) : cs.primary;
+
+    return Material(
+      color: cs.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              // Color indicator
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: hasValue && hasColor
+                      ? color
+                      : cs.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: hasValue && !hasColor
+                      ? Border.all(color: cs.outlineVariant)
+                      : null,
+                ),
+                child: Center(
+                  child: hasValue && hasColor
+                      ? Text(
+                          gameType!.name.isNotEmpty
+                              ? gameType!.name[0].toUpperCase()
+                              : '?',
+                          style: tt.titleSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        )
+                      : Icon(
+                          Icons.category_outlined,
+                          size: 18,
+                          color: hasValue ? cs.onSurfaceVariant : cs.primary,
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasValue ? gameType!.name : 'Choose game type',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: tt.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: hasValue ? cs.onSurface : cs.onSurfaceVariant,
+                      ),
+                    ),
+                    if (hasValue) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        gameType!.lowestScoreWins
+                            ? 'Lowest wins'
+                            : 'Highest wins',
+                        style: tt.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(width: 10),
@@ -675,47 +773,6 @@ class _PlayerTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-// ========================= DIALOGS =========================
-
-class _AddGameTypeDialog extends StatefulWidget {
-  @override
-  State<_AddGameTypeDialog> createState() => _AddGameTypeDialogState();
-}
-
-class _AddGameTypeDialogState extends State<_AddGameTypeDialog> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('New Game Type'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: const InputDecoration(hintText: 'Enter game type name'),
-        textCapitalization: TextCapitalization.words,
-        onSubmitted: (value) => Navigator.pop(context, value),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, _controller.text),
-          child: const Text('Add'),
-        ),
-      ],
     );
   }
 }

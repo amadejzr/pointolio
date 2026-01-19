@@ -69,11 +69,19 @@ class CreateGameCubit extends Cubit<CreateGameState> {
     emit(state.copyWith(selectedPlayers: players));
   }
 
-  Future<void> addNewGameType(String name) async {
+  Future<void> addNewGameType(
+    String name, {
+    bool lowestScoreWins = false,
+    int? color,
+  }) async {
     if (name.trim().isEmpty) return;
 
     try {
-      final id = await _gameTypeRepository.add(name);
+      final id = await _gameTypeRepository.add(
+        name,
+        lowestScoreWins: lowestScoreWins,
+        color: color,
+      );
       final newType = await _gameTypeRepository.getById(id);
 
       if (newType != null) {

@@ -116,6 +116,12 @@ class GameRepository {
     return count.length;
   }
 
+  Future<GameType?> getGameType(int? gameTypeId) async {
+    if (gameTypeId == null) return null;
+    return (_db.select(_db.gameTypes)..where((t) => t.id.equals(gameTypeId)))
+        .getSingleOrNull();
+  }
+
   /// Reorders players in a game by updating their orderIndex values.
   /// [gamePlayerIds] should be the list of GamePlayer IDs in the new desired order.
   Future<void> reorderPlayers(List<int> gamePlayerIds) async {

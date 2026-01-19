@@ -6,14 +6,16 @@ enum HomeStatus { initial, loading, loaded, error }
 class GameWithPlayerCount extends Equatable {
   final Game game;
   final int playerCount;
+  final GameType? gameType;
 
   const GameWithPlayerCount({
     required this.game,
     required this.playerCount,
+    this.gameType,
   });
 
   @override
-  List<Object?> get props => [game, playerCount];
+  List<Object?> get props => [game, playerCount, gameType];
 }
 
 class HomeState extends Equatable {

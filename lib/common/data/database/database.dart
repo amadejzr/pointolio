@@ -23,7 +23,28 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 3) {
+          // Add lowestScoreWins column to game_types table (default false = highest score wins)
+          await customStatement(
+            'ALTER TABLE game_types ADD COLUMN lowest_score_wins INTEGER NOT NULL DEFAULT 0',
+          );
+          // Add color column to game_types table (nullable)
+          await customStatement(
+            'ALTER TABLE game_types ADD COLUMN color INTEGER',
+          );
+        }
+      },
+    );
+  }
 }
 
 LazyDatabase _openConnection() {

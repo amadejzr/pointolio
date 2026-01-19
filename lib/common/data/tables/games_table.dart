@@ -6,6 +6,12 @@ class GameTypes extends Table {
   // Dropdown items come from here. When user types a new one, insert it here.
   TextColumn get name => text().withLength(min: 1, max: 60)();
 
+  // If true, lowest score wins. If false, highest score wins.
+  BoolColumn get lowestScoreWins => boolean().withDefault(const Constant(false))();
+
+  // Color for the game type (stored as hex integer, e.g. 0xFF42A5F5)
+  IntColumn get color => integer().nullable()();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
