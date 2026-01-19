@@ -26,7 +26,11 @@ class ScoringCubit extends Cubit<ScoringState> {
 
     try {
       final game = await _gameRepository.getById(state.gameId);
-      emit(state.copyWith(game: game));
+      final gameType = await _gameRepository.getGameType(game?.gameTypeId);
+      emit(state.copyWith(
+        game: game,
+        gameType: () => gameType,
+      ));
 
       _playersSubscription?.cancel();
       _playersSubscription =

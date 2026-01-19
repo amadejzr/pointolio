@@ -40,7 +40,11 @@ class ScoringScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(title),
+            title: _AppBarTitle(
+              title: title,
+              gameTypeColor: state.gameTypeColor,
+              lowestScoreWins: state.lowestScoreWins,
+            ),
             actions: [
               IconButton(
                 tooltip: 'Add round',
@@ -178,6 +182,101 @@ class _ScoringBody extends StatelessWidget {
 }
 
 // =================== Dumb UI widgets ===================
+
+class _AppBarTitle extends StatelessWidget {
+  const _AppBarTitle({
+    required this.title,
+    this.gameTypeColor,
+    required this.lowestScoreWins,
+  });
+
+  final String title;
+  final int? gameTypeColor;
+  final bool lowestScoreWins;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final hasColor = gameTypeColor != null;
+    final color = hasColor ? Color(gameTypeColor!) : cs.primary;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Color indicator
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: hasColor
+                ? Text(
+                    title.isNotEmpty ? title[0].toUpperCase() : '?',
+                    style: tt.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
+                : Icon(
+                    Icons.sports_esports_outlined,
+                    color: cs.onPrimary,
+                    size: 18,
+                  ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              _WinConditionIndicator(lowestScoreWins: lowestScoreWins),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WinConditionIndicator extends StatelessWidget {
+  const _WinConditionIndicator({required this.lowestScoreWins});
+
+  final bool lowestScoreWins;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final icon = lowestScoreWins ? Icons.arrow_downward : Icons.arrow_upward;
+    final label = lowestScoreWins ? 'Lowest wins' : 'Highest wins';
+    final color = lowestScoreWins ? Colors.blue : Colors.orange;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: tt.labelSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class ErrorView extends StatelessWidget {
   const ErrorView({super.key, required this.message, required this.onRetry});

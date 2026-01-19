@@ -18,6 +18,6 @@ class ScoreEntries extends Table {
   // Prevent duplicate entries for same player in same round
   @override
   List<Set<Column>> get uniqueKeys => [
-        {gamePlayerId, roundNumber},
-      ];
+    {gamePlayerId, roundNumber},
+  ];
 }

@@ -21,9 +21,12 @@ class TotalsBar extends StatelessWidget {
         ? null
         : totals.reduce((a, b) => a < b ? a : b);
 
-    final leaders = maxTotal == null
+    // Determine winning score based on game type
+    final int? winningScore = state.lowestScoreWins ? minTotal : maxTotal;
+
+    final leaders = winningScore == null
         ? <PlayerScore>[]
-        : players.where((p) => p.total == maxTotal).toList();
+        : players.where((p) => p.total == winningScore).toList();
 
     final leaderLabel = leaders.isEmpty
         ? '—'
@@ -31,7 +34,7 @@ class TotalsBar extends StatelessWidget {
         ? _initials(_fullName(leaders.first))
         : 'Tie';
 
-    final leaderScore = maxTotal?.toString() ?? '—';
+    final leaderScore = winningScore?.toString() ?? '—';
     final spread = (maxTotal != null && minTotal != null)
         ? (maxTotal - minTotal)
         : null;
@@ -150,10 +153,16 @@ class TotalsSheet extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
+    // Sort based on win condition: lowest wins = ascending, highest wins = descending
     final sorted = [...state.playerScores]
-      ..sort((a, b) => b.total.compareTo(a.total));
+      ..sort((a, b) => state.lowestScoreWins
+          ? a.total.compareTo(b.total)
+          : b.total.compareTo(a.total));
 
     final top = sorted.isEmpty ? null : sorted.first.total;
+
+    // Compute ranks with ties (players with same score share the same rank)
+    final ranks = _computeRanks(sorted);
 
     return SafeArea(
       child: Padding(
@@ -200,6 +209,7 @@ class TotalsSheet extends StatelessWidget {
                   final ps = sorted[index];
                   final name = _fullName(ps);
                   final isLeader = top != null && ps.total == top;
+                  final rank = ranks[index];
 
                   return Container(
                     decoration: BoxDecoration(
@@ -212,7 +222,7 @@ class TotalsSheet extends StatelessWidget {
                         horizontal: 14,
                         vertical: 6,
                       ),
-                      leading: _RankBadge(rank: index + 1),
+                      leading: _RankBadge(rank: rank),
                       title: Text(
                         name,
                         maxLines: 1,
@@ -223,10 +233,10 @@ class TotalsSheet extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        _subtitleForRank(index + 1),
+                        _subtitleForRank(rank),
                         style: text.labelMedium?.copyWith(
                           color: isLeader
-                              ? cs.onPrimaryContainer.withOpacity(0.85)
+                              ? cs.onPrimaryContainer.withValues(alpha: 0.85)
                               : cs.onSurfaceVariant,
                           fontWeight: FontWeight.w700,
                         ),
@@ -238,7 +248,7 @@ class TotalsSheet extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: isLeader
-                              ? cs.onPrimaryContainer.withOpacity(0.12)
+                              ? cs.onPrimaryContainer.withValues(alpha: 0.12)
                               : cs.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(color: cs.outlineVariant),
@@ -262,6 +272,31 @@ class TotalsSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Computes ranks for sorted players, handling ties.
+  /// Players with the same score get the same rank.
+  /// Example: [100, 90, 90, 80] -> ranks [1, 2, 2, 4]
+  static List<int> _computeRanks(List<PlayerScore> sorted) {
+    if (sorted.isEmpty) return [];
+
+    final ranks = <int>[];
+    int currentRank = 1;
+
+    for (int i = 0; i < sorted.length; i++) {
+      if (i == 0) {
+        ranks.add(currentRank);
+      } else if (sorted[i].total == sorted[i - 1].total) {
+        // Same score as previous player, same rank
+        ranks.add(ranks[i - 1]);
+      } else {
+        // Different score, rank is position + 1
+        currentRank = i + 1;
+        ranks.add(currentRank);
+      }
+    }
+
+    return ranks;
   }
 
   static String _fullName(PlayerScore ps) {

@@ -25,6 +25,7 @@ class PlayerScore extends Equatable {
 class ScoringState extends Equatable {
   final int gameId;
   final Game? game;
+  final GameType? gameType;
   final List<PlayerScore> playerScores;
   final int roundCount;
   final ScoringStatus status;
@@ -33,6 +34,7 @@ class ScoringState extends Equatable {
   const ScoringState({
     required this.gameId,
     this.game,
+    this.gameType,
     this.playerScores = const [],
     this.roundCount = 0,
     this.status = ScoringStatus.initial,
@@ -41,9 +43,16 @@ class ScoringState extends Equatable {
 
   factory ScoringState.initial(int gameId) => ScoringState(gameId: gameId);
 
+  /// Returns true if lowest score wins for this game type
+  bool get lowestScoreWins => gameType?.lowestScoreWins ?? false;
+
+  /// Returns the game type color if set
+  int? get gameTypeColor => gameType?.color;
+
   ScoringState copyWith({
     int? gameId,
     Game? game,
+    GameType? Function()? gameType,
     List<PlayerScore>? playerScores,
     int? roundCount,
     ScoringStatus? status,
@@ -52,6 +61,7 @@ class ScoringState extends Equatable {
     return ScoringState(
       gameId: gameId ?? this.gameId,
       game: game ?? this.game,
+      gameType: gameType != null ? gameType() : this.gameType,
       playerScores: playerScores ?? this.playerScores,
       roundCount: roundCount ?? this.roundCount,
       status: status ?? this.status,
@@ -63,6 +73,7 @@ class ScoringState extends Equatable {
   List<Object?> get props => [
         gameId,
         game,
+        gameType,
         playerScores,
         roundCount,
         status,
