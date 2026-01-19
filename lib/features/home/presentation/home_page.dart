@@ -151,18 +151,8 @@ class _HomeView extends StatelessWidget {
           floatingActionButton: editState.isEditing
               ? null
               : FloatingActionButton(
-                  onPressed: () async {
-                    final result = await Navigator.pushNamed(
-                      context,
-                      AppRouter.createGame,
-                    );
-                    if (result != null && context.mounted) {
-                      Navigator.pushNamed(
-                        context,
-                        AppRouter.scoring,
-                        arguments: result,
-                      );
-                    }
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRouter.createGame);
                   },
                   child: const Icon(Icons.add),
                 ),

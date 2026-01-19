@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scoreio/common/data/database/database.dart';
@@ -42,15 +44,22 @@ class _CreateGameViewState extends State<_CreateGameView> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
 
     return BlocConsumer<CreateGameCubit, CreateGameState>(
       listener: (context, state) {
-        if (state.status == CreateGameStatus.success) {
-          Navigator.pop(context, state.createdGameId);
+        if (state.status == CreateGameStatus.success &&
+            state.createdGameId != null) {
+          Navigator.pushReplacementNamed(
+            context,
+            '/scoring',
+            arguments: state.createdGameId,
+          );
         } else if (state.status == CreateGameStatus.error) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage ?? 'Something went wrong')),
+            SnackBar(
+              content: Text(state.errorMessage ?? 'Something went wrong'),
+            ),
           );
         }
       },
@@ -58,7 +67,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
         final cubit = context.read<CreateGameCubit>();
 
         return Scaffold(
-          backgroundColor: colorScheme.surface,
+          backgroundColor: cs.surface,
           appBar: AppBar(
             title: const Text('New Game'),
             leading: IconButton(
@@ -71,8 +80,8 @@ class _CreateGameViewState extends State<_CreateGameView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Game Name Field
-                _SectionLabel(label: 'Game Name'),
+                // Game Name
+                const _SectionLabel(label: 'Game Name'),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _gameNameController,
@@ -85,30 +94,24 @@ class _CreateGameViewState extends State<_CreateGameView> {
 
                 const SizedBox(height: 24),
 
-                // Game Type Dropdown
-                _SectionLabel(label: 'Game Type'),
+                // Game Type (picker sheet)
+                const _SectionLabel(label: 'Game Type'),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<int>(
-                        key: ValueKey('gameType_${state.availableGameTypes.length}'),
-                        value: state.selectedGameType?.id,
-                        decoration: const InputDecoration(
-                          hintText: 'Select game type',
-                        ),
-                        items: state.availableGameTypes.map((type) {
-                          return DropdownMenuItem(
-                            value: type.id,
-                            child: Text(type.name),
+                      child: _PickerField(
+                        value: state.selectedGameType?.name ?? '',
+                        placeholder: 'Choose game type',
+                        leading: Icons.category_outlined,
+                        onTap: () async {
+                          final selected = await _showPickerSheet<GameType>(
+                            context: context,
+                            title: 'Game types',
+                            items: state.availableGameTypes,
+                            itemLabel: (t) => t.name,
                           );
-                        }).toList(),
-                        onChanged: (id) {
-                          if (id != null) {
-                            final gameType = state.availableGameTypes
-                                .firstWhere((t) => t.id == id);
-                            cubit.setGameType(gameType);
-                          }
+                          if (selected != null) cubit.setGameType(selected);
                         },
                       ),
                     ),
@@ -122,46 +125,44 @@ class _CreateGameViewState extends State<_CreateGameView> {
 
                 const SizedBox(height: 24),
 
-                // Players Section
+                // Players
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _SectionLabel(label: 'Players'),
+                    const _SectionLabel(label: 'Players'),
                     Text(
                       '${state.selectedPlayers.length} added',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
 
-                // Player Dropdown + Add Button
                 Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<int>(
-                        key: ValueKey('players_${state.availablePlayers.length}_${state.selectedPlayers.length}'),
-                        value: null,
-                        decoration: const InputDecoration(
-                          hintText: 'Add player',
-                        ),
-                        items: state.availablePlayers
-                            .where((p) => !state.selectedPlayers
-                                .any((sp) => sp.id == p.id))
-                            .map((player) {
-                          return DropdownMenuItem(
-                            value: player.id,
-                            child: Text(_playerDisplayName(player)),
+                      child: _PickerField(
+                        value: '',
+                        placeholder: 'Add player',
+                        leading: Icons.person_outline,
+                        onTap: () async {
+                          final remaining = state.availablePlayers
+                              .where(
+                                (p) => !state.selectedPlayers.any(
+                                  (sp) => sp.id == p.id,
+                                ),
+                              )
+                              .toList();
+
+                          final selected = await _showPickerSheet<Player>(
+                            context: context,
+                            title: 'Players',
+                            items: remaining,
+                            itemLabel: _playerDisplayName,
                           );
-                        }).toList(),
-                        onChanged: (id) {
-                          if (id != null) {
-                            final player = state.availablePlayers
-                                .firstWhere((p) => p.id == id);
-                            cubit.addPlayer(player);
-                          }
+                          if (selected != null) cubit.addPlayer(selected);
                         },
                       ),
                     ),
@@ -177,31 +178,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
 
                 // Players List
                 if (state.selectedPlayers.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colorScheme.outline),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.people_outline,
-                          size: 40,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Add at least 2 players',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                    ),
-                  )
+                  _EmptyPlayersCard()
                 else
                   ReorderableListView.builder(
                     shrinkWrap: true,
@@ -209,10 +186,22 @@ class _CreateGameViewState extends State<_CreateGameView> {
                     itemCount: state.selectedPlayers.length,
                     onReorder: cubit.reorderPlayers,
                     proxyDecorator: (child, index, animation) {
+                      // subtle lift, no wild scaling
                       return Material(
-                        elevation: 2,
-                        borderRadius: BorderRadius.circular(12),
-                        child: child,
+                        color: Colors.transparent,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                blurRadius: 16,
+                                offset: const Offset(0, 10),
+                                color: Colors.black.withOpacity(0.12),
+                              ),
+                            ],
+                          ),
+                          child: child,
+                        ),
                       );
                     },
                     itemBuilder: (context, index) {
@@ -232,7 +221,8 @@ class _CreateGameViewState extends State<_CreateGameView> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: ElevatedButton(
-                onPressed: state.isValid && state.status != CreateGameStatus.loading
+                onPressed:
+                    state.isValid && state.status != CreateGameStatus.loading
                     ? cubit.createGame
                     : null,
                 child: state.status == CreateGameStatus.loading
@@ -258,12 +248,12 @@ class _CreateGameViewState extends State<_CreateGameView> {
   }
 
   Future<void> _showAddGameTypeDialog(
-      BuildContext context, CreateGameCubit cubit) async {
+    BuildContext context,
+    CreateGameCubit cubit,
+  ) async {
     final result = await showDialog<String>(
       context: context,
-      builder: (dialogContext) {
-        return _AddGameTypeDialog();
-      },
+      builder: (_) => _AddGameTypeDialog(),
     );
 
     if (result != null && result.trim().isNotEmpty) {
@@ -272,32 +262,357 @@ class _CreateGameViewState extends State<_CreateGameView> {
   }
 
   Future<void> _showAddPlayerDialog(
-      BuildContext context, CreateGameCubit cubit) async {
+    BuildContext context,
+    CreateGameCubit cubit,
+  ) async {
     final result = await showDialog<Map<String, String>>(
       context: context,
-      builder: (dialogContext) {
-        return _AddPlayerDialog();
-      },
+      builder: (_) => _AddPlayerDialog(),
     );
 
-    if (result != null && result['firstName']!.trim().isNotEmpty) {
+    if (result != null && (result['firstName'] ?? '').trim().isNotEmpty) {
       cubit.addNewPlayer(result['firstName']!, result['lastName']);
     }
   }
 }
 
+// ========================= PICKER FIELD =========================
+
+class _PickerField extends StatelessWidget {
+  const _PickerField({
+    required this.value,
+    required this.placeholder,
+    required this.onTap,
+    this.leading,
+  });
+
+  final String value; // e.g. "Rummy"
+  final String placeholder; // e.g. "Choose…"
+  final VoidCallback onTap;
+  final IconData? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final hasValue = value.trim().isNotEmpty;
+
+    return Material(
+      color: cs.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              if (leading != null) ...[
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: cs.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(leading, size: 18, color: cs.primary),
+                ),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Text(
+                  hasValue ? value : placeholder,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: hasValue ? cs.onSurface : cs.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ========================= PICKER SHEET =========================
+
+Future<T?> _showPickerSheet<T>({
+  required BuildContext context,
+  required String title,
+  required List<T> items,
+  required String Function(T item) itemLabel,
+  String? emptyTitle,
+  String? emptySubtitle,
+}) async {
+  final cs = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
+
+  return showModalBottomSheet<T>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: cs.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    ),
+    builder: (ctx) {
+      return _PickerSheet<T>(
+        title: title,
+        items: items,
+        itemLabel: itemLabel,
+        emptyTitle: emptyTitle,
+        emptySubtitle: emptySubtitle,
+        cs: cs,
+        textTheme: textTheme,
+      );
+    },
+  );
+}
+
+class _PickerSheet<T> extends StatefulWidget {
+  const _PickerSheet({
+    required this.title,
+    required this.items,
+    required this.itemLabel,
+    required this.cs,
+    required this.textTheme,
+    this.emptyTitle,
+    this.emptySubtitle,
+  });
+
+  final String title;
+  final List<T> items;
+  final String Function(T item) itemLabel;
+
+  final String? emptyTitle;
+  final String? emptySubtitle;
+
+  final ColorScheme cs;
+  final TextTheme textTheme;
+
+  @override
+  State<_PickerSheet<T>> createState() => _PickerSheetState<T>();
+}
+
+class _PickerSheetState<T> extends State<_PickerSheet<T>> {
+  final _search = TextEditingController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = widget.cs;
+
+    final query = _search.text.trim().toLowerCase();
+    final filtered = query.isEmpty
+        ? widget.items
+        : widget.items
+              .where((e) => widget.itemLabel(e).toLowerCase().contains(query))
+              .toList();
+
+    final height = MediaQuery.sizeOf(context).height;
+    final maxHeight = height * 0.82;
+
+    return SizedBox(
+      height: maxHeight,
+      child: Column(
+        children: [
+          // top handle + header
+          const SizedBox(height: 10),
+          Container(
+            width: 38,
+            height: 4,
+            decoration: BoxDecoration(
+              color: cs.outlineVariant,
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: widget.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: TextField(
+              controller: _search,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                hintText: 'Search...',
+                prefixIcon: Icon(Icons.search),
+              ),
+              textInputAction: TextInputAction.search,
+            ),
+          ),
+
+          Expanded(
+            child: filtered.isEmpty
+                ? _EmptySheetState(
+                    title: widget.emptyTitle ?? 'Nothing here',
+                    subtitle:
+                        widget.emptySubtitle ?? 'Try changing your search.',
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final item = filtered[index];
+                      final label = widget.itemLabel(item);
+
+                      return Material(
+                        color: cs.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => Navigator.pop<T>(context, item),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: widget.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptySheetState extends StatelessWidget {
+  const _EmptySheetState({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.inbox_outlined, size: 44, color: cs.onSurfaceVariant),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ========================= UI BITS =========================
+
 class _SectionLabel extends StatelessWidget {
   final String label;
-
   const _SectionLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
+      style: Theme.of(
+        context,
+      ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+    );
+  }
+}
+
+class _EmptyPlayersCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.people_outline, size: 40, color: cs.onSurfaceVariant),
+          const SizedBox(height: 8),
+          Text(
+            'Add at least 2 players',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
+        ],
+      ),
     );
   }
 }
@@ -323,23 +638,25 @@ class _PlayerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: colorScheme.primaryContainer,
+          backgroundColor: cs.primaryContainer,
           child: Text(
-            player.firstName.isNotEmpty ? player.firstName[0].toUpperCase() : '?',
+            player.firstName.isNotEmpty
+                ? player.firstName[0].toUpperCase()
+                : '?',
             style: TextStyle(
-              color: colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.w600,
+              color: cs.onPrimaryContainer,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -348,15 +665,12 @@ class _PlayerTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.close, color: colorScheme.error),
+              icon: Icon(Icons.close, color: cs.error),
               onPressed: onRemove,
             ),
             ReorderableDragStartListener(
               index: index,
-              child: Icon(
-                Icons.drag_handle,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              child: Icon(Icons.drag_handle, color: cs.onSurfaceVariant),
             ),
           ],
         ),
@@ -364,6 +678,8 @@ class _PlayerTile extends StatelessWidget {
     );
   }
 }
+
+// ========================= DIALOGS =========================
 
 class _AddGameTypeDialog extends StatefulWidget {
   @override
@@ -386,9 +702,7 @@ class _AddGameTypeDialogState extends State<_AddGameTypeDialog> {
       content: TextField(
         controller: _controller,
         autofocus: true,
-        decoration: const InputDecoration(
-          hintText: 'Enter game type name',
-        ),
+        decoration: const InputDecoration(hintText: 'Enter game type name'),
         textCapitalization: TextCapitalization.words,
         onSubmitted: (value) => Navigator.pop(context, value),
       ),
@@ -439,17 +753,13 @@ class _AddPlayerDialogState extends State<_AddPlayerDialog> {
           TextField(
             controller: _firstNameController,
             autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'First name',
-            ),
+            decoration: const InputDecoration(hintText: 'First name'),
             textCapitalization: TextCapitalization.words,
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _lastNameController,
-            decoration: const InputDecoration(
-              hintText: 'Last name (optional)',
-            ),
+            decoration: const InputDecoration(hintText: 'Last name (optional)'),
             textCapitalization: TextCapitalization.words,
             onSubmitted: (_) => _submit(),
           ),
@@ -460,10 +770,7 @@ class _AddPlayerDialogState extends State<_AddPlayerDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        TextButton(
-          onPressed: _submit,
-          child: const Text('Add'),
-        ),
+        TextButton(onPressed: _submit, child: const Text('Add')),
       ],
     );
   }
