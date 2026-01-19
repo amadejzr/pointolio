@@ -10,6 +10,8 @@ import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_state.dart';
 import 'package:scoreio/features/create_game/presentation/widgets/game_type_picker_sheet.dart';
+import 'package:scoreio/common/ui/widgets/picker_sheet.dart';
+import 'package:scoreio/features/create_game/presentation/widgets/add_player_dialog.dart';
 import 'package:scoreio/features/create_game/presentation/widgets/new_game_type_bottom_sheet/new_game_type_bottom_sheet.dart';
 
 class CreateGamePage extends StatelessWidget {
@@ -154,7 +156,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
                               )
                               .toList();
 
-                          final selected = await _showPickerSheet<Player>(
+                          final selected = await PickerSheet.show<Player>(
                             context: context,
                             title: 'Players',
                             items: remaining,
@@ -264,10 +266,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
     BuildContext context,
     CreateGameCubit cubit,
   ) async {
-    final result = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (_) => _AddPlayerDialog(),
-    );
+    final result = await AddPlayerDialog.show(context);
 
     if (result != null && (result['firstName'] ?? '').trim().isNotEmpty) {
       cubit.addNewPlayer(result['firstName']!, result['lastName']);
@@ -441,234 +440,6 @@ class _GameTypePickerField extends StatelessWidget {
   }
 }
 
-// ========================= PICKER SHEET =========================
-
-Future<T?> _showPickerSheet<T>({
-  required BuildContext context,
-  required String title,
-  required List<T> items,
-  required String Function(T item) itemLabel,
-  String? emptyTitle,
-  String? emptySubtitle,
-}) async {
-  final cs = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
-
-  return showModalBottomSheet<T>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: cs.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-    ),
-    builder: (ctx) {
-      return _PickerSheet<T>(
-        title: title,
-        items: items,
-        itemLabel: itemLabel,
-        emptyTitle: emptyTitle,
-        emptySubtitle: emptySubtitle,
-        cs: cs,
-        textTheme: textTheme,
-      );
-    },
-  );
-}
-
-class _PickerSheet<T> extends StatefulWidget {
-  const _PickerSheet({
-    required this.title,
-    required this.items,
-    required this.itemLabel,
-    required this.cs,
-    required this.textTheme,
-    this.emptyTitle,
-    this.emptySubtitle,
-  });
-
-  final String title;
-  final List<T> items;
-  final String Function(T item) itemLabel;
-
-  final String? emptyTitle;
-  final String? emptySubtitle;
-
-  final ColorScheme cs;
-  final TextTheme textTheme;
-
-  @override
-  State<_PickerSheet<T>> createState() => _PickerSheetState<T>();
-}
-
-class _PickerSheetState<T> extends State<_PickerSheet<T>> {
-  final _search = TextEditingController();
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = widget.cs;
-
-    final query = _search.text.trim().toLowerCase();
-    final filtered = query.isEmpty
-        ? widget.items
-        : widget.items
-              .where((e) => widget.itemLabel(e).toLowerCase().contains(query))
-              .toList();
-
-    final height = MediaQuery.sizeOf(context).height;
-    final maxHeight = height * 0.82;
-
-    return SizedBox(
-      height: maxHeight,
-      child: Column(
-        children: [
-          // top handle + header
-          const SizedBox(height: 10),
-          Container(
-            width: 38,
-            height: 4,
-            decoration: BoxDecoration(
-              color: cs.outlineVariant,
-              borderRadius: BorderRadius.circular(99),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    style: widget.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: TextField(
-              controller: _search,
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                hintText: 'Search...',
-                prefixIcon: Icon(Icons.search),
-              ),
-              textInputAction: TextInputAction.search,
-            ),
-          ),
-
-          Expanded(
-            child: filtered.isEmpty
-                ? _EmptySheetState(
-                    title: widget.emptyTitle ?? 'Nothing here',
-                    subtitle:
-                        widget.emptySubtitle ?? 'Try changing your search.',
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final item = filtered[index];
-                      final label = widget.itemLabel(item);
-
-                      return Material(
-                        color: cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () => Navigator.pop<T>(context, item),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 14,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    label,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: widget.textTheme.bodyLarge?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.chevron_right,
-                                  color: cs.onSurfaceVariant,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptySheetState extends StatelessWidget {
-  const _EmptySheetState({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.inbox_outlined, size: 44, color: cs.onSurfaceVariant),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ========================= UI BITS =========================
 
 class _SectionLabel extends StatelessWidget {
@@ -773,62 +544,6 @@ class _PlayerTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _AddPlayerDialog extends StatefulWidget {
-  @override
-  State<_AddPlayerDialog> createState() => _AddPlayerDialogState();
-}
-
-class _AddPlayerDialogState extends State<_AddPlayerDialog> {
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    Navigator.pop(context, {
-      'firstName': _firstNameController.text,
-      'lastName': _lastNameController.text,
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('New Player'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _firstNameController,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'First name'),
-            textCapitalization: TextCapitalization.words,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _lastNameController,
-            decoration: const InputDecoration(hintText: 'Last name (optional)'),
-            textCapitalization: TextCapitalization.words,
-            onSubmitted: (_) => _submit(),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        TextButton(onPressed: _submit, child: const Text('Add')),
-      ],
     );
   }
 }
