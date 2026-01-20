@@ -14,16 +14,12 @@ class HomeOverflowMenu extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(_radius),
       ),
-      clipBehavior: Clip.antiAlias, // ✅ clips splash
+      clipBehavior: Clip.antiAlias,
       child: PopupMenuButton<_HomeMenuAction>(
         tooltip: 'Menu',
         position: PopupMenuPosition.under,
 
-        // ✅ IMPORTANT: use `icon` so PopupMenuButton owns the tap area
         icon: Icon(Icons.more_horiz, color: cs.onSurfaceVariant),
-
-        // Optional: make tap target feel like IconButton
-        padding: const EdgeInsets.all(8),
 
         onSelected: (action) {
           switch (action) {

@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
 
 class GameCard extends StatelessWidget {
+  const GameCard({
+    required this.gameWithPlayerCount,
+
+    this.onTap,
+    this.onLongPress,
+    this.onDelete,
+    this.isEditing = false,
+    super.key,
+  });
   final GameWithPlayerCount gameWithPlayerCount;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onDelete;
   final bool isEditing;
-
-  const GameCard({
-    super.key,
-    required this.gameWithPlayerCount,
-    this.onTap,
-    this.onLongPress,
-    this.onDelete,
-    this.isEditing = false,
-  });
 
   String get _title => gameWithPlayerCount.game.name;
   int get _playerCount => gameWithPlayerCount.playerCount;
@@ -52,7 +52,7 @@ class GameCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: cs.outlineVariant, width: 1),
+        side: BorderSide(color: cs.outlineVariant),
       ),
       child: InkWell(
         onTap: isEditing ? null : onTap,
@@ -73,7 +73,7 @@ class GameCard extends StatelessWidget {
                 child: Center(
                   child: hasColor
                       ? Text(
-                          _gameType?.isNotEmpty == true
+                          _gameType?.isNotEmpty ?? false
                               ? _gameType![0].toUpperCase()
                               : '?',
                           style: tt.titleMedium?.copyWith(
@@ -107,7 +107,8 @@ class GameCard extends StatelessWidget {
                         ],
                         Expanded(
                           child: Text(
-                            '${_gameType != null ? '$_gameType • ' : ''}$_playerCount players • ${_formatDate(_gameDate)}',
+                            '${_gameType != null ? '$_gameType • ' : ''}'
+                            '$_playerCount players • ${_formatDate(_gameDate)}',
                             style: tt.bodySmall?.copyWith(
                               color: cs.onSurfaceVariant,
                             ),

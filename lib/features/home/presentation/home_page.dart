@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scoreio/common/data/repositories/game_repository.dart';
@@ -93,7 +95,7 @@ class _HomeBody extends StatelessWidget {
     return ListView.separated(
       padding: Spacing.page,
       itemCount: state.games.length,
-      separatorBuilder: (_, __) => Spacing.gap12,
+      separatorBuilder: (_, _) => Spacing.gap12,
       itemBuilder: (context, index) {
         final gameWithCount = state.games[index];
 
@@ -112,7 +114,9 @@ class _HomeBody extends StatelessWidget {
               gameName: gameWithCount.game.name,
             );
             if (confirmed && context.mounted) {
-              context.read<HomeCubit>().deleteGame(gameWithCount.game.id);
+              unawaited(
+                context.read<HomeCubit>().deleteGame(gameWithCount.game.id),
+              );
             }
           },
         );

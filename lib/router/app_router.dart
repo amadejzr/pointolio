@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/features/home/presentation/home_page.dart';
 import 'package:scoreio/features/create_game/presentation/create_game_page.dart';
+import 'package:scoreio/features/home/presentation/home_page.dart';
 import 'package:scoreio/features/scoring/presentation/scoring_page.dart';
 
 class AppRouter {
