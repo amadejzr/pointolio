@@ -56,6 +56,18 @@ class HomeCubit extends Cubit<HomeState> {
     }
   }
 
+  Future<void> setFinished(int id, {required bool isFinished}) async {
+    try {
+      await _repository.setGameFinished(id, finished: isFinished);
+    } on DomainException catch (e) {
+      final message = switch (e.code) {
+        DomainErrorCode.notFound => 'Game not found',
+        _ => 'Failed to update game status',
+      };
+      emit(state.copyWith(snackbarMessage: message));
+    }
+  }
+
   void clearSnackbar() {
     emit(state.copyWith(clearSnackbar: true));
   }

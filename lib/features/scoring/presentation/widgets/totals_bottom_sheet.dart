@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/features/scoring/presentation/cubit/scoring_state.dart';
+import 'package:scoreio/features/scoring/presentation/cubit/scoring_cubit.dart';
 
 class TotalsBar extends StatelessWidget {
-  const TotalsBar({super.key, required this.state, required this.onShowTotals});
+  const TotalsBar({required this.state, required this.onShowTotals, super.key});
 
   final ScoringState state;
   final VoidCallback onShowTotals;
@@ -11,106 +11,92 @@ class TotalsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
 
-    final players = state.playerScores;
-    final totals = players.map((e) => e.total).toList();
-    final int? maxTotal = totals.isEmpty
-        ? null
-        : totals.reduce((a, b) => a > b ? a : b);
-    final int? minTotal = totals.isEmpty
-        ? null
-        : totals.reduce((a, b) => a < b ? a : b);
+    final leader = _leaderInfo(state);
 
-    // Determine winning score based on game type
-    final int? winningScore = state.lowestScoreWins ? minTotal : maxTotal;
-
-    final leaders = winningScore == null
-        ? <PlayerScore>[]
-        : players.where((p) => p.total == winningScore).toList();
-
-    final leaderLabel = leaders.isEmpty
-        ? '—'
-        : leaders.length == 1
-        ? _initials(_fullName(leaders.first))
-        : 'Tie';
-
-    final leaderScore = winningScore?.toString() ?? '—';
-    final spread = (maxTotal != null && minTotal != null)
-        ? (maxTotal - minTotal)
-        : null;
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(Spacing.md, 10, Spacing.md, 0),
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest,
-          border: Border(top: BorderSide(color: cs.outlineVariant)),
-        ),
-        child: Row(
-          children: [
-            // Left: meta
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${state.playerScores.length} players • ${state.roundCount} rounds',
-                    style: text.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    spread == null ? 'Spread: —' : 'Spread: $spread',
-                    style: text.labelMedium?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Center: leader pill
-            _LeaderPill(label: leaderLabel, score: leaderScore),
-
-            const SizedBox(width: 10),
-
-            // Right: totals button
-            Material(
-              color: cs.primary,
-              borderRadius: BorderRadius.circular(999),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: onShowTotals,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.leaderboard, size: 18, color: cs.onPrimary),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Totals',
-                        style: text.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: cs.onPrimary,
-                        ),
-                      ),
-                    ],
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        Spacing.md,
+        Spacing.sm,
+        Spacing.md,
+        MediaQuery.paddingOf(context).bottom + Spacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(top: BorderSide(color: cs.outlineVariant)),
+      ),
+      child: Row(
+        children: [
+          // Chips row (same style as the landscape appbar chips)
+          Expanded(
+            child: Wrap(
+              spacing: Spacing.xs,
+              runSpacing: Spacing.xs,
+              children: [
+                Tooltip(
+                  message: 'Players',
+                  waitDuration: const Duration(milliseconds: 350),
+                  child: _MiniChip(
+                    icon: Icons.people_outline,
+                    label: '${state.playerScores.length}',
                   ),
                 ),
-              ),
+                Tooltip(
+                  message: 'Rounds',
+                  waitDuration: const Duration(milliseconds: 350),
+                  child: _MiniChip(
+                    icon: Icons.grid_view_rounded,
+                    label: '${state.roundCount}',
+                  ),
+                ),
+                Tooltip(
+                  message: state.lowestScoreWins
+                      ? 'Leader (lowest total)'
+                      : 'Leader (highest total)',
+                  waitDuration: const Duration(milliseconds: 350),
+                  child: _MiniChip(
+                    icon: Icons.emoji_events_outlined,
+                    label: leader.label, // "Tie" or "Maj A."
+                    onTap: onShowTotals, // quick open totals
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          Spacing.hGap12,
+
+          // Totals CTA (keep as a pill button like before)
+          _TotalsPillButton(onPressed: onShowTotals),
+        ],
       ),
     );
+  }
+
+  _LeaderInfo _leaderInfo(ScoringState state) {
+    if (state.playerScores.isEmpty) {
+      return const _LeaderInfo(label: '—');
+    }
+
+    var best = state.playerScores.first;
+    for (final ps in state.playerScores.skip(1)) {
+      final isBetter = state.lowestScoreWins
+          ? ps.total < best.total
+          : ps.total > best.total;
+      if (isBetter) best = ps;
+    }
+
+    final bestTotal = best.total;
+    final tied = state.playerScores
+        .where((ps) => ps.total == bestTotal)
+        .toList();
+    if (tied.length > 1) return const _LeaderInfo(label: 'Tie');
+
+    // Compact name label, similar to appbar chip style.
+    final full = _fullName(best);
+    final parts = full.split(' ').where((e) => e.trim().isNotEmpty).toList();
+    if (parts.length == 1) return _LeaderInfo(label: parts.first);
+    return _LeaderInfo(label: '${parts.first} ${parts[1][0].toUpperCase()}.');
   }
 
   static String _fullName(PlayerScore ps) {
@@ -118,58 +104,109 @@ class TotalsBar extends StatelessWidget {
     final ln = (ps.player.lastName ?? '').trim();
     return ln.isEmpty ? fn : '$fn $ln';
   }
-
-  static String _initials(String name) {
-    final parts = name.split(' ').where((p) => p.trim().isNotEmpty).toList();
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-    return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
-  }
 }
 
-class _LeaderPill extends StatelessWidget {
-  const _LeaderPill({required this.label, required this.score});
-
+class _LeaderInfo {
+  const _LeaderInfo({required this.label});
   final String label;
-  final String score;
+}
+
+/// Small pill chip — matches the chips used in the landscape AppBar.
+class _MiniChip extends StatelessWidget {
+  const _MiniChip({
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
+    final tt = Theme.of(context).textTheme;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    final child = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: cs.surface,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: cs.outlineVariant),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: cs.primaryContainer,
-            foregroundColor: cs.onPrimaryContainer,
-            child: Text(
-              label,
-              style: text.labelLarge?.copyWith(fontWeight: FontWeight.w900),
+          Icon(icon, size: 16, color: cs.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: tt.labelLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: cs.onSurfaceVariant,
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            score,
-            style: text.titleMedium?.copyWith(fontWeight: FontWeight.w900),
-          ),
         ],
+      ),
+    );
+
+    if (onTap == null) return child;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Totals action — kept as a primary pill button (same vibe as before).
+class _TotalsPillButton extends StatelessWidget {
+  const _TotalsPillButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Material(
+      color: cs.primary,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.summarize_outlined, size: 18, color: cs.onPrimary),
+              const SizedBox(width: 8),
+              Text(
+                'Totals',
+                style: tt.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: cs.onPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
 class TotalsSheet extends StatelessWidget {
-  const TotalsSheet({super.key, required this.state});
+  const TotalsSheet({required this.state, super.key});
 
   final ScoringState state;
 
@@ -178,7 +215,6 @@ class TotalsSheet extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
-    // Sort based on win condition: lowest wins = ascending, highest wins = descending
     final sorted = [...state.playerScores]
       ..sort(
         (a, b) => state.lowestScoreWins
@@ -187,8 +223,6 @@ class TotalsSheet extends StatelessWidget {
       );
 
     final top = sorted.isEmpty ? null : sorted.first.total;
-
-    // Compute ranks with ties (players with same score share the same rank)
     final ranks = _computeRanks(sorted);
 
     return Padding(
@@ -225,7 +259,6 @@ class TotalsSheet extends StatelessWidget {
           // List
           Expanded(
             child: ListView.separated(
-              shrinkWrap: false,
               physics: const ClampingScrollPhysics(),
               itemCount: sorted.length,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
@@ -303,9 +336,9 @@ class TotalsSheet extends StatelessWidget {
     if (sorted.isEmpty) return [];
 
     final ranks = <int>[];
-    int currentRank = 1;
+    var currentRank = 1;
 
-    for (int i = 0; i < sorted.length; i++) {
+    for (var i = 0; i < sorted.length; i++) {
       if (i == 0) {
         ranks.add(currentRank);
       } else if (sorted[i].total == sorted[i - 1].total) {

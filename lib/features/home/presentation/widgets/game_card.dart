@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:scoreio/common/ui/widgets/game_leading_widget.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
 
 class GameCard extends StatelessWidget {
   const GameCard({
     required this.gameWithPlayerCount,
-
+    super.key,
     this.onTap,
     this.onLongPress,
     this.onDelete,
+    this.onToggleFinished,
     this.isEditing = false,
-    super.key,
+    this.isFinished = false,
   });
+
   final GameWithPlayerCount gameWithPlayerCount;
+
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onDelete;
+
+  /// Toggle finished/un-finished (only shown when editing)
+  final VoidCallback? onToggleFinished;
+
+  /// Source of truth from DB (e.g. finishedAt != null)
+  final bool isFinished;
+
   final bool isEditing;
 
   String get _title => gameWithPlayerCount.game.name;
@@ -29,15 +41,10 @@ class GameCard extends StatelessWidget {
     final now = DateTime.now();
     final difference = now.difference(date);
 
-    if (difference.inDays == 0) {
-      return 'Today';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+    if (difference.inDays == 0) return 'Today';
+    if (difference.inDays == 1) return 'Yesterday';
+    if (difference.inDays < 7) return '${difference.inDays} days ago';
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override
@@ -46,10 +53,11 @@ class GameCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     final hasColor = _gameTypeColor != null;
-    final color = hasColor ? Color(_gameTypeColor!) : cs.primaryContainer;
+    final typeColor = hasColor ? Color(_gameTypeColor!) : cs.primaryContainer;
 
     return Card(
       elevation: 0,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: cs.outlineVariant),
@@ -59,58 +67,45 @@ class GameCard extends StatelessWidget {
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: Spacing.page,
           child: Row(
             children: [
-              // Color indicator
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: hasColor
-                      ? Text(
-                          _gameType?.isNotEmpty ?? false
-                              ? _gameType![0].toUpperCase()
-                              : '?',
-                          style: tt.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        )
-                      : Icon(
-                          Icons.sports_esports_outlined,
-                          color: cs.onPrimaryContainer,
-                        ),
-                ),
+              GameLeadingWidget(
+                typeColor: typeColor,
+                hasColor: hasColor,
+                gameTypeName: _gameType,
+                isFinished: isFinished,
               ),
-              const SizedBox(width: 16),
+
+              Spacing.hGap16,
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: tt.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    Spacing.gap4,
                     Row(
                       children: [
                         if (_gameType != null) ...[
                           _WinConditionChip(lowestScoreWins: _lowestScoreWins),
-                          const SizedBox(width: 8),
+                          Spacing.hGap8,
                         ],
                         Expanded(
                           child: Text(
                             '${_gameType != null ? '$_gameType • ' : ''}'
-                            '$_playerCount players • ${_formatDate(_gameDate)}',
+                            '$_playerCount players • ${_formatDate(_gameDate)}'
+                            '${isFinished ? ' • Finished' : ''}',
                             style: tt.bodySmall?.copyWith(
                               color: cs.onSurfaceVariant,
+                              fontWeight: isFinished ? FontWeight.w600 : null,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -121,20 +116,62 @@ class GameCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isEditing)
-                TextButton(
-                  onPressed: onDelete,
-                  style: TextButton.styleFrom(
-                    foregroundColor: cs.error,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+
+              Spacing.hGap12,
+
+              if (isEditing) ...[
+                if (onToggleFinished != null)
+                  _EditIconButton(
+                    tooltip: isFinished ? 'Mark as active' : 'Finish game',
+                    icon: isFinished ? Icons.undo : Icons.check_circle_outline,
+                    onPressed: onToggleFinished,
                   ),
-                  child: const Text('Delete'),
-                )
-              else
+                Spacing.hGap8,
+                _EditIconButton(
+                  tooltip: 'Delete',
+                  icon: Icons.delete_outline,
+                  onPressed: onDelete,
+                  color: cs.error,
+                ),
+              ] else
                 Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditIconButton extends StatelessWidget {
+  const _EditIconButton({
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+    this.color,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String tooltip;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final c = color ?? cs.primary;
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: c.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Icon(icon, size: 20, color: c),
           ),
         ),
       ),

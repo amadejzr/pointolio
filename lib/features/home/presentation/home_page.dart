@@ -84,6 +84,7 @@ class _HomeBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final cubit = context.read<HomeCubit>();
 
     if (state.status == HomeStatus.loading) {
       return const Center(child: CircularProgressIndicator());
@@ -100,7 +101,7 @@ class _HomeBody extends StatelessWidget {
             ),
             Spacing.gap16,
             FilledButton.tonal(
-              onPressed: () => context.read<HomeCubit>().loadGames(),
+              onPressed: cubit.loadGames,
               child: const Text('Retry'),
             ),
           ],
@@ -118,6 +119,7 @@ class _HomeBody extends StatelessWidget {
       separatorBuilder: (_, _) => Spacing.gap12,
       itemBuilder: (context, index) {
         final gameWithCount = state.games[index];
+        final game = gameWithCount.game;
 
         return GameCard(
           gameWithPlayerCount: gameWithCount,
@@ -125,19 +127,31 @@ class _HomeBody extends StatelessWidget {
           onTap: () => Navigator.pushNamed(
             context,
             AppRouter.scoring,
-            arguments: gameWithCount.game.id,
+            arguments: game.id,
           ),
-          onLongPress: () => context.read<HomeCubit>().toggleEditMode(),
+          onLongPress: cubit.toggleEditMode,
+          isFinished: game.finishedAt != null,
+
+          // existing delete
           onDelete: () async {
             final confirmed = await DeleteGameDialog.show(
               context,
-              gameName: gameWithCount.game.name,
+              gameName: game.name,
             );
             if (confirmed && context.mounted) {
-              unawaited(
-                context.read<HomeCubit>().deleteGame(gameWithCount.game.id),
-              );
+              unawaited(cubit.deleteGame(game.id));
             }
+          },
+
+          // ✅ new: finish/unfinish only visible in edit mode
+          onToggleFinished: () {
+            final isFinished = game.finishedAt != null;
+            unawaited(
+              cubit.setFinished(
+                game.id,
+                isFinished: !isFinished,
+              ),
+            );
           },
         );
       },

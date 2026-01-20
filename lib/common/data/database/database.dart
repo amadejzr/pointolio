@@ -1,11 +1,10 @@
-import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
+import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:scoreio/common/data/dao/game_dao.dart';
 import 'package:scoreio/common/data/dao/game_type_dao.dart';
 import 'package:scoreio/common/data/dao/player_dao.dart';
+import 'package:scoreio/common/data/dao/score_entry_dao.dart';
 import 'package:scoreio/common/data/tables/game_players_table.dart';
 import 'package:scoreio/common/data/tables/games_table.dart';
 import 'package:scoreio/common/data/tables/player_table.dart';
@@ -25,40 +24,27 @@ part 'database.g.dart';
     GameDao,
     GameTypeDao,
     PlayerDao,
+    ScoreEntryDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  // After generating code, this class needs to define a `schemaVersion` getter
+  // and a constructor telling drift where the database should be stored.
+  // These are described in the getting started guide: https://drift.simonbinder.eu/setup/
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 1;
 
-  @override
-  MigrationStrategy get migration {
-    return MigrationStrategy(
-      onCreate: (Migrator m) async {
-        await m.createAll();
-      },
-      onUpgrade: (Migrator m, int from, int to) async {
-        if (from < 3) {
-          // Add lowestScoreWins column to game_types table (default false = highest score wins)
-          await customStatement(
-            'ALTER TABLE game_types ADD COLUMN lowest_score_wins INTEGER NOT NULL DEFAULT 0',
-          );
-          // Add color column to game_types table (nullable)
-          await customStatement(
-            'ALTER TABLE game_types ADD COLUMN color INTEGER',
-          );
-        }
-      },
+  static QueryExecutor _openConnection() {
+    return driftDatabase(
+      name: 'database',
+      native: const DriftNativeOptions(
+        // By default, `driftDatabase` from `package:drift_flutter` stores the
+        // database files in `getApplicationDocumentsDirectory()`.
+        databaseDirectory: getApplicationSupportDirectory,
+      ),
+      // If you need web support, see https://drift.simonbinder.eu/platforms/web/
     );
   }
-}
-
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dir.path, 'score_games.sqlite'));
-    return NativeDatabase.createInBackground(file);
-  });
 }

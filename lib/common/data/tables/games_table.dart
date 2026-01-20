@@ -7,7 +7,8 @@ class GameTypes extends Table {
   TextColumn get name => text().withLength(min: 1, max: 60)();
 
   // If true, lowest score wins. If false, highest score wins.
-  BoolColumn get lowestScoreWins => boolean().withDefault(const Constant(false))();
+  BoolColumn get lowestScoreWins =>
+      boolean().withDefault(const Constant(false))();
 
   // Color for the game type (stored as hex integer, e.g. 0xFF42A5F5)
   IntColumn get color => integer().nullable()();
@@ -39,10 +40,16 @@ class Games extends Table {
     onDelete: KeyAction.setNull,
   )();
 
-  // Optional: store a snapshot name too (so if user renames a type later, this game still shows original)
+  // Optional: store a snapshot name too (so if user renames a type later,
+  //this game still shows original)
   TextColumn get gameTypeNameSnapshot =>
       text().nullable().withLength(min: 1, max: 60)();
 
   // Optional: notes
   TextColumn get note => text().nullable()();
+
+  // ✅ NEW: when the game was finished
+  // null = active game
+  // non-null = finished game
+  DateTimeColumn get finishedAt => dateTime().nullable()();
 }

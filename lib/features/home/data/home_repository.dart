@@ -70,4 +70,34 @@ class HomeRepository {
       );
     }
   }
+
+  Future<void> setGameFinished(int id, {required bool finished}) async {
+    try {
+      final updated = await _db.gameDao.setGameFinished(id, finished: finished);
+
+      if (updated == 0) {
+        throw DomainException(
+          DomainErrorCode.notFound,
+          context: {
+            'op': 'setGameFinished',
+            'gameId': id,
+            'finished': finished,
+          },
+        );
+      }
+    } on SqliteException catch (e) {
+      throw e.toDomainException(
+        operation: 'setGameFinished',
+        context: {'gameId': id, 'finished': finished},
+      );
+    } on DomainException {
+      rethrow;
+    } on Object catch (e) {
+      throw DomainException(
+        DomainErrorCode.storage,
+        context: {'op': 'setGameFinished', 'gameId': id, 'finished': finished},
+        cause: e,
+      );
+    }
+  }
 }

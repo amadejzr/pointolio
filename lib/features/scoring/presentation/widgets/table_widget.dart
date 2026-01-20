@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:scoreio/features/scoring/presentation/cubit/scoring_state.dart';
+import 'package:scoreio/features/scoring/presentation/cubit/scoring_cubit.dart';
 
 class RoundsGrid extends StatefulWidget {
   const RoundsGrid({
-    super.key,
     required this.state,
     required this.onDeleteRound,
     required this.onEditScore,
     required this.onReorderPlayers,
+    super.key,
   });
 
   final ScoringState state;
@@ -118,10 +118,10 @@ class _RoundsGridState extends State<RoundsGrid> {
         final fallback = MediaQuery.sizeOf(context).height * 0.62;
         final tableHeight = constraints.hasBoundedHeight
             ? constraints.maxHeight
-            : math.max(320.0, fallback);
+            : math.max(320, fallback);
 
         return SizedBox(
-          height: tableHeight,
+          height: tableHeight.toDouble(),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -155,7 +155,9 @@ class _RoundsGridState extends State<RoundsGrid> {
                           onReorderEnd: (_) =>
                               setState(() => _dragIndex = null),
                           onReorder: (oldIndex, newIndex) {
-                            if (newIndex > oldIndex) newIndex--;
+                            if (newIndex > oldIndex) {
+                              newIndex--;
+                            }
                             widget.onReorderPlayers(oldIndex, newIndex);
                           },
                           proxyDecorator: (child, index, animation) {
@@ -458,7 +460,7 @@ class _RoundsHeaderRowTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    if (roundCount == 0) return SizedBox(height: RoundsGrid.headerHeight);
+    if (roundCount == 0) return const SizedBox(height: RoundsGrid.headerHeight);
 
     return Container(
       height: RoundsGrid.headerHeight,
@@ -497,7 +499,7 @@ class _RoundsPlayerRowTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (roundCount == 0) return SizedBox(height: RoundsGrid.rowHeight);
+    if (roundCount == 0) return const SizedBox(height: RoundsGrid.rowHeight);
 
     return SizedBox(
       height: RoundsGrid.rowHeight,
@@ -546,7 +548,6 @@ class _TableHeaderCell extends StatelessWidget {
               ? Border(
                   right: BorderSide(
                     color: cs.outlineVariant.withOpacity(0.55),
-                    width: 1,
                   ),
                 )
               : null,
@@ -594,7 +595,6 @@ class _TableScoreCell extends StatelessWidget {
             ? Border(
                 right: BorderSide(
                   color: cs.outlineVariant.withOpacity(0.45),
-                  width: 1,
                 ),
               )
             : null,

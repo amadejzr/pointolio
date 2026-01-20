@@ -457,6 +457,17 @@ class $GamesTable extends Games with TableInfo<$GamesTable, Game> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _finishedAtMeta = const VerificationMeta(
+    'finishedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> finishedAt = GeneratedColumn<DateTime>(
+    'finished_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -466,6 +477,7 @@ class $GamesTable extends Games with TableInfo<$GamesTable, Game> {
     gameTypeId,
     gameTypeNameSnapshot,
     note,
+    finishedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -526,6 +538,12 @@ class $GamesTable extends Games with TableInfo<$GamesTable, Game> {
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
       );
     }
+    if (data.containsKey('finished_at')) {
+      context.handle(
+        _finishedAtMeta,
+        finishedAt.isAcceptableOrUnknown(data['finished_at']!, _finishedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -563,6 +581,10 @@ class $GamesTable extends Games with TableInfo<$GamesTable, Game> {
         DriftSqlType.string,
         data['${effectivePrefix}note'],
       ),
+      finishedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}finished_at'],
+      ),
     );
   }
 
@@ -580,6 +602,7 @@ class Game extends DataClass implements Insertable<Game> {
   final int? gameTypeId;
   final String? gameTypeNameSnapshot;
   final String? note;
+  final DateTime? finishedAt;
   const Game({
     required this.id,
     required this.name,
@@ -588,6 +611,7 @@ class Game extends DataClass implements Insertable<Game> {
     this.gameTypeId,
     this.gameTypeNameSnapshot,
     this.note,
+    this.finishedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -605,6 +629,9 @@ class Game extends DataClass implements Insertable<Game> {
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
+    if (!nullToAbsent || finishedAt != null) {
+      map['finished_at'] = Variable<DateTime>(finishedAt);
+    }
     return map;
   }
 
@@ -621,6 +648,9 @@ class Game extends DataClass implements Insertable<Game> {
           ? const Value.absent()
           : Value(gameTypeNameSnapshot),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      finishedAt: finishedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(finishedAt),
     );
   }
 
@@ -639,6 +669,7 @@ class Game extends DataClass implements Insertable<Game> {
         json['gameTypeNameSnapshot'],
       ),
       note: serializer.fromJson<String?>(json['note']),
+      finishedAt: serializer.fromJson<DateTime?>(json['finishedAt']),
     );
   }
   @override
@@ -652,6 +683,7 @@ class Game extends DataClass implements Insertable<Game> {
       'gameTypeId': serializer.toJson<int?>(gameTypeId),
       'gameTypeNameSnapshot': serializer.toJson<String?>(gameTypeNameSnapshot),
       'note': serializer.toJson<String?>(note),
+      'finishedAt': serializer.toJson<DateTime?>(finishedAt),
     };
   }
 
@@ -663,6 +695,7 @@ class Game extends DataClass implements Insertable<Game> {
     Value<int?> gameTypeId = const Value.absent(),
     Value<String?> gameTypeNameSnapshot = const Value.absent(),
     Value<String?> note = const Value.absent(),
+    Value<DateTime?> finishedAt = const Value.absent(),
   }) => Game(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -673,6 +706,7 @@ class Game extends DataClass implements Insertable<Game> {
         ? gameTypeNameSnapshot.value
         : this.gameTypeNameSnapshot,
     note: note.present ? note.value : this.note,
+    finishedAt: finishedAt.present ? finishedAt.value : this.finishedAt,
   );
   Game copyWithCompanion(GamesCompanion data) {
     return Game(
@@ -687,6 +721,9 @@ class Game extends DataClass implements Insertable<Game> {
           ? data.gameTypeNameSnapshot.value
           : this.gameTypeNameSnapshot,
       note: data.note.present ? data.note.value : this.note,
+      finishedAt: data.finishedAt.present
+          ? data.finishedAt.value
+          : this.finishedAt,
     );
   }
 
@@ -699,7 +736,8 @@ class Game extends DataClass implements Insertable<Game> {
           ..write('gameDate: $gameDate, ')
           ..write('gameTypeId: $gameTypeId, ')
           ..write('gameTypeNameSnapshot: $gameTypeNameSnapshot, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('finishedAt: $finishedAt')
           ..write(')'))
         .toString();
   }
@@ -713,6 +751,7 @@ class Game extends DataClass implements Insertable<Game> {
     gameTypeId,
     gameTypeNameSnapshot,
     note,
+    finishedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -724,7 +763,8 @@ class Game extends DataClass implements Insertable<Game> {
           other.gameDate == this.gameDate &&
           other.gameTypeId == this.gameTypeId &&
           other.gameTypeNameSnapshot == this.gameTypeNameSnapshot &&
-          other.note == this.note);
+          other.note == this.note &&
+          other.finishedAt == this.finishedAt);
 }
 
 class GamesCompanion extends UpdateCompanion<Game> {
@@ -735,6 +775,7 @@ class GamesCompanion extends UpdateCompanion<Game> {
   final Value<int?> gameTypeId;
   final Value<String?> gameTypeNameSnapshot;
   final Value<String?> note;
+  final Value<DateTime?> finishedAt;
   const GamesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -743,6 +784,7 @@ class GamesCompanion extends UpdateCompanion<Game> {
     this.gameTypeId = const Value.absent(),
     this.gameTypeNameSnapshot = const Value.absent(),
     this.note = const Value.absent(),
+    this.finishedAt = const Value.absent(),
   });
   GamesCompanion.insert({
     this.id = const Value.absent(),
@@ -752,6 +794,7 @@ class GamesCompanion extends UpdateCompanion<Game> {
     this.gameTypeId = const Value.absent(),
     this.gameTypeNameSnapshot = const Value.absent(),
     this.note = const Value.absent(),
+    this.finishedAt = const Value.absent(),
   }) : name = Value(name);
   static Insertable<Game> custom({
     Expression<int>? id,
@@ -761,6 +804,7 @@ class GamesCompanion extends UpdateCompanion<Game> {
     Expression<int>? gameTypeId,
     Expression<String>? gameTypeNameSnapshot,
     Expression<String>? note,
+    Expression<DateTime>? finishedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -771,6 +815,7 @@ class GamesCompanion extends UpdateCompanion<Game> {
       if (gameTypeNameSnapshot != null)
         'game_type_name_snapshot': gameTypeNameSnapshot,
       if (note != null) 'note': note,
+      if (finishedAt != null) 'finished_at': finishedAt,
     });
   }
 
@@ -782,6 +827,7 @@ class GamesCompanion extends UpdateCompanion<Game> {
     Value<int?>? gameTypeId,
     Value<String?>? gameTypeNameSnapshot,
     Value<String?>? note,
+    Value<DateTime?>? finishedAt,
   }) {
     return GamesCompanion(
       id: id ?? this.id,
@@ -791,6 +837,7 @@ class GamesCompanion extends UpdateCompanion<Game> {
       gameTypeId: gameTypeId ?? this.gameTypeId,
       gameTypeNameSnapshot: gameTypeNameSnapshot ?? this.gameTypeNameSnapshot,
       note: note ?? this.note,
+      finishedAt: finishedAt ?? this.finishedAt,
     );
   }
 
@@ -820,6 +867,9 @@ class GamesCompanion extends UpdateCompanion<Game> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (finishedAt.present) {
+      map['finished_at'] = Variable<DateTime>(finishedAt.value);
+    }
     return map;
   }
 
@@ -832,7 +882,8 @@ class GamesCompanion extends UpdateCompanion<Game> {
           ..write('gameDate: $gameDate, ')
           ..write('gameTypeId: $gameTypeId, ')
           ..write('gameTypeNameSnapshot: $gameTypeNameSnapshot, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('finishedAt: $finishedAt')
           ..write(')'))
         .toString();
   }
@@ -1939,6 +1990,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final GameDao gameDao = GameDao(this as AppDatabase);
   late final GameTypeDao gameTypeDao = GameTypeDao(this as AppDatabase);
   late final PlayerDao playerDao = PlayerDao(this as AppDatabase);
+  late final ScoreEntryDao scoreEntryDao = ScoreEntryDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2275,6 +2327,7 @@ typedef $$GamesTableCreateCompanionBuilder =
       Value<int?> gameTypeId,
       Value<String?> gameTypeNameSnapshot,
       Value<String?> note,
+      Value<DateTime?> finishedAt,
     });
 typedef $$GamesTableUpdateCompanionBuilder =
     GamesCompanion Function({
@@ -2285,6 +2338,7 @@ typedef $$GamesTableUpdateCompanionBuilder =
       Value<int?> gameTypeId,
       Value<String?> gameTypeNameSnapshot,
       Value<String?> note,
+      Value<DateTime?> finishedAt,
     });
 
 final class $$GamesTableReferences
@@ -2362,6 +2416,11 @@ class $$GamesTableFilterComposer extends Composer<_$AppDatabase, $GamesTable> {
 
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get finishedAt => $composableBuilder(
+    column: $table.finishedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2453,6 +2512,11 @@ class $$GamesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get finishedAt => $composableBuilder(
+    column: $table.finishedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$GameTypesTableOrderingComposer get gameTypeId {
     final $$GameTypesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -2505,6 +2569,11 @@ class $$GamesTableAnnotationComposer
 
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get finishedAt => $composableBuilder(
+    column: $table.finishedAt,
+    builder: (column) => column,
+  );
 
   $$GameTypesTableAnnotationComposer get gameTypeId {
     final $$GameTypesTableAnnotationComposer composer = $composerBuilder(
@@ -2590,6 +2659,7 @@ class $$GamesTableTableManager
                 Value<int?> gameTypeId = const Value.absent(),
                 Value<String?> gameTypeNameSnapshot = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<DateTime?> finishedAt = const Value.absent(),
               }) => GamesCompanion(
                 id: id,
                 name: name,
@@ -2598,6 +2668,7 @@ class $$GamesTableTableManager
                 gameTypeId: gameTypeId,
                 gameTypeNameSnapshot: gameTypeNameSnapshot,
                 note: note,
+                finishedAt: finishedAt,
               ),
           createCompanionCallback:
               ({
@@ -2608,6 +2679,7 @@ class $$GamesTableTableManager
                 Value<int?> gameTypeId = const Value.absent(),
                 Value<String?> gameTypeNameSnapshot = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<DateTime?> finishedAt = const Value.absent(),
               }) => GamesCompanion.insert(
                 id: id,
                 name: name,
@@ -2616,6 +2688,7 @@ class $$GamesTableTableManager
                 gameTypeId: gameTypeId,
                 gameTypeNameSnapshot: gameTypeNameSnapshot,
                 note: note,
+                finishedAt: finishedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(

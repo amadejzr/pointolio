@@ -15,8 +15,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Pointolio',
+      title: 'Scoreio',
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       initialRoute: AppRouter.home,
       onGenerateRoute: AppRouter.onGenerateRoute,
     );
