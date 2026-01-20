@@ -1936,6 +1936,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PlayersTable players = $PlayersTable(this);
   late final $GamePlayersTable gamePlayers = $GamePlayersTable(this);
   late final $ScoreEntriesTable scoreEntries = $ScoreEntriesTable(this);
+  late final GameDao gameDao = GameDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

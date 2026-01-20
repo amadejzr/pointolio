@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/data/repositories/game_repository.dart';
 import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:scoreio/features/home/data/home_repository.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_cubit.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
 import 'package:scoreio/features/home/presentation/widgets/delete_game_dialog.dart';
@@ -19,7 +19,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) =>
-          HomeCubit(gameRepository: locator<GameRepository>())..loadGames(),
+          HomeCubit(homeRepository: locator<HomeRepository>())..loadGames(),
       child: const _HomeView(),
     );
   }
@@ -32,36 +32,46 @@ class _HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    return BlocBuilder<HomeCubit, HomeState>(
-      builder: (context, state) {
-        final cubit = context.read<HomeCubit>();
-
-        return Scaffold(
-          backgroundColor: cs.surface,
-          appBar: AppBar(
-            title: const Text('My Games'),
-            actions: [
-              if (state.isEditing)
-                TextButton(
-                  onPressed: cubit.exitEditMode,
-                  child: const Text('Done'),
-                )
-              else
-                const HomeOverflowMenu(),
-            ],
-          ),
-
-          body: _HomeBody(state: state),
-
-          floatingActionButton: state.isEditing
-              ? null
-              : FloatingActionButton(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRouter.createGame),
-                  child: const Icon(Icons.add),
-                ),
-        );
+    return BlocListener<HomeCubit, HomeState>(
+      listenWhen: (prev, curr) => prev.snackbarMessage != curr.snackbarMessage,
+      listener: (context, state) {
+        final message = state.snackbarMessage;
+        if (message != null) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(message)));
+          context.read<HomeCubit>().clearSnackbar();
+        }
       },
+      child: BlocBuilder<HomeCubit, HomeState>(
+        builder: (context, state) {
+          final cubit = context.read<HomeCubit>();
+
+          return Scaffold(
+            backgroundColor: cs.surface,
+            appBar: AppBar(
+              title: const Text('My Games'),
+              actions: [
+                if (state.isEditing)
+                  TextButton(
+                    onPressed: cubit.exitEditMode,
+                    child: const Text('Done'),
+                  )
+                else
+                  const HomeOverflowMenu(),
+              ],
+            ),
+            body: _HomeBody(state: state),
+            floatingActionButton: state.isEditing
+                ? null
+                : FloatingActionButton(
+                    onPressed: () =>
+                        Navigator.pushNamed(context, AppRouter.createGame),
+                    child: const Icon(Icons.add),
+                  ),
+          );
+        },
+      ),
     );
   }
 }
@@ -81,9 +91,19 @@ class _HomeBody extends StatelessWidget {
 
     if (state.status == HomeStatus.error) {
       return Center(
-        child: Text(
-          state.errorMessage ?? 'Something went wrong',
-          style: TextStyle(color: cs.error),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              state.errorMessage ?? 'Something went wrong',
+              style: TextStyle(color: cs.error),
+            ),
+            Spacing.gap16,
+            FilledButton.tonal(
+              onPressed: () => context.read<HomeCubit>().loadGames(),
+              child: const Text('Retry'),
+            ),
+          ],
         ),
       );
     }
