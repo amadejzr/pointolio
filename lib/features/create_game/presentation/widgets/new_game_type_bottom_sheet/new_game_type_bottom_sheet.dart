@@ -1,19 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:scoreio/features/create_game/domain/models.dart';
 import 'package:scoreio/features/create_game/presentation/widgets/new_game_type_bottom_sheet/cubit/new_game_type_cubit.dart';
 import 'package:scoreio/features/create_game/presentation/widgets/new_game_type_bottom_sheet/cubit/new_game_type_state.dart';
-
-class GameTypeResult {
-  final String name;
-  final bool lowestScoreWins;
-  final int? color;
-
-  GameTypeResult({
-    required this.name,
-    required this.lowestScoreWins,
-    this.color,
-  });
-}
 
 class NewGameTypeBottomSheet extends StatelessWidget {
   const NewGameTypeBottomSheet({super.key});
@@ -89,12 +79,12 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
         child: Material(
           color: Colors.transparent,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: Spacing.xs),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 10),
+                Spacing.gap8,
                 Center(
                   child: Container(
                     width: 38,
@@ -105,11 +95,11 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                Spacing.gap12,
 
                 // Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: Spacing.sheetHorizontal,
                   child: Row(
                     children: [
                       Expanded(
@@ -128,11 +118,11 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                Spacing.gap12,
 
                 // Color
                 const _SectionTitle('Color'),
-                const SizedBox(height: 12),
+                Spacing.gap12,
                 BlocBuilder<NewGameTypeCubit, NewGameTypeState>(
                   buildWhen: (prev, curr) =>
                       prev.selectedColor != curr.selectedColor,
@@ -141,9 +131,9 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                       height: 48,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: Spacing.sheetHorizontal,
                         itemCount: gameTypeColors.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        separatorBuilder: (_, _) => Spacing.hGap8,
                         itemBuilder: (context, index) {
                           final colorInt = gameTypeColors[index];
                           final isSelected = state.selectedColor == colorInt;
@@ -159,13 +149,13 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                   },
                 ),
 
-                const SizedBox(height: 22),
+                Spacing.gap24,
 
                 // Name
                 const _SectionTitle('Name'),
-                const SizedBox(height: 8),
+                Spacing.gap8,
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: Spacing.sheetHorizontal,
                   child: TextField(
                     controller: _nameController,
                     autofocus: true,
@@ -179,17 +169,17 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                   ),
                 ),
 
-                const SizedBox(height: 22),
+                Spacing.gap24,
 
                 // Winning condition
                 const _SectionTitle('Winning Condition'),
-                const SizedBox(height: 8),
+                Spacing.gap8,
                 BlocBuilder<NewGameTypeCubit, NewGameTypeState>(
                   buildWhen: (prev, curr) =>
                       prev.lowestScoreWins != curr.lowestScoreWins,
                   builder: (context, state) {
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: Spacing.sheetHorizontal,
                       child: Container(
                         decoration: BoxDecoration(
                           color: cs.surfaceContainerHighest,
@@ -222,11 +212,11 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                   },
                 ),
 
-                const SizedBox(height: 18),
+                Spacing.gap16,
 
                 // Button
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  padding: Spacing.sheetBottom,
                   child: BlocBuilder<NewGameTypeCubit, NewGameTypeState>(
                     buildWhen: (prev, curr) => prev.isValid != curr.isValid,
                     builder: (context, state) {
@@ -258,7 +248,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: Spacing.sheetHorizontal,
       child: Text(
         text,
         style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -335,7 +325,7 @@ class _WinOption extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -343,7 +333,7 @@ class _WinOption extends StatelessWidget {
                 icon,
                 color: selected ? cs.onPrimaryContainer : cs.onSurfaceVariant,
               ),
-              const SizedBox(height: 4),
+              Spacing.gap4,
               Text(
                 label,
                 style: tt.bodyMedium?.copyWith(

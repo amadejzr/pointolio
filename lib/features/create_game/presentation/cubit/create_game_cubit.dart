@@ -1,39 +1,49 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/data/repositories/game_repository.dart';
-import 'package:scoreio/common/data/repositories/game_type_repository.dart';
-import 'package:scoreio/common/data/repositories/player_repository.dart';
+import 'package:scoreio/common/exception/domain_exception.dart';
+import 'package:scoreio/features/create_game/data/create_game_repository.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_state.dart';
 
 class CreateGameCubit extends Cubit<CreateGameState> {
-  final GameTypeRepository _gameTypeRepository;
-  final PlayerRepository _playerRepository;
-  final GameRepository _gameRepository;
-
   CreateGameCubit({
-    required GameTypeRepository gameTypeRepository,
-    required PlayerRepository playerRepository,
-    required GameRepository gameRepository,
-  })  : _gameTypeRepository = gameTypeRepository,
-        _playerRepository = playerRepository,
-        _gameRepository = gameRepository,
-        super(CreateGameState.initial());
+    required CreateGameRepository createGameRepository,
+  }) : _createGameRepository = createGameRepository,
+       super(CreateGameState.initial());
+  final CreateGameRepository _createGameRepository;
 
   Future<void> loadData() async {
-    try {
-      final gameTypes = await _gameTypeRepository.getAll();
-      final players = await _playerRepository.getAll();
+    emit(state.copyWith(status: CreateGameStatus.loading));
 
-      emit(state.copyWith(
-        availableGameTypes: gameTypes,
-        availablePlayers: players,
-      ));
-    } catch (e) {
-      emit(state.copyWith(
-        status: CreateGameStatus.error,
-        errorMessage: 'Failed to load data: $e',
-      ));
+    try {
+      final gameTypes = await _createGameRepository.getAllGameTypes();
+      final players = await _createGameRepository.getAllPlayers();
+
+      emit(
+        state.copyWith(
+          status: CreateGameStatus.initial,
+          availableGameTypes: gameTypes,
+          availablePlayers: players,
+        ),
+      );
+    } on DomainException catch (e) {
+      emit(
+        state.copyWith(
+          status: CreateGameStatus.error,
+          errorMessage: _mapDomainError(e, 'load data'),
+        ),
+      );
+    } on Object catch (_) {
+      emit(
+        state.copyWith(
+          status: CreateGameStatus.error,
+          errorMessage: 'Failed to load data',
+        ),
+      );
     }
+  }
+
+  void clearSnackbar() {
+    emit(state.copyWith());
   }
 
   void setGameName(String name) {
@@ -50,22 +60,34 @@ class CreateGameCubit extends Cubit<CreateGameState> {
 
   void addPlayer(Player player) {
     if (state.selectedPlayers.any((p) => p.id == player.id)) return;
-    emit(state.copyWith(
-      selectedPlayers: [...state.selectedPlayers, player],
-    ));
+    emit(
+      state.copyWith(
+        selectedPlayers: [...state.selectedPlayers, player],
+      ),
+    );
   }
 
   void removePlayer(int id) {
-    emit(state.copyWith(
-      selectedPlayers: state.selectedPlayers.where((p) => p.id != id).toList(),
-    ));
+    emit(
+      state.copyWith(
+        selectedPlayers: state.selectedPlayers
+            .where((p) => p.id != id)
+            .toList(),
+      ),
+    );
   }
 
   void reorderPlayers(int oldIndex, int newIndex) {
     final players = List<Player>.from(state.selectedPlayers);
-    if (newIndex > oldIndex) newIndex--;
+
+    var targetIndex = newIndex;
+    if (targetIndex > oldIndex) {
+      targetIndex--;
+    }
+
     final player = players.removeAt(oldIndex);
-    players.insert(newIndex, player);
+    players.insert(targetIndex, player);
+
     emit(state.copyWith(selectedPlayers: players));
   }
 
@@ -77,24 +99,27 @@ class CreateGameCubit extends Cubit<CreateGameState> {
     if (name.trim().isEmpty) return;
 
     try {
-      final id = await _gameTypeRepository.add(
-        name,
+      final id = await _createGameRepository.addGameType(
+        name: name,
         lowestScoreWins: lowestScoreWins,
         color: color,
       );
-      final newType = await _gameTypeRepository.getById(id);
+      final newType = await _createGameRepository.getGameTypeById(id);
 
       if (newType != null) {
-        emit(state.copyWith(
-          availableGameTypes: [...state.availableGameTypes, newType],
-          selectedGameType: newType,
-        ));
+        emit(
+          state.copyWith(
+            availableGameTypes: [...state.availableGameTypes, newType],
+            selectedGameType: newType,
+          ),
+        );
       }
-    } catch (e) {
-      emit(state.copyWith(
-        status: CreateGameStatus.error,
-        errorMessage: 'Failed to add game type: $e',
-      ));
+    } on DomainException catch (e) {
+      emit(
+        state.copyWith(snackbarMessage: _mapDomainError(e, 'add game type')),
+      );
+    } on Object catch (_) {
+      emit(state.copyWith(snackbarMessage: 'Failed to add game type'));
     }
   }
 
@@ -102,23 +127,24 @@ class CreateGameCubit extends Cubit<CreateGameState> {
     if (firstName.trim().isEmpty) return;
 
     try {
-      final id = await _playerRepository.add(
+      final id = await _createGameRepository.addPlayer(
         firstName: firstName,
         lastName: lastName,
       );
-      final newPlayer = await _playerRepository.getById(id);
+      final newPlayer = await _createGameRepository.getPlayerById(id);
 
       if (newPlayer != null) {
-        emit(state.copyWith(
-          availablePlayers: [...state.availablePlayers, newPlayer],
-          selectedPlayers: [...state.selectedPlayers, newPlayer],
-        ));
+        emit(
+          state.copyWith(
+            availablePlayers: [...state.availablePlayers, newPlayer],
+            selectedPlayers: [...state.selectedPlayers, newPlayer],
+          ),
+        );
       }
-    } catch (e) {
-      emit(state.copyWith(
-        status: CreateGameStatus.error,
-        errorMessage: 'Failed to add player: $e',
-      ));
+    } on DomainException catch (e) {
+      emit(state.copyWith(snackbarMessage: _mapDomainError(e, 'add player')));
+    } on Object catch (_) {
+      emit(state.copyWith(snackbarMessage: 'Failed to add player'));
     }
   }
 
@@ -128,7 +154,7 @@ class CreateGameCubit extends Cubit<CreateGameState> {
     emit(state.copyWith(status: CreateGameStatus.loading));
 
     try {
-      final gameId = await _gameRepository.create(
+      final gameId = await _createGameRepository.createGame(
         name: state.gameName,
         gameTypeId: state.selectedGameType!.id,
         gameTypeName: state.selectedGameType!.name,
@@ -136,15 +162,36 @@ class CreateGameCubit extends Cubit<CreateGameState> {
         gameDate: state.gameDate,
       );
 
-      emit(state.copyWith(
-        status: CreateGameStatus.success,
-        createdGameId: gameId,
-      ));
-    } catch (e) {
-      emit(state.copyWith(
-        status: CreateGameStatus.error,
-        errorMessage: 'Failed to create game: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: CreateGameStatus.success,
+          createdGameId: gameId,
+        ),
+      );
+    } on DomainException catch (e) {
+      emit(
+        state.copyWith(
+          status: CreateGameStatus.initial,
+          snackbarMessage: _mapDomainError(e, 'create game'),
+        ),
+      );
+    } on Object catch (_) {
+      emit(
+        state.copyWith(
+          status: CreateGameStatus.initial,
+          snackbarMessage: 'Failed to create game',
+        ),
+      );
     }
+  }
+
+  String _mapDomainError(DomainException e, String operation) {
+    return switch (e.code) {
+      DomainErrorCode.notFound => 'Resource not found',
+      DomainErrorCode.conflict => 'Already exists',
+      DomainErrorCode.validation => 'Invalid data',
+      DomainErrorCode.storage => 'Failed to $operation',
+      DomainErrorCode.unauthorized => 'Not authorized',
+    };
   }
 }

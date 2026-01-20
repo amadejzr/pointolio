@@ -20,15 +20,14 @@ const gameTypeColors = [
 ];
 
 class NewGameTypeState extends Equatable {
-  final String name;
-  final bool lowestScoreWins;
-  final int? selectedColor;
-
   const NewGameTypeState({
     this.name = '',
     this.lowestScoreWins = false,
     this.selectedColor,
   });
+  final String name;
+  final bool lowestScoreWins;
+  final int? selectedColor;
 
   bool get isValid => name.trim().isNotEmpty;
 
@@ -40,7 +39,9 @@ class NewGameTypeState extends Equatable {
     return NewGameTypeState(
       name: name ?? this.name,
       lowestScoreWins: lowestScoreWins ?? this.lowestScoreWins,
-      selectedColor: selectedColor != null ? selectedColor() : this.selectedColor,
+      selectedColor: selectedColor != null
+          ? selectedColor()
+          : this.selectedColor,
     );
   }
 

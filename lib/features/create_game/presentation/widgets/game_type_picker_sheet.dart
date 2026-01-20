@@ -3,7 +3,7 @@ import 'package:scoreio/common/data/database/database.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
 
 class GameTypePickerSheet extends StatefulWidget {
-  const GameTypePickerSheet({super.key, required this.gameTypes});
+  const GameTypePickerSheet({required this.gameTypes, super.key});
 
   final List<GameType> gameTypes;
 
@@ -112,7 +112,7 @@ class _GameTypePickerSheetState extends State<GameTypePickerSheet> {
                 : ListView.separated(
                     padding: Spacing.list,
                     itemCount: _filteredGameTypes.length,
-                    separatorBuilder: (_, __) => Spacing.gap12,
+                    separatorBuilder: (_, _) => Spacing.gap12,
                     itemBuilder: (context, index) {
                       final gameType = _filteredGameTypes[index];
                       return _GameTypeTile(
@@ -238,8 +238,7 @@ class _WinConditionBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: color),
-          Spacing
-              .hGap8, // was 4; 8 is fine, but if you want exact: keep SizedBox(width: 4)
+          Spacing.hGap8,
           Text(
             label,
             style: tt.labelSmall?.copyWith(

@@ -30,6 +30,42 @@ class GameDao extends DatabaseAccessor<AppDatabase> with _$GameDaoMixin {
     return into(games).insert(game);
   }
 
+  /// Creates a game with players in a single transaction.
+  /// Returns the created game ID.
+  Future<int> createGame({
+    required String name,
+    required int gameTypeId,
+    required String gameTypeName,
+    required List<int> playerIds,
+    DateTime? gameDate,
+    String? note,
+  }) {
+    return transaction(() async {
+      final gameId = await into(games).insert(
+        GamesCompanion.insert(
+          name: name.trim(),
+          gameDate: Value(gameDate ?? DateTime.now()),
+          gameTypeId: Value(gameTypeId),
+          gameTypeNameSnapshot: Value(gameTypeName),
+          note: Value(note?.trim()),
+        ),
+      );
+
+      for (var i = 0; i < playerIds.length; i++) {
+        await into(gamePlayers).insert(
+          GamePlayersCompanion.insert(
+            gameId: gameId,
+            playerId: playerIds[i],
+            orderIndex: Value(i),
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+
+      return gameId;
+    });
+  }
+
   Future<void> updateGame(int id, GamesCompanion companion) {
     return (update(games)..where((g) => g.id.equals(id))).write(companion);
   }

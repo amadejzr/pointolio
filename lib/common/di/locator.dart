@@ -4,6 +4,7 @@ import 'package:scoreio/common/data/repositories/game_repository.dart';
 import 'package:scoreio/common/data/repositories/game_type_repository.dart';
 import 'package:scoreio/common/data/repositories/player_repository.dart';
 import 'package:scoreio/common/data/repositories/score_entry_repository.dart';
+import 'package:scoreio/features/create_game/data/create_game_repository.dart';
 import 'package:scoreio/features/home/data/home_repository.dart';
 
 final GetIt locator = GetIt.instance;
@@ -25,7 +26,11 @@ Future<void> setupLocator() async {
     ..registerLazySingleton<ScoreEntryRepository>(
       () => ScoreEntryRepository(locator<AppDatabase>()),
     )
+    ///
     ..registerLazySingleton<HomeRepository>(
       () => HomeRepository(locator<AppDatabase>()),
+    )
+    ..registerLazySingleton<CreateGameRepository>(
+      () => CreateGameRepository(locator<AppDatabase>()),
     );
 }

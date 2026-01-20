@@ -4,35 +4,35 @@ import 'package:scoreio/common/data/database/database.dart';
 enum CreateGameStatus { initial, loading, success, error }
 
 class CreateGameState extends Equatable {
-  final String gameName;
-  final GameType? selectedGameType;
-  final List<Player> selectedPlayers;
-  final DateTime gameDate;
-  final CreateGameStatus status;
-  final String? errorMessage;
-  final int? createdGameId;
-
-  // Available options from DB
-  final List<GameType> availableGameTypes;
-  final List<Player> availablePlayers;
-
   const CreateGameState({
+    required this.gameDate,
     this.gameName = '',
     this.selectedGameType,
     this.selectedPlayers = const [],
-    required this.gameDate,
     this.status = CreateGameStatus.initial,
     this.errorMessage,
+    this.snackbarMessage,
     this.createdGameId,
     this.availableGameTypes = const [],
     this.availablePlayers = const [],
   });
-
   factory CreateGameState.initial() {
     return CreateGameState(
       gameDate: DateTime.now(),
     );
   }
+  final String gameName;
+  final GameType? selectedGameType;
+  final List<Player> selectedPlayers;
+  final DateTime gameDate;
+  final CreateGameStatus status;
+  final String? errorMessage; // blocking error (failed to load data)
+  final String? snackbarMessage; // transient error (failed to add player, etc.)
+  final int? createdGameId;
+
+  // Available options from DB
+  final List<GameType> availableGameTypes;
+  final List<Player> availablePlayers;
 
   bool get isValid =>
       gameName.trim().isNotEmpty &&
@@ -46,6 +46,7 @@ class CreateGameState extends Equatable {
     DateTime? gameDate,
     CreateGameStatus? status,
     String? errorMessage,
+    String? snackbarMessage,
     int? createdGameId,
     List<GameType>? availableGameTypes,
     List<Player>? availablePlayers,
@@ -56,7 +57,8 @@ class CreateGameState extends Equatable {
       selectedPlayers: selectedPlayers ?? this.selectedPlayers,
       gameDate: gameDate ?? this.gameDate,
       status: status ?? this.status,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: errorMessage,
+      snackbarMessage: snackbarMessage,
       createdGameId: createdGameId ?? this.createdGameId,
       availableGameTypes: availableGameTypes ?? this.availableGameTypes,
       availablePlayers: availablePlayers ?? this.availablePlayers,
@@ -65,14 +67,15 @@ class CreateGameState extends Equatable {
 
   @override
   List<Object?> get props => [
-        gameName,
-        selectedGameType,
-        selectedPlayers,
-        gameDate,
-        status,
-        errorMessage,
-        createdGameId,
-        availableGameTypes,
-        availablePlayers,
-      ];
+    gameName,
+    selectedGameType,
+    selectedPlayers,
+    gameDate,
+    status,
+    errorMessage,
+    snackbarMessage,
+    createdGameId,
+    availableGameTypes,
+    availablePlayers,
+  ];
 }

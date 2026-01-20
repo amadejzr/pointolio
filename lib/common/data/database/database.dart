@@ -4,6 +4,8 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:scoreio/common/data/dao/game_dao.dart';
+import 'package:scoreio/common/data/dao/game_type_dao.dart';
+import 'package:scoreio/common/data/dao/player_dao.dart';
 import 'package:scoreio/common/data/tables/game_players_table.dart';
 import 'package:scoreio/common/data/tables/games_table.dart';
 import 'package:scoreio/common/data/tables/player_table.dart';
@@ -21,6 +23,8 @@ part 'database.g.dart';
   ],
   daos: [
     GameDao,
+    GameTypeDao,
+    PlayerDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

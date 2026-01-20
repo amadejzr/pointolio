@@ -8,6 +8,8 @@ class NewGameTypeCubit extends Cubit<NewGameTypeState> {
     emit(state.copyWith(name: name));
   }
 
+  // Don't want to complicate it
+  // ignore: avoid_positional_boolean_parameters
   void setLowestScoreWins(bool value) {
     emit(state.copyWith(lowestScoreWins: value));
   }
