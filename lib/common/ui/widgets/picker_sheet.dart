@@ -1,28 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:scoreio/common/ui/tokens/spacing.dart';
+
+typedef PickerItemLabel<T> = String Function(T item);
+typedef PickerItemSearchText<T> = String Function(T item);
+typedef PickerItemBuilder<T> = Widget Function(BuildContext context, T item);
+typedef PickerItemKey<T> = Object Function(T item);
 
 class PickerSheet<T> extends StatefulWidget {
   const PickerSheet({
-    super.key,
     required this.title,
     required this.items,
     required this.itemLabel,
+    this.itemBuilder,
+    this.itemKey,
+    this.searchText,
+    this.searchHintText = 'Search...',
     this.emptyTitle,
     this.emptySubtitle,
+    this.initialQuery,
+    this.maxHeightFactor = 0.82,
+    super.key,
   });
 
   final String title;
   final List<T> items;
-  final String Function(T item) itemLabel;
+
+  /// Used for:
+  /// - default row label
+  /// - filtering (unless [searchText] is provided)
+  final PickerItemLabel<T> itemLabel;
+
+  /// If provided, controls how rows look.
+  /// If not provided, a simple default tile is used.
+  final PickerItemBuilder<T>? itemBuilder;
+
+  /// Optional stable key extractor for list rows.
+  final PickerItemKey<T>? itemKey;
+
+  /// Optional search string extractor (defaults to [itemLabel]).
+  final PickerItemSearchText<T>? searchText;
+
+  final String searchHintText;
   final String? emptyTitle;
   final String? emptySubtitle;
+  final String? initialQuery;
+
+  /// Height = screenHeight * factor
+  final double maxHeightFactor;
 
   static Future<T?> show<T>({
     required BuildContext context,
     required String title,
     required List<T> items,
     required String Function(T item) itemLabel,
+    Widget Function(BuildContext context, T item)? itemBuilder,
+    Object Function(T item)? itemKey,
+    String Function(T item)? searchText,
+    String searchHintText = 'Search...',
     String? emptyTitle,
     String? emptySubtitle,
+    String? initialQuery,
+    double maxHeightFactor = 0.82,
   }) {
     final cs = Theme.of(context).colorScheme;
 
@@ -38,8 +76,14 @@ class PickerSheet<T> extends StatefulWidget {
         title: title,
         items: items,
         itemLabel: itemLabel,
+        itemBuilder: itemBuilder,
+        itemKey: itemKey,
+        searchText: searchText,
+        searchHintText: searchHintText,
         emptyTitle: emptyTitle,
         emptySubtitle: emptySubtitle,
+        initialQuery: initialQuery,
+        maxHeightFactor: maxHeightFactor,
       ),
     );
   }
@@ -49,7 +93,13 @@ class PickerSheet<T> extends StatefulWidget {
 }
 
 class _PickerSheetState<T> extends State<PickerSheet<T>> {
-  final _search = TextEditingController();
+  late final TextEditingController _search;
+
+  @override
+  void initState() {
+    super.initState();
+    _search = TextEditingController(text: widget.initialQuery ?? '');
+  }
 
   @override
   void dispose() {
@@ -57,20 +107,26 @@ class _PickerSheetState<T> extends State<PickerSheet<T>> {
     super.dispose();
   }
 
+  List<T> get _filteredItems {
+    final query = _search.text.trim().toLowerCase();
+    if (query.isEmpty) return widget.items;
+
+    final textOf = widget.searchText ?? widget.itemLabel;
+
+    return widget.items.where((e) {
+      final haystack = textOf(e).toLowerCase();
+      return haystack.contains(query);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final tt = Theme.of(context).textTheme;
 
-    final query = _search.text.trim().toLowerCase();
-    final filtered = query.isEmpty
-        ? widget.items
-        : widget.items
-              .where((e) => widget.itemLabel(e).toLowerCase().contains(query))
-              .toList();
-
-    final height = MediaQuery.sizeOf(context).height;
-    final maxHeight = height * 0.82;
+    final maxHeight =
+        MediaQuery.sizeOf(context).height * widget.maxHeightFactor;
+    final filtered = _filteredItems;
 
     return SizedBox(
       height: maxHeight,
@@ -85,15 +141,17 @@ class _PickerSheetState<T> extends State<PickerSheet<T>> {
               borderRadius: BorderRadius.circular(99),
             ),
           ),
-          const SizedBox(height: 12),
+          Spacing.gap12,
+
+          // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: Spacing.sheetHorizontal,
             child: Row(
               children: [
                 Expanded(
                   child: Text(
                     widget.title,
-                    style: textTheme.titleMedium?.copyWith(
+                    style: tt.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -105,18 +163,22 @@ class _PickerSheetState<T> extends State<PickerSheet<T>> {
               ],
             ),
           ),
+
+          // Search
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: Spacing.search,
             child: TextField(
               controller: _search,
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                hintText: 'Search...',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: widget.searchHintText,
+                prefixIcon: const Icon(Icons.search),
               ),
               textInputAction: TextInputAction.search,
             ),
           ),
+
+          // List
           Expanded(
             child: filtered.isEmpty
                 ? _EmptySheetState(
@@ -125,48 +187,69 @@ class _PickerSheetState<T> extends State<PickerSheet<T>> {
                         widget.emptySubtitle ?? 'Try changing your search.',
                   )
                 : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                    padding: Spacing.list,
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, _) => Spacing.gap12,
                     itemBuilder: (context, index) {
                       final item = filtered[index];
-                      final label = widget.itemLabel(item);
 
-                      return Material(
-                        color: cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () => Navigator.pop<T>(context, item),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 14,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    label,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: textTheme.bodyLarge?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.chevron_right,
-                                  color: cs.onSurfaceVariant,
-                                ),
-                              ],
-                            ),
+                      final child = widget.itemBuilder != null
+                          ? widget.itemBuilder!(context, item)
+                          : _DefaultPickerTile(
+                              label: widget.itemLabel(item),
+                            );
+
+                      final key = widget.itemKey != null
+                          ? ValueKey<Object>(widget.itemKey!(item))
+                          : null;
+
+                      return KeyedSubtree(
+                        key: key,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () => Navigator.pop<T>(context, item),
+                            child: child,
                           ),
                         ),
                       );
                     },
                   ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DefaultPickerTile extends StatelessWidget {
+  const _DefaultPickerTile({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
         ],
       ),
     );
@@ -182,10 +265,11 @@ class _EmptySheetState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Spacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -194,17 +278,13 @@ class _EmptySheetState extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
           ],
         ),

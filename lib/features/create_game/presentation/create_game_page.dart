@@ -10,7 +10,7 @@ import 'package:scoreio/features/create_game/data/create_game_repository.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_state.dart';
 import 'package:scoreio/features/create_game/presentation/widgets/add_player_dialog.dart';
-import 'package:scoreio/features/create_game/presentation/widgets/game_type_picker_sheet.dart';
+import 'package:scoreio/features/create_game/presentation/widgets/game_type_widgets.dart';
 import 'package:scoreio/features/create_game/presentation/widgets/new_game_type_bottom_sheet/new_game_type_bottom_sheet.dart';
 
 class CreateGamePage extends StatelessWidget {
@@ -182,9 +182,15 @@ class _CreateGameViewState extends State<_CreateGameView> {
                 child: _GameTypePickerField(
                   gameType: state.selectedGameType,
                   onTap: () async {
-                    final selected = await GameTypePickerSheet.show(
-                      context,
-                      gameTypes: state.availableGameTypes,
+                    final selected = await PickerSheet.show<GameType>(
+                      context: context,
+                      title: 'Game Types',
+                      items: state.availableGameTypes,
+                      itemLabel: (t) => t.name,
+                      itemKey: (t) => t.id,
+                      itemBuilder: (context, t) => GameTypeTile(gameType: t),
+                      emptyTitle: 'No game types found',
+                      emptySubtitle: 'Try a different search term.',
                     );
                     if (selected != null) cubit.setGameType(selected);
                   },
