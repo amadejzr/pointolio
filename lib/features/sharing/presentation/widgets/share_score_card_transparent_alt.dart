@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:scoreio/common/data/database/database.dart';
 import 'package:scoreio/features/scoring/domain/models.dart';
 
@@ -38,13 +39,24 @@ class ShareScoreCardTransparentAlt extends StatelessWidget {
       fallback: '',
       max: 18,
     );
-    final gameDate = scoringData.game?.gameDate.toString();
-    final roundCount = scoringData.roundCount;
 
-    final metaParts = <String>[];
-    if (gameDate != null && gameDate.isNotEmpty) metaParts.add(gameDate);
-    if (roundCount > 0) metaParts.add('$roundCount rounds');
-    final meta = metaParts.join(' • ');
+    final date = scoringData.game?.gameDate;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+
+    // You can pick yMMMd or yMd depending on your taste.
+    // yMMMd -> "Jan 21, 2026" / "21. jan. 2026"
+    // yMd   -> "1/21/2026" / "21. 1. 2026"
+    final dateText = date != null ? DateFormat.yMMMd(locale).format(date) : '—';
+
+    final roundCount = scoringData.roundCount;
+    final roundsText = Intl.plural(
+      roundCount,
+      zero: '0 rounds',
+      one: '1 round',
+      other: '$roundCount rounds',
+    );
+
+    final meta = '$dateText • $roundsText';
 
     final winnersLabel = isTie ? 'TIE' : 'WINNER';
     final winnersNames = isTie
@@ -142,7 +154,7 @@ class ShareScoreCardTransparentAlt extends StatelessWidget {
                         ),
                       ],
                       if (meta.isNotEmpty)
-                        Expanded(
+                        Flexible(
                           child: Text(
                             meta,
                             maxLines: 1,

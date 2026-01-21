@@ -12,8 +12,6 @@ import 'package:scoreio/features/scoring/presentation/widgets/app_bar_title_widg
 import 'package:scoreio/features/scoring/presentation/widgets/table_widget.dart';
 import 'package:scoreio/features/scoring/presentation/widgets/totals_bottom_sheet.dart';
 import 'package:scoreio/features/sharing/presentation/share_sheet.dart';
-import 'package:scoreio/features/sharing/presentation/widgets/share_score_card_transparent.dart';
-import 'package:scoreio/features/sharing/presentation/widgets/share_score_card_transparent_alt.dart';
 
 class ScoringPage extends StatelessWidget {
   const ScoringPage({required this.gameId, super.key});
@@ -63,7 +61,21 @@ class ScoringScreen extends StatelessWidget {
                 }
               },
               onShare: () {
-                unawaited(ShareSheet.show(context, previews: []));
+                unawaited(
+                  ShareSheet.show(
+                    context,
+                    scoringData: ScoringData(
+                      game: state.game,
+                      gameType: state.gameType,
+                      playerScores: state.playerScores,
+                      roundCount: state.roundCount,
+                    ),
+                    lowestScoreWins: state.lowestScoreWins,
+                    primaryColor: state.gameType?.color == null
+                        ? null
+                        : Color(state.gameType!.color!),
+                  ),
+                );
               },
             ),
             actionsPadding: isLandscape ? null : Spacing.horizontalPage,
@@ -98,32 +110,16 @@ class ScoringScreen extends StatelessWidget {
                           unawaited(
                             ShareSheet.show(
                               context,
-                              previews: [
-                                ShareScoreCardTransparent(
-                                  scoringData: ScoringData(
-                                    game: state.game,
-                                    gameType: state.gameType,
-                                    playerScores: state.playerScores,
-                                    roundCount: state.roundCount,
-                                  ),
-                                  lowestScoreWins: state.lowestScoreWins,
-                                  primaryColor: state.gameType?.color == null
-                                      ? null
-                                      : Color(state.gameType!.color!),
-                                ),
-                                ShareScoreCardTransparentAlt(
-                                  scoringData: ScoringData(
-                                    game: state.game,
-                                    gameType: state.gameType,
-                                    playerScores: state.playerScores,
-                                    roundCount: state.roundCount,
-                                  ),
-                                  lowestScoreWins: state.lowestScoreWins,
-                                  primaryColor: state.gameType?.color == null
-                                      ? null
-                                      : Color(state.gameType!.color!),
-                                ),
-                              ],
+                              scoringData: ScoringData(
+                                game: state.game,
+                                gameType: state.gameType,
+                                playerScores: state.playerScores,
+                                roundCount: state.roundCount,
+                              ),
+                              lowestScoreWins: state.lowestScoreWins,
+                              primaryColor: state.gameType?.color == null
+                                  ? null
+                                  : Color(state.gameType!.color!),
                             ),
                           );
                         }

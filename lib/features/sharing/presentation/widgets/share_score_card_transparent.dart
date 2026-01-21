@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:scoreio/common/data/database/database.dart';
 import 'package:scoreio/features/scoring/domain/models.dart';
 
@@ -62,24 +63,37 @@ class ShareScoreCardTransparent extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context, Color accent) {
     final gameName = _clean(scoringData.game?.name, fallback: 'Game', max: 48);
-    final gameDate = scoringData.game?.gameDate.toString();
+
+    final date = scoringData.game?.gameDate;
+    final formattedDate = date != null
+        ? DateFormat.yMMMd(
+            Localizations.localeOf(context).toString(),
+          ).format(date)
+        : null;
+
     final gameTypeName = _clean(
       scoringData.gameType?.name,
       fallback: '',
       max: 18,
     );
+
     final roundCount = scoringData.roundCount;
 
-    final metaParts = <String>[];
-    if (gameDate != null && gameDate.isNotEmpty) metaParts.add(gameDate);
-    if (roundCount > 0) metaParts.add('$roundCount rounds');
-    final meta = metaParts.join(' • ');
+    final dateText = formattedDate ?? '';
+    final roundsText = roundCount > 0
+        ? Intl.plural(
+            roundCount,
+            one: '$roundCount round',
+            other: '$roundCount rounds',
+          )
+        : '';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top line: pill (left) + date (right)
           Row(
             children: [
               if (gameTypeName.isNotEmpty)
@@ -114,23 +128,25 @@ class ShareScoreCardTransparent extends StatelessWidget {
                     ],
                   ),
                 ),
+
               const Spacer(),
-              if (meta.isNotEmpty)
-                Flexible(
-                  child: Text(
-                    meta,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: textColor.withValues(alpha: 0.60),
-                      fontSize: 12.5,
-                    ),
+
+              if (dateText.isNotEmpty)
+                Text(
+                  dateText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.60),
+                    fontSize: 12.5,
                   ),
                 ),
             ],
           ),
+
           const SizedBox(height: 10),
+
+          // Title
           Text(
             gameName,
             maxLines: 2,
@@ -143,6 +159,21 @@ class ShareScoreCardTransparent extends StatelessWidget {
               height: 1.05,
             ),
           ),
+
+          // Second line: rounds (and you can add more later)
+          if (roundsText.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              roundsText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: textColor.withValues(alpha: 0.60),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -59,17 +59,16 @@ class AppBarTitleMenu extends StatelessWidget {
               ],
             ),
           ),
-          if (isFinished)
-            PopupMenuItem(
-              value: _ScoringMenuAction.share,
-              child: Row(
-                children: [
-                  Icon(Icons.ios_share, size: 18, color: cs.onSurfaceVariant),
-                  const SizedBox(width: 12),
-                  const Text('Share'),
-                ],
-              ),
+          PopupMenuItem(
+            value: _ScoringMenuAction.share,
+            child: Row(
+              children: [
+                Icon(Icons.ios_share, size: 18, color: cs.onSurfaceVariant),
+                const SizedBox(width: 12),
+                const Text('Share'),
+              ],
             ),
+          ),
         ],
 
         // ✅ THIS is where title + color + arrow live

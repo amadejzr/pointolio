@@ -1,26 +1,32 @@
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
+// share_sheet.dart
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:gallery_saver_plus/gallery_saver.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:scoreio/features/scoring/domain/models.dart';
+import 'package:scoreio/features/sharing/presentation/cubit/share_sheet_cubit.dart';
+import 'package:scoreio/features/sharing/presentation/widgets/share_score_card_transparent.dart';
+import 'package:scoreio/features/sharing/presentation/widgets/share_score_card_transparent_alt.dart';
 
 class ShareSheet extends StatefulWidget {
   const ShareSheet({
-    required this.previews,
+    required this.scoringData,
+    required this.lowestScoreWins,
     super.key,
     this.title = 'Share',
+    this.primaryColor,
   });
 
-  final List<Widget> previews;
+  final ScoringData scoringData;
+  final bool lowestScoreWins;
   final String title;
+  final Color? primaryColor;
 
   static Future<void> show(
     BuildContext context, {
-    required List<Widget> previews,
+    required ScoringData scoringData,
+    required bool lowestScoreWins,
+    Color? primaryColor,
     String title = 'Share',
   }) {
     final cs = Theme.of(context).colorScheme;
@@ -34,11 +40,16 @@ class ShareSheet extends StatefulWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.95,
-        child: ShareSheet(
-          previews: previews,
-          title: title,
+      builder: (_) => BlocProvider(
+        create: (_) => ShareSheetCubit(previewCount: 2),
+        child: FractionallySizedBox(
+          heightFactor: 0.95,
+          child: ShareSheet(
+            scoringData: scoringData,
+            lowestScoreWins: lowestScoreWins,
+            primaryColor: primaryColor,
+            title: title,
+          ),
         ),
       ),
     );
@@ -50,144 +61,43 @@ class ShareSheet extends StatefulWidget {
 
 class _ShareSheetState extends State<ShareSheet> {
   late final PageController _pageController;
-  late final List<GlobalKey> _captureKeys;
-  int _index = 0;
-  bool _busy = false;
+  late final List<Widget> _previews;
+
+  Timer? _toastTimer;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-    _captureKeys = List.generate(
-      widget.previews.length,
-      (_) => GlobalKey(),
-    );
+
+    // Build previews INSIDE the sheet
+    _previews = [
+      ShareScoreCardTransparent(
+        scoringData: widget.scoringData,
+        lowestScoreWins: widget.lowestScoreWins,
+        primaryColor: widget.primaryColor,
+      ),
+      ShareScoreCardTransparentAlt(
+        scoringData: widget.scoringData,
+        lowestScoreWins: widget.lowestScoreWins,
+        primaryColor: widget.primaryColor,
+      ),
+    ];
   }
 
   @override
   void dispose() {
+    _toastTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
 
-  /// Captures the current preview widget as a high-quality PNG.
-  Future<Uint8List?> _captureWidget({double pixelRatio = 3.0}) async {
-    // Wait for the next frame to ensure painting is complete
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-
-    final key = _captureKeys[_index];
-    final boundary =
-        key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-    if (boundary == null) return null;
-
-    // Wait until the boundary is ready to be painted
-    if (boundary.debugNeedsPaint) {
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-    }
-
-    final image = await boundary.toImage(pixelRatio: pixelRatio);
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    return byteData?.buffer.asUint8List();
-  }
-
-  /// Saves the captured image to a temporary file and returns the path.
-  Future<String?> _saveToTempFile(Uint8List bytes) async {
-    final tempDir = await getTemporaryDirectory();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final file = File('${tempDir.path}/scoreio_$timestamp.png');
-    await file.writeAsBytes(bytes);
-    return file.path;
-  }
-
-  Future<void> _onShare() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-
-    try {
-      final bytes = await _captureWidget();
-      if (bytes == null) {
-        _showError('Failed to capture image');
-        return;
-      }
-
-      final path = await _saveToTempFile(bytes);
-      if (path == null) {
-        _showError('Failed to save image');
-        return;
-      }
-
-      // Use platform share sheet
-
-      if (!mounted) {
-        return;
-      }
-      final size = MediaQuery.of(context).size;
-
-      final result = await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(path)],
-          text: 'Shared from Scoreio',
-          sharePositionOrigin: Rect.fromLTWH(
-            0,
-            size.height - 1, // bottom edge
-            size.width,
-            1, // minimal non-zero height
-          ),
-        ),
-      );
-
-      if (result.status == ShareResultStatus.success) {
-        if (mounted) Navigator.of(context).pop();
-      }
-    } on Exception catch (e) {
-      _showError('Share failed: $e');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _onSaveImage() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-
-    try {
-      final bytes = await _captureWidget();
-      if (bytes == null) {
-        _showError('Failed to capture image');
-        return;
-      }
-
-      final path = await _saveToTempFile(bytes);
-      if (path == null) {
-        _showError('Failed to save image');
-        return;
-      }
-
-      final success =
-          await GallerySaver.saveImage(path, albumName: 'Scoreio') ?? false;
-
-      if (success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Image saved to gallery')),
-          );
-          Navigator.of(context).pop();
-        }
-      } else {
-        _showError('Failed to save to gallery');
-      }
-    } on Exception catch (e) {
-      _showError('Save failed: $e');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+  void _scheduleToastClear(BuildContext context) {
+    _toastTimer?.cancel();
+    _toastTimer = Timer(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      context.read<ShareSheetCubit>().clearToast();
+    });
   }
 
   @override
@@ -196,158 +106,247 @@ class _ShareSheetState extends State<ShareSheet> {
     final text = Theme.of(context).textTheme;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
-    final previews = widget.previews.isEmpty
-        ? [
-            const _EmptyPreview(
-              title: 'Nothing to share',
-              subtitle: 'Generate a scorecard first.',
-            ),
-          ]
-        : widget.previews;
-
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(bottom: bottomInset + 5),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 6),
-
-          // ===== Header =====
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-            child: Row(
+    return BlocListener<ShareSheetCubit, ShareSheetState>(
+      listenWhen: (p, n) => p.toast?.id != n.toast?.id && n.toast != null,
+      listener: (context, state) {
+        _scheduleToastClear(context);
+      },
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(bottom: bottomInset + 5),
+        child: Stack(
+          children: [
+            Column(
               children: [
-                Text(
-                  widget.title,
-                  style: text.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-                ),
-                const Spacer(),
-                _ChipCounter(current: _index + 1, total: previews.length),
-              ],
-            ),
-          ),
+                const SizedBox(height: 6),
 
-          // ===== Preview Carousel =====
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxHeight: 400,
-                minHeight: 200,
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: cs.outlineVariant),
+                // ===== Header =====
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                  child: Row(
+                    children: [
+                      Text(
+                        widget.title,
+                        style: text.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const Spacer(),
+                      BlocBuilder<ShareSheetCubit, ShareSheetState>(
+                        builder: (context, state) => _ChipCounter(
+                          current: state.index + 1,
+                          total: _previews.length,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: Stack(
-                  children: [
-                    PageView.builder(
-                      controller: _pageController,
-                      itemCount: previews.length,
-                      onPageChanged: (i) => setState(() => _index = i),
-                      itemBuilder: (context, i) {
-                        return Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Center(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              // RepaintBoundary inside FittedBox captures
-                              // the full-size widget, not the scaled version
-                              child: RepaintBoundary(
-                                key: _captureKeys.length > i
-                                    ? _captureKeys[i]
-                                    : null,
-                                child: previews[i],
+
+                // ===== Preview Carousel =====
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: 400,
+                      minHeight: 200,
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: cs.outlineVariant),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(
+                        children: [
+                          PageView.builder(
+                            controller: _pageController,
+                            itemCount: _previews.length,
+                            onPageChanged: (i) =>
+                                context.read<ShareSheetCubit>().setIndex(i),
+                            itemBuilder: (context, i) {
+                              final key = context
+                                  .read<ShareSheetCubit>()
+                                  .captureKeys[i];
+
+                              return Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Center(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown, // preview can crop
+                                    child: RepaintBoundary(
+                                      key: key,
+                                      child: _previews[i],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+
+                          // subtle gradient
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: IgnorePointer(
+                              child: Container(
+                                height: 70,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      cs.surface.withAlpha(0),
+                                      cs.surface.withAlpha(200),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
 
-                    // subtle gradient for nicer feel
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: IgnorePointer(
-                        child: Container(
-                          height: 70,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                cs.surface.withAlpha(0),
-                                cs.surface.withAlpha(200),
-                              ],
+                          // dots
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 10,
+                            child:
+                                BlocBuilder<ShareSheetCubit, ShareSheetState>(
+                                  builder: (context, state) => _Dots(
+                                    count: _previews.length,
+                                    index: state.index,
+                                  ),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+                const Spacer(),
+
+                // ===== Actions =====
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: BlocBuilder<ShareSheetCubit, ShareSheetState>(
+                    builder: (context, state) {
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: _ActionButton(
+                              icon: Icons.ios_share_rounded,
+                              label: 'More',
+                              busy: state.busy,
+                              onTap: () => context
+                                  .read<ShareSheetCubit>()
+                                  .share(context),
+                              prominent: true,
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-
-                    // page dots
-                    if (previews.length > 1)
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 10,
-                        child: _Dots(
-                          count: previews.length,
-                          index: _index,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          const Spacer(),
-
-          // ===== Actions =====
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.ios_share_rounded,
-                        label: 'More',
-                        busy: _busy,
-                        onTap: widget.previews.isEmpty ? null : _onShare,
-                        prominent: true,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.download_rounded,
-                        label: 'Save image',
-                        busy: _busy,
-                        onTap: widget.previews.isEmpty ? null : _onSaveImage,
-                      ),
-                    ),
-                  ],
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _ActionButton(
+                              icon: Icons.download_rounded,
+                              label: 'Save image',
+                              busy: state.busy,
+                              onTap: () => context
+                                  .read<ShareSheetCubit>()
+                                  .saveToGallery(context),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+
+            // ===== TOP MESSAGE OVERLAY (always above sheet content) =====
+            Positioned(
+              left: 12,
+              right: 12,
+              top: 0,
+              child: BlocBuilder<ShareSheetCubit, ShareSheetState>(
+                buildWhen: (p, n) => p.toast?.id != n.toast?.id,
+                builder: (context, state) {
+                  final toast = state.toast;
+                  if (toast == null) return const SizedBox.shrink();
+
+                  final cs = Theme.of(context).colorScheme;
+
+                  final Color bg;
+                  final Color fg;
+                  final IconData icon;
+
+                  switch (toast.type) {
+                    case ShareSheetToastType.success:
+                      bg = cs.primaryContainer;
+                      fg = cs.onPrimaryContainer;
+                      icon = Icons.check_circle_rounded;
+                    case ShareSheetToastType.error:
+                      bg = cs.errorContainer;
+                      fg = cs.onErrorContainer;
+                      icon = Icons.error_rounded;
+                    case ShareSheetToastType.info:
+                      bg = cs.surfaceContainerHighest;
+                      fg = cs.onSurface;
+                      icon = Icons.info_rounded;
+                  }
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: cs.outlineVariant),
+                        boxShadow: const [
+                          BoxShadow(
+                            blurRadius: 18,
+                            offset: Offset(0, 8),
+                            color: Color(0x33000000),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(icon, size: 18, color: fg),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              toast.message,
+                              style: TextStyle(
+                                color: fg,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
+// ===== UI bits =====
 
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
@@ -361,7 +360,7 @@ class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool busy;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
   final bool prominent;
 
   @override
@@ -380,12 +379,12 @@ class _ActionButton extends StatelessWidget {
         curve: Curves.easeOut,
         height: 52,
         decoration: BoxDecoration(
-          color: onTap == null ? cs.surfaceContainerHighest.withAlpha(120) : bg,
+          color: busy ? cs.surfaceContainerHighest.withAlpha(120) : bg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: cs.outlineVariant),
         ),
         child: Center(
-          child: busy && onTap != null
+          child: busy
               ? SizedBox(
                   width: 18,
                   height: 18,
@@ -462,46 +461,6 @@ class _Dots extends StatelessWidget {
           ),
         );
       }),
-    );
-  }
-}
-
-class _EmptyPreview extends StatelessWidget {
-  const _EmptyPreview({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.image_not_supported_rounded,
-              size: 34,
-              color: cs.onSurfaceVariant,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: text.titleMedium?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: text.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
