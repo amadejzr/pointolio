@@ -117,9 +117,28 @@ class _ShareSheetState extends State<ShareSheet> {
       }
 
       // Use platform share sheet
-      await Share.shareXFiles([XFile(path)], text: 'Shared from Scoreio');
 
-      if (mounted) Navigator.of(context).pop();
+      if (!mounted) {
+        return;
+      }
+      final size = MediaQuery.of(context).size;
+
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(path)],
+          text: 'Shared from Scoreio',
+          sharePositionOrigin: Rect.fromLTWH(
+            0,
+            size.height - 1, // bottom edge
+            size.width,
+            1, // minimal non-zero height
+          ),
+        ),
+      );
+
+      if (result.status == ShareResultStatus.success) {
+        if (mounted) Navigator.of(context).pop();
+      }
     } on Exception catch (e) {
       _showError('Share failed: $e');
     } finally {
