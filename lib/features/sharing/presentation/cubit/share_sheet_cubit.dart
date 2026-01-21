@@ -126,9 +126,21 @@ class ShareSheetCubit extends Cubit<ShareSheetState> {
       file = File('${dir.path}/scoreio_$ts.png');
       await file.writeAsBytes(bytes, flush: true);
 
-      final success =
-          await GallerySaver.saveImage(file.path, albumName: 'Scoreio') ??
-          false;
+      // Verify file exists and has content before saving
+      if (!file.existsSync()) {
+        emit(state.copyWith(busy: false));
+        _toast('Failed to create temp file', ShareSheetToastType.error);
+        return;
+      }
+
+      final fileLength = await file.length();
+      if (fileLength == 0) {
+        emit(state.copyWith(busy: false));
+        _toast('Captured image is empty', ShareSheetToastType.error);
+        return;
+      }
+
+      final success = await GallerySaver.saveImage(file.path) ?? false;
 
       if (isClosed) return;
       emit(state.copyWith(busy: false));
@@ -140,6 +152,9 @@ class ShareSheetCubit extends Cubit<ShareSheetState> {
         _toast('Image saved to gallery', ShareSheetToastType.success);
         if (context.mounted) Navigator.of(context).pop();
       } else {
+        //
+        // ignore: body_might_complete_normally_catch_error
+        await file.delete().catchError((_) {});
         _toast('Failed to save to gallery', ShareSheetToastType.error);
       }
     } on Object catch (e) {
@@ -159,13 +174,20 @@ class ShareSheetCubit extends Cubit<ShareSheetState> {
     if (isClosed) return false;
     if (!(Platform.isIOS || Platform.isAndroid)) return false;
 
-    // iOS: Permission.photos
+    // iOS: photosAddOnly for saving images (write-only)
     // Android 13+: Permission.photos (READ_MEDIA_IMAGES)
     // older Android: Permission.storage
-    final perm = Platform.isIOS ? Permission.photos : Permission.photos;
+    final perm = Platform.isIOS ? Permission.photosAddOnly : Permission.photos;
 
     final status = await perm.request();
+
     if (status.isGranted || status.isLimited) return true;
+
+    // If permanently denied, open app settings so user can grant manually
+    if (status.isPermanentlyDenied) {
+      await openAppSettings();
+      return false;
+    }
 
     // fallback for older Androids if needed
     if (Platform.isAndroid) {
