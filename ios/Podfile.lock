@@ -1,6 +1,6 @@
 PODS:
   - Flutter (1.0.0)
-  - gallery_saver_plus (0.0.1):
+  - image_gallery_saver_plus (0.0.1):
     - Flutter
   - permission_handler_apple (9.3.0):
     - Flutter
@@ -34,7 +34,7 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - gallery_saver_plus (from `.symlinks/plugins/gallery_saver_plus/ios`)
+  - image_gallery_saver_plus (from `.symlinks/plugins/image_gallery_saver_plus/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - sqlite3_flutter_libs (from `.symlinks/plugins/sqlite3_flutter_libs/darwin`)
@@ -46,8 +46,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  gallery_saver_plus:
-    :path: ".symlinks/plugins/gallery_saver_plus/ios"
+  image_gallery_saver_plus:
+    :path: ".symlinks/plugins/image_gallery_saver_plus/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   share_plus:
@@ -57,7 +57,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  gallery_saver_plus: 61c8a831d5975e2bf57f87bcd64379dcc7d29ff2
+  image_gallery_saver_plus: e597bf65a7846979417a3eae0763b71b6dfec6c3
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
   sqlite3: 8d708bc63e9f4ce48f0ad9d6269e478c5ced1d9b

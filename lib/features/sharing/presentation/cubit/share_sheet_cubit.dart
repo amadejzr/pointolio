@@ -1,6 +1,5 @@
 // share_sheet_cubit.dart
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:equatable/equatable.dart';
@@ -8,8 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:gallery_saver_plus/gallery_saver.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -98,8 +96,6 @@ class ShareSheetCubit extends Cubit<ShareSheetState> {
     if (state.busy || isClosed) return;
     emit(state.copyWith(busy: true));
 
-    File? file;
-
     try {
       final ok = await _ensureGalleryPermission();
       if (isClosed) return;
@@ -119,54 +115,24 @@ class ShareSheetCubit extends Cubit<ShareSheetState> {
         return;
       }
 
-      final dir = await getTemporaryDirectory();
-      if (isClosed) return;
-
-      final ts = DateTime.now().millisecondsSinceEpoch;
-      file = File('${dir.path}/scoreio_$ts.png');
-      await file.writeAsBytes(bytes, flush: true);
-
-      // Verify file exists and has content before saving
-      if (!file.existsSync()) {
-        emit(state.copyWith(busy: false));
-        _toast('Failed to create temp file', ShareSheetToastType.error);
-        return;
-      }
-
-      final fileLength = await file.length();
-      if (fileLength == 0) {
-        emit(state.copyWith(busy: false));
-        _toast('Captured image is empty', ShareSheetToastType.error);
-        return;
-      }
-
-      final success = await GallerySaver.saveImage(file.path) ?? false;
+      final result =
+          await ImageGallerySaverPlus.saveImage(bytes);
 
       if (isClosed) return;
+
       emit(state.copyWith(busy: false));
 
+      final success = result['isSuccess'] as bool? ?? false;
       if (success) {
-        //
-        // ignore: body_might_complete_normally_catch_error
-        await file.delete().catchError((_) {});
         _toast('Image saved to gallery', ShareSheetToastType.success);
         if (context.mounted) Navigator.of(context).pop();
       } else {
-        //
-        // ignore: body_might_complete_normally_catch_error
-        await file.delete().catchError((_) {});
         _toast('Failed to save to gallery', ShareSheetToastType.error);
       }
     } on Object catch (e) {
       if (isClosed) return;
       emit(state.copyWith(busy: false));
       _toast('Save failed: $e', ShareSheetToastType.error);
-
-      if (file != null) {
-        //
-        // ignore: body_might_complete_normally_catch_error
-        await file.delete().catchError((_) {});
-      }
     }
   }
 
