@@ -84,6 +84,7 @@ class _HomeBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final cubit = context.read<HomeCubit>();
 
     if (state.status == HomeStatus.loading) {
@@ -113,48 +114,143 @@ class _HomeBody extends StatelessWidget {
       return const _EmptyGamesState();
     }
 
-    return ListView.separated(
+    final activeGames =
+        state.games.where((g) => g.game.finishedAt == null).toList();
+    final completedGames =
+        state.games.where((g) => g.game.finishedAt != null).toList();
+
+    return ListView(
       padding: Spacing.page,
-      itemCount: state.games.length,
-      separatorBuilder: (_, _) => Spacing.gap12,
-      itemBuilder: (context, index) {
-        final gameWithCount = state.games[index];
-        final game = gameWithCount.game;
+      children: [
+        // ===== Active =====
+        if (activeGames.isNotEmpty)
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: activeGames.length,
+            separatorBuilder: (_, _) => Spacing.gap12,
+            itemBuilder: (context, index) {
+              final gameWithCount = activeGames[index];
+              final game = gameWithCount.game;
 
-        return GameCard(
-          gameWithPlayerCount: gameWithCount,
-          isEditing: state.isEditing,
-          onTap: () => Navigator.pushNamed(
-            context,
-            AppRouter.scoring,
-            arguments: game.id,
-          ),
-          onLongPress: cubit.toggleEditMode,
-          isFinished: game.finishedAt != null,
-
-          // existing delete
-          onDelete: () async {
-            final confirmed = await DeleteGameDialog.show(
-              context,
-              gameName: game.name,
-            );
-            if (confirmed && context.mounted) {
-              unawaited(cubit.deleteGame(game.id));
-            }
-          },
-
-          // ✅ new: finish/unfinish only visible in edit mode
-          onToggleFinished: () {
-            final isFinished = game.finishedAt != null;
-            unawaited(
-              cubit.setFinished(
-                game.id,
-                isFinished: !isFinished,
+              return GameCard(
+                gameWithPlayerCount: gameWithCount,
+                isEditing: state.isEditing,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRouter.scoring,
+                  arguments: game.id,
+                ),
+                onLongPress: cubit.toggleEditMode,
+                isFinished: game.finishedAt != null,
+                onDelete: () async {
+                  final confirmed = await DeleteGameDialog.show(
+                    context,
+                    gameName: game.name,
+                  );
+                  if (confirmed && context.mounted) {
+                    unawaited(cubit.deleteGame(game.id));
+                  }
+                },
+                onToggleFinished: () {
+                  final isFinished = game.finishedAt != null;
+                  unawaited(
+                    cubit.setFinished(
+                      game.id,
+                      isFinished: !isFinished,
+                    ),
+                  );
+                },
+              );
+            },
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            child: Text(
+              completedGames.isNotEmpty ? 'No active games' : 'No games yet',
+              style: tt.titleSmall?.copyWith(
+                color: cs.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
               ),
-            );
-          },
-        );
-      },
+            ),
+          ),
+
+        // ===== Completed (collapsed by default) =====
+        if (completedGames.isNotEmpty) ...[
+          if (activeGames.isNotEmpty) Spacing.gap24 else Spacing.gap12,
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: cubit.toggleShowCompleted,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+              child: Row(
+                children: [
+                  Text(
+                    'Completed (${completedGames.length})',
+                    style: tt.titleSmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  AnimatedRotation(
+                    duration: const Duration(milliseconds: 160),
+                    turns: state.showCompleted ? 0.5 : 0.0,
+                    child: Icon(
+                      Icons.expand_more,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (state.showCompleted) ...[
+            Spacing.gap12,
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: completedGames.length,
+              separatorBuilder: (_, _) => Spacing.gap12,
+              itemBuilder: (context, index) {
+                final gameWithCount = completedGames[index];
+                final game = gameWithCount.game;
+
+                return GameCard(
+                  gameWithPlayerCount: gameWithCount,
+                  isEditing: state.isEditing,
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.scoring,
+                    arguments: game.id,
+                  ),
+                  onLongPress: cubit.toggleEditMode,
+                  isFinished: game.finishedAt != null,
+                  onDelete: () async {
+                    final confirmed = await DeleteGameDialog.show(
+                      context,
+                      gameName: game.name,
+                    );
+                    if (confirmed && context.mounted) {
+                      unawaited(cubit.deleteGame(game.id));
+                    }
+                  },
+                  onToggleFinished: () {
+                    final isFinished = game.finishedAt != null;
+                    unawaited(
+                      cubit.setFinished(
+                        game.id,
+                        isFinished: !isFinished,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ],
+      ],
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:scoreio/common/data/database/database.dart';
 import 'package:scoreio/common/exception/domain_exception.dart';
 import 'package:scoreio/common/exception/exception_mapper.dart';
+import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
 
 class HomeRepository {
   const HomeRepository(this._db);
@@ -69,6 +70,31 @@ class HomeRepository {
         context: {'gameTypeId': gameTypeId},
       );
     }
+  }
+
+  Stream<List<GameWithPlayerCount>> watchGamesWithMetadata() {
+    return _db.gameDao.watchGamesWithMetadata().map((rows) {
+      return rows
+          .map(
+            (r) => GameWithPlayerCount(
+              game: r.$1,
+              playerCount: r.$2,
+              gameType: r.$3,
+            ),
+          )
+          .toList();
+    }).handleError(
+      (Object e) {
+        if (e is SqliteException) {
+          throw e.toDomainException(operation: 'watchGamesWithMetadata');
+        }
+        throw DomainException(
+          DomainErrorCode.storage,
+          context: {'op': 'watchGamesWithMetadata'},
+          cause: e,
+        );
+      },
+    );
   }
 
   Future<void> setGameFinished(int id, {required bool finished}) async {

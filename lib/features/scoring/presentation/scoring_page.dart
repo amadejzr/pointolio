@@ -483,6 +483,14 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
     super.dispose();
   }
 
+  Future<void> _saveRound() async {
+    final scores = <int, int>{};
+    for (final e in _controllers.entries) {
+      scores[e.key] = int.tryParse(e.value.text.trim()) ?? 0;
+    }
+    await widget.onSave(scores);
+  }
+
   @override
   Widget build(BuildContext context) {
     final roundNumber = widget.state.roundCount + 1;
@@ -519,7 +527,13 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
               ],
             ),
             const SizedBox(height: 12),
-            ...widget.state.playerScores.map((ps) {
+            ...widget.state.playerScores.asMap().entries.map((entry) {
+              final index = entry.key;
+              final ps = entry.value;
+
+              final isFirst = index == 0;
+              final isLast = index == widget.state.playerScores.length - 1;
+
               final name = [
                 ps.player.firstName,
                 if ((ps.player.lastName ?? '').trim().isNotEmpty)
@@ -527,6 +541,7 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
               ].join(' ');
 
               final ctrl = _controllers[ps.gamePlayer.id]!;
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
@@ -546,11 +561,15 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
                       width: 120,
                       child: TextField(
                         controller: ctrl,
+                        autofocus: isFirst,
                         keyboardType: const TextInputType.numberWithOptions(
                           signed: true,
                           decimal: true,
                         ),
-                        textInputAction: TextInputAction.next,
+                        textInputAction: isLast
+                            ? TextInputAction.done
+                            : TextInputAction.next,
+                        onSubmitted: isLast ? (_) => _saveRound() : null,
                         decoration: const InputDecoration(labelText: 'Points'),
                       ),
                     ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:scoreio/features/scoring/domain/models.dart';
 import 'package:scoreio/features/scoring/presentation/cubit/scoring_cubit.dart';
@@ -49,13 +50,22 @@ class RoundsGrid extends StatefulWidget {
   }
 }
 
-class _RoundsGridState extends State<RoundsGrid> {
+class _RoundsGridState extends State<RoundsGrid>
+    with SingleTickerProviderStateMixin {
   final _vLeft = ScrollController();
   final _vRight = ScrollController();
+
+  // ✅ right-table horizontal controller (header + rows share one scroll)
+  final _h = ScrollController();
 
   bool _syncing = false;
   bool _showFullNames = false;
   int? _dragIndex;
+
+  // ✅ round-add animation state
+  int _prevRoundCount = 0;
+  int? _highlightRound; // 1-based
+  late final AnimationController _pulse;
 
   void _toggleNames() => setState(() => _showFullNames = !_showFullNames);
 
@@ -81,13 +91,68 @@ class _RoundsGridState extends State<RoundsGrid> {
     super.initState();
     _vLeft.addListener(() => _syncVertical(fromLeft: true));
     _vRight.addListener(() => _syncVertical(fromLeft: false));
+
+    _prevRoundCount = widget.state.roundCount;
+
+    _pulse =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 650),
+        )..addListener(() {
+          if (mounted) setState(() {});
+        });
+  }
+
+  @override
+  void didUpdateWidget(covariant RoundsGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final newCount = widget.state.roundCount;
+    final oldCount = _prevRoundCount;
+
+    if (newCount > oldCount) {
+      _highlightRound = newCount;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        if (_h.hasClients) {
+          unawaited(
+            _h.animateTo(
+              _h.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 420),
+              curve: Curves.easeOutCubic,
+            ),
+          );
+        }
+
+        unawaited(
+          _pulse.forward(from: 0).then((_) {
+            if (!mounted) return;
+            Future<void>.delayed(const Duration(milliseconds: 250), () {
+              if (mounted) setState(() => _highlightRound = null);
+            });
+          }),
+        );
+      });
+    }
+
+    _prevRoundCount = newCount;
   }
 
   @override
   void dispose() {
     _vLeft.dispose();
     _vRight.dispose();
+    _h.dispose();
+    _pulse.dispose();
     super.dispose();
+  }
+
+  double get _pulse01 {
+    // 0..1..0 (nice “flicker”)
+    final t = _pulse.value;
+    return math.sin(math.pi * t).clamp(0.0, 1.0);
   }
 
   @override
@@ -248,8 +313,9 @@ class _RoundsGridState extends State<RoundsGrid> {
                     child: ClipRect(
                       child: LayoutBuilder(
                         builder: (context, rightConstraints) {
-                          // ✅ one horizontal scroll for header + rows
                           return SingleChildScrollView(
+                            controller:
+                                _h, // ✅ used for auto-scroll to last round
                             physics: const ClampingScrollPhysics(),
                             scrollDirection: Axis.horizontal,
                             child: SizedBox(
@@ -263,6 +329,8 @@ class _RoundsGridState extends State<RoundsGrid> {
                                     roundCount: roundCount,
                                     sidePad: scoreSidePad,
                                     onDeleteRound: widget.onDeleteRound,
+                                    highlightRound: _highlightRound,
+                                    pulse01: _pulse01,
                                   ),
                                   const SizedBox(height: 8),
                                   Expanded(
@@ -299,6 +367,8 @@ class _RoundsGridState extends State<RoundsGrid> {
                                             playerScore: ps,
                                             roundCount: roundCount,
                                             onEditScore: widget.onEditScore,
+                                            highlightRound: _highlightRound,
+                                            pulse01: _pulse01,
                                           ),
                                         );
                                       },
@@ -408,7 +478,6 @@ class _PlayerCellCompact extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
-
             const SizedBox(width: 10),
 
             // ✅ Name reveal animation (clean & subtle)
@@ -458,11 +527,16 @@ class _RoundsHeaderRowTable extends StatelessWidget {
     required this.roundCount,
     required this.sidePad,
     required this.onDeleteRound,
+    required this.highlightRound,
+    required this.pulse01,
   });
 
   final int roundCount;
   final double sidePad;
   final FutureOr<void> Function(int roundNumber) onDeleteRound;
+
+  final int? highlightRound; // 1-based
+  final double pulse01;
 
   @override
   Widget build(BuildContext context) {
@@ -484,6 +558,8 @@ class _RoundsHeaderRowTable extends StatelessWidget {
               label: 'R$r',
               showDivider: r != roundCount,
               onLongPress: () => onDeleteRound(r),
+              highlight: highlightRound == r,
+              pulse01: pulse01,
             ),
           ],
         ],
@@ -497,12 +573,17 @@ class _RoundsPlayerRowTable extends StatelessWidget {
     required this.playerScore,
     required this.roundCount,
     required this.onEditScore,
+    required this.highlightRound,
+    required this.pulse01,
   });
 
   final PlayerScore playerScore;
   final int roundCount;
   final FutureOr<void> Function(int scoreEntryId, int currentPoints)
   onEditScore;
+
+  final int? highlightRound;
+  final double pulse01;
 
   @override
   Widget build(BuildContext context) {
@@ -519,6 +600,8 @@ class _RoundsPlayerRowTable extends StatelessWidget {
               round: r,
               showDivider: r != roundCount,
               onEdit: onEditScore,
+              highlight: highlightRound == r,
+              pulse01: pulse01,
             ),
           ],
         ],
@@ -533,6 +616,8 @@ class _TableHeaderCell extends StatelessWidget {
     required this.label,
     required this.showDivider,
     required this.onLongPress,
+    required this.highlight,
+    required this.pulse01,
   });
 
   final double width;
@@ -540,17 +625,26 @@ class _TableHeaderCell extends StatelessWidget {
   final bool showDivider;
   final VoidCallback onLongPress;
 
+  final bool highlight;
+  final double pulse01;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
+    final highlightBg = highlight
+        ? cs.primaryContainer.withValues(alpha: 0.08 + (0.20 * pulse01))
+        : Colors.transparent;
+
     return GestureDetector(
       onLongPress: onLongPress,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 80),
         width: width,
         height: RoundsGrid.headerHeight,
         alignment: Alignment.center,
         decoration: BoxDecoration(
+          color: highlightBg,
           border: showDivider
               ? Border(
                   right: BorderSide(
@@ -577,6 +671,8 @@ class _TableScoreCell extends StatelessWidget {
     required this.round,
     required this.showDivider,
     required this.onEdit,
+    required this.highlight,
+    required this.pulse01,
   });
 
   final double width;
@@ -585,6 +681,9 @@ class _TableScoreCell extends StatelessWidget {
   final bool showDivider;
   final FutureOr<void> Function(int scoreEntryId, int currentPoints) onEdit;
 
+  final bool highlight;
+  final double pulse01;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -592,12 +691,17 @@ class _TableScoreCell extends StatelessWidget {
     final entry = playerScore.roundScores[round];
     final value = entry?.points;
 
-    final child = Container(
+    final highlightBg = highlight
+        ? cs.primaryContainer.withValues(alpha: 0.06 + (0.18 * pulse01))
+        : Colors.transparent;
+
+    final child = AnimatedContainer(
+      duration: const Duration(milliseconds: 80),
       width: width,
       height: RoundsGrid.rowHeight,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        // ✅ subtle column divider => table feel
+        color: highlightBg,
         border: showDivider
             ? Border(
                 right: BorderSide(
@@ -608,6 +712,7 @@ class _TableScoreCell extends StatelessWidget {
       ),
       child: Text(
         value?.toString() ?? '-',
+        textAlign: TextAlign.center,
         style: Theme.of(
           context,
         ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),

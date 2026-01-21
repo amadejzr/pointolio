@@ -25,6 +25,7 @@ class HomeState extends Equatable {
     this.errorMessage,
     this.snackbarMessage,
     this.isEditing = false,
+    this.showCompleted = false,
   });
 
   factory HomeState.initial() => const HomeState();
@@ -34,6 +35,7 @@ class HomeState extends Equatable {
   final String? errorMessage;
   final String? snackbarMessage;
   final bool isEditing;
+  final bool showCompleted;
 
   HomeState copyWith({
     List<GameWithPlayerCount>? games,
@@ -41,6 +43,7 @@ class HomeState extends Equatable {
     String? errorMessage,
     String? snackbarMessage,
     bool? isEditing,
+    bool? showCompleted,
     bool clearSnackbar = false,
   }) {
     return HomeState(
@@ -50,6 +53,7 @@ class HomeState extends Equatable {
       snackbarMessage:
           clearSnackbar ? null : snackbarMessage ?? this.snackbarMessage,
       isEditing: isEditing ?? this.isEditing,
+      showCompleted: showCompleted ?? this.showCompleted,
     );
   }
 
@@ -60,5 +64,6 @@ class HomeState extends Equatable {
         errorMessage,
         snackbarMessage,
         isEditing,
+        showCompleted,
       ];
 }

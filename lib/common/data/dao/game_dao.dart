@@ -135,4 +135,28 @@ class GameDao extends DatabaseAccessor<AppDatabase> with _$GameDaoMixin {
       ),
     );
   }
+
+  /// Watches all games with player count and game type in a single query.
+  /// Returns a stream of tuples: (Game, playerCount, GameType?)
+  Stream<List<(Game, int, GameType?)>> watchGamesWithMetadata() {
+    final playerCount = gamePlayers.id.count();
+
+    final query = select(games).join([
+      leftOuterJoin(gameTypes, gameTypes.id.equalsExp(games.gameTypeId)),
+      leftOuterJoin(gamePlayers, gamePlayers.gameId.equalsExp(games.id)),
+    ])
+      ..groupBy([games.id])
+      ..orderBy([OrderingTerm.desc(games.gameDate)])
+      ..addColumns([playerCount]);
+
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        return (
+          row.readTable(games),
+          row.read(playerCount) ?? 0,
+          row.readTableOrNull(gameTypes),
+        );
+      }).toList();
+    });
+  }
 }

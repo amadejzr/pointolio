@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/data/database/database.dart';
 import 'package:scoreio/common/exception/domain_exception.dart';
 import 'package:scoreio/features/home/data/home_repository.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
@@ -11,26 +10,14 @@ class HomeCubit extends Cubit<HomeState> {
     : _repository = homeRepository,
       super(HomeState.initial());
   final HomeRepository _repository;
-  StreamSubscription<List<Game>>? _gamesSubscription;
+  StreamSubscription<List<GameWithPlayerCount>>? _gamesSubscription;
 
   void loadGames() {
     emit(state.copyWith(status: HomeStatus.loading));
 
     unawaited(_gamesSubscription?.cancel());
-    _gamesSubscription = _repository.watchAllGames().listen(
-      (games) async {
-        final gamesWithCounts = <GameWithPlayerCount>[];
-        for (final game in games) {
-          final count = await _repository.getPlayerCount(game.id);
-          final gameType = await _repository.getGameType(game.gameTypeId);
-          gamesWithCounts.add(
-            GameWithPlayerCount(
-              game: game,
-              playerCount: count,
-              gameType: gameType,
-            ),
-          );
-        }
+    _gamesSubscription = _repository.watchGamesWithMetadata().listen(
+      (gamesWithCounts) {
         emit(state.copyWith(games: gamesWithCounts, status: HomeStatus.loaded));
       },
       onError: (Object _) {
@@ -78,6 +65,10 @@ class HomeCubit extends Cubit<HomeState> {
 
   void exitEditMode() {
     emit(state.copyWith(isEditing: false));
+  }
+
+  void toggleShowCompleted() {
+    emit(state.copyWith(showCompleted: !state.showCompleted));
   }
 
   @override
