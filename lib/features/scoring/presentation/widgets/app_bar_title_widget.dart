@@ -64,9 +64,9 @@ class AppBarTitleMenu extends StatelessWidget {
               value: _ScoringMenuAction.share,
               child: Row(
                 children: [
-                  Icon(Icons.edit, size: 18, color: cs.onSurfaceVariant),
+                  Icon(Icons.ios_share, size: 18, color: cs.onSurfaceVariant),
                   const SizedBox(width: 12),
-                  const Text('Edit'),
+                  const Text('Share'),
                 ],
               ),
             ),

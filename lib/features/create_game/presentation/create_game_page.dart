@@ -269,11 +269,11 @@ class _CreateGameViewState extends State<_CreateGameView> {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           blurRadius: 16,
-                          offset: const Offset(0, 10),
-                          color: Colors.black.withOpacity(0.12),
+                          offset: Offset(0, 10),
+                          color: Color(0x1F000000),
                         ),
                       ],
                     ),

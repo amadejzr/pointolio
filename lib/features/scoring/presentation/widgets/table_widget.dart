@@ -111,8 +111,8 @@ class _RoundsGridState extends State<RoundsGrid> {
 
     // Cleaner zebra + slightly stronger for readability
     Color zebraBg(int index) => index.isEven
-        ? cs.surfaceContainerHighest.withOpacity(0.62)
-        : cs.surfaceContainerHighest.withOpacity(0.30);
+        ? cs.surfaceContainerHighest.withValues(alpha: 0.62)
+        : cs.surfaceContainerHighest.withValues(alpha: 0.30);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -155,7 +155,7 @@ class _RoundsGridState extends State<RoundsGrid> {
                           onReorderStart: (i) => setState(() => _dragIndex = i),
                           onReorderEnd: (_) =>
                               setState(() => _dragIndex = null),
-                          onReorder: (oldIndex, newIndex) {
+                          onReorder: (oldIndex, newIndex) async {
                             if (newIndex > oldIndex) {
                               newIndex--;
                             }
@@ -174,12 +174,16 @@ class _RoundsGridState extends State<RoundsGrid> {
                                 ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
-                                  color: cs.primaryContainer.withOpacity(0.30),
+                                  color: cs.primaryContainer.withValues(
+                                    alpha: 0.30,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
                                       blurRadius: 16,
                                       offset: const Offset(0, 12),
-                                      color: Colors.black.withOpacity(0.14),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.14,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -208,7 +212,9 @@ class _RoundsGridState extends State<RoundsGrid> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(14),
                                 color: isDragging
-                                    ? cs.primaryContainer.withOpacity(0.22)
+                                    ? cs.primaryContainer.withValues(
+                                        alpha: 0.22,
+                                      )
                                     : zebraBg(index),
                               ),
                               child: ReorderableDelayedDragStartListener(
@@ -284,10 +290,10 @@ class _RoundsGridState extends State<RoundsGrid> {
                                             ),
                                             color: isDragging
                                                 ? cs.primaryContainer
-                                                      .withOpacity(0.18)
+                                                      .withValues(alpha: 0.18)
                                                 : zebraBg(
                                                     index,
-                                                  ).withOpacity(0.95),
+                                                  ).withValues(alpha: 0.95),
                                           ),
                                           child: _RoundsPlayerRowTable(
                                             playerScore: ps,
@@ -548,7 +554,7 @@ class _TableHeaderCell extends StatelessWidget {
           border: showDivider
               ? Border(
                   right: BorderSide(
-                    color: cs.outlineVariant.withOpacity(0.55),
+                    color: cs.outlineVariant.withValues(alpha: 0.55),
                   ),
                 )
               : null,
@@ -595,7 +601,7 @@ class _TableScoreCell extends StatelessWidget {
         border: showDivider
             ? Border(
                 right: BorderSide(
-                  color: cs.outlineVariant.withOpacity(0.45),
+                  color: cs.outlineVariant.withValues(alpha: 0.45),
                 ),
               )
             : null,
