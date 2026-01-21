@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:scoreio/features/scoring/domain/models.dart';
 import 'package:scoreio/features/scoring/presentation/cubit/scoring_cubit.dart';
 
 class RoundsGrid extends StatefulWidget {

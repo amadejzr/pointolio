@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
+import 'package:scoreio/common/data/tables/games_table.dart';
 import 'package:scoreio/common/data/tables/player_table.dart';
-import 'games_table.dart';
 
 class GamePlayers extends Table {
   IntColumn get id => integer().autoIncrement()();

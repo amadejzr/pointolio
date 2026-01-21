@@ -1,36 +1,8 @@
-import 'package:equatable/equatable.dart';
-import 'package:scoreio/common/data/database/database.dart';
+part of 'scoring_cubit.dart';
 
 enum ScoringStatus { initial, loading, loaded, error }
 
-class PlayerScore extends Equatable {
-  final Player player;
-  final GamePlayer gamePlayer;
-  final Map<int, ScoreEntry> roundScores; // roundNumber -> ScoreEntry
-  final int total;
-
-  const PlayerScore({
-    required this.player,
-    required this.gamePlayer,
-    required this.roundScores,
-    required this.total,
-  });
-
-  int? getScoreForRound(int round) => roundScores[round]?.points;
-
-  @override
-  List<Object?> get props => [player, gamePlayer, roundScores, total];
-}
-
 class ScoringState extends Equatable {
-  final int gameId;
-  final Game? game;
-  final GameType? gameType;
-  final List<PlayerScore> playerScores;
-  final int roundCount;
-  final ScoringStatus status;
-  final String? errorMessage;
-
   const ScoringState({
     required this.gameId,
     this.game,
@@ -42,6 +14,14 @@ class ScoringState extends Equatable {
   });
 
   factory ScoringState.initial(int gameId) => ScoringState(gameId: gameId);
+
+  final int gameId;
+  final Game? game;
+  final GameType? gameType;
+  final List<PlayerScore> playerScores;
+  final int roundCount;
+  final ScoringStatus status;
+  final String? errorMessage;
 
   /// Returns true if lowest score wins for this game type
   bool get lowestScoreWins => gameType?.lowestScoreWins ?? false;
@@ -71,12 +51,12 @@ class ScoringState extends Equatable {
 
   @override
   List<Object?> get props => [
-        gameId,
-        game,
-        gameType,
-        playerScores,
-        roundCount,
-        status,
-        errorMessage,
-      ];
+    gameId,
+    game,
+    gameType,
+    playerScores,
+    roundCount,
+    status,
+    errorMessage,
+  ];
 }

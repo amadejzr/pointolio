@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/data/repositories/game_repository.dart';
-import 'package:scoreio/common/data/repositories/score_entry_repository.dart';
 import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:scoreio/features/scoring/data/scoring_repository.dart';
 import 'package:scoreio/features/scoring/presentation/cubit/scoring_cubit.dart';
+import 'package:scoreio/features/scoring/presentation/widgets/app_bar_title_widget.dart';
 import 'package:scoreio/features/scoring/presentation/widgets/table_widget.dart';
 import 'package:scoreio/features/scoring/presentation/widgets/totals_bottom_sheet.dart';
 
@@ -22,8 +22,7 @@ class ScoringPage extends StatelessWidget {
       create: (_) {
         final cubit = ScoringCubit(
           gameId: gameId,
-          gameRepository: locator<GameRepository>(),
-          scoreEntryRepository: locator<ScoreEntryRepository>(),
+          scoringRepository: ScoringRepository(locator<AppDatabase>()),
         );
         unawaited(cubit.loadData());
         return cubit;
@@ -46,10 +45,20 @@ class ScoringScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: _AppBarTitle(
+            title: AppBarTitleMenu(
               title: title,
               gameTypeColor: state.gameTypeColor,
               lowestScoreWins: state.lowestScoreWins,
+              isFinished: state.game?.finishedAt != null,
+              gameTypeName: state.gameType?.name,
+              onToggleFinished: () {
+                if (state.game?.finishedAt != null) {
+                  unawaited(context.read<ScoringCubit>().restoreGame());
+                } else {
+                  unawaited(context.read<ScoringCubit>().finishGame());
+                }
+              },
+              onShare: () {},
             ),
             actionsPadding: isLandscape ? null : Spacing.horizontalPage,
             actions: [
@@ -58,18 +67,30 @@ class ScoringScreen extends StatelessWidget {
                   state: state,
                   onOpenTotals: () => _showTotalsSheet(context, state),
                 ),
-              IconButton.filled(
-                tooltip: 'Add round',
-                icon: const Icon(
-                  Icons.add,
-                  color: Colors.white,
+              if (state.game?.finishedAt == null)
+                IconButton.filled(
+                  tooltip: 'Add round',
+                  icon: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                  ),
+                  onPressed:
+                      state.status == ScoringStatus.loaded &&
+                          state.playerScores.isNotEmpty
+                      ? () => _onAddRoundPressed(context, state)
+                      : null,
+                )
+              else
+                IconButton.filled(
+                  tooltip: 'Share result',
+                  icon: const Icon(
+                    Icons.ios_share,
+                    color: Colors.white,
+                  ),
+                  onPressed: state.status == ScoringStatus.loaded
+                      ? () {}
+                      : null,
                 ),
-                onPressed:
-                    state.status == ScoringStatus.loaded &&
-                        state.playerScores.isNotEmpty
-                    ? () => _onAddRoundPressed(context, state)
-                    : null,
-              ),
             ],
           ),
           body: _ScoringBody(
@@ -210,95 +231,6 @@ class _ScoringBody extends StatelessWidget {
 }
 
 // =================== AppBar UI ===================
-
-class _AppBarTitle extends StatelessWidget {
-  const _AppBarTitle({
-    required this.title,
-    required this.lowestScoreWins,
-    this.gameTypeColor,
-  });
-
-  final String title;
-  final int? gameTypeColor;
-  final bool lowestScoreWins;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    final hasColor = gameTypeColor != null;
-    final color = hasColor ? Color(gameTypeColor!) : cs.primary;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              title.isNotEmpty ? title[0].toUpperCase() : '?',
-              style: tt.titleSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              _WinConditionIndicator(lowestScoreWins: lowestScoreWins),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _WinConditionIndicator extends StatelessWidget {
-  const _WinConditionIndicator({required this.lowestScoreWins});
-
-  final bool lowestScoreWins;
-
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    final icon = lowestScoreWins ? Icons.arrow_downward : Icons.arrow_upward;
-    final label = lowestScoreWins ? 'Lowest wins' : 'Highest wins';
-    final color = lowestScoreWins ? Colors.blue : Colors.orange;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 12, color: color),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: tt.labelSmall?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 /// Landscape-only: compact stats in AppBar with tooltips on long-press/hover
 class _AppBarStats extends StatelessWidget {
@@ -684,3 +616,7 @@ Future<bool> confirmDialog(
       )) ??
       false;
 }
+
+// sdsd
+// ignore: flutter_style_todos
+// TODO: Add a sharing like strava for card games

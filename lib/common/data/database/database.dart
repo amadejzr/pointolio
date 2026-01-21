@@ -5,6 +5,7 @@ import 'package:scoreio/common/data/dao/game_dao.dart';
 import 'package:scoreio/common/data/dao/game_type_dao.dart';
 import 'package:scoreio/common/data/dao/player_dao.dart';
 import 'package:scoreio/common/data/dao/score_entry_dao.dart';
+import 'package:scoreio/common/data/dao/scoring_dao.dart';
 import 'package:scoreio/common/data/tables/game_players_table.dart';
 import 'package:scoreio/common/data/tables/games_table.dart';
 import 'package:scoreio/common/data/tables/player_table.dart';
@@ -25,6 +26,7 @@ part 'database.g.dart';
     GameTypeDao,
     PlayerDao,
     ScoreEntryDao,
+    ScoringDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

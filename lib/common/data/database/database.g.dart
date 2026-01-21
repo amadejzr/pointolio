@@ -1991,6 +1991,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final GameTypeDao gameTypeDao = GameTypeDao(this as AppDatabase);
   late final PlayerDao playerDao = PlayerDao(this as AppDatabase);
   late final ScoreEntryDao scoreEntryDao = ScoreEntryDao(this as AppDatabase);
+  late final ScoringDao scoringDao = ScoringDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

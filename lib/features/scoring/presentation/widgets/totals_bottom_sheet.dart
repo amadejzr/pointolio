@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:scoreio/features/scoring/domain/models.dart';
 import 'package:scoreio/features/scoring/presentation/cubit/scoring_cubit.dart';
 
 class TotalsBar extends StatelessWidget {

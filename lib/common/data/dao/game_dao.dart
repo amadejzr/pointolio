@@ -127,4 +127,12 @@ class GameDao extends DatabaseAccessor<AppDatabase> with _$GameDaoMixin {
       gameTypes,
     )..where((t) => t.id.equals(gameTypeId))).getSingleOrNull();
   }
+
+  Future<int> setGameFinished(int id, {required bool finished}) {
+    return (update(games)..where((g) => g.id.equals(id))).write(
+      GamesCompanion(
+        finishedAt: Value(finished ? DateTime.now() : null),
+      ),
+    );
+  }
 }
