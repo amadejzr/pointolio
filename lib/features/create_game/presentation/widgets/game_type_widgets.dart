@@ -72,7 +72,7 @@ class GameTypeTile extends StatelessWidget {
                     ),
                   ),
                   Spacing.gap4,
-                  _WinConditionBadge(
+                  WinConditionBadge(
                     lowestScoreWins: gameType.lowestScoreWins,
                   ),
                 ],
@@ -88,8 +88,8 @@ class GameTypeTile extends StatelessWidget {
   }
 }
 
-class _WinConditionBadge extends StatelessWidget {
-  const _WinConditionBadge({required this.lowestScoreWins});
+class WinConditionBadge extends StatelessWidget {
+  const WinConditionBadge({required this.lowestScoreWins, super.key});
 
   final bool lowestScoreWins;
 

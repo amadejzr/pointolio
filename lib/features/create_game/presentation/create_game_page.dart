@@ -173,83 +173,68 @@ class _CreateGameViewState extends State<_CreateGameView> {
 
           Spacing.gap24,
 
-          // Game Type (picker sheet)
-          const _SectionLabel(label: 'Game Type'),
-          Spacing.gap8,
+          // Game Type (picker sheet) + "New" action
           Row(
             children: [
-              Expanded(
-                child: _GameTypePickerField(
-                  gameType: state.selectedGameType,
-                  onTap: () async {
-                    final selected = await PickerSheet.show<GameType>(
-                      context: context,
-                      title: 'Game Types',
-                      items: state.availableGameTypes,
-                      itemLabel: (t) => t.name,
-                      itemKey: (t) => t.id,
-                      itemBuilder: (context, t) => GameTypeTile(gameType: t),
-                      emptyTitle: 'No game types found',
-                      emptySubtitle: 'Try a different search term.',
-                    );
-                    if (selected != null) cubit.setGameType(selected);
-                  },
-                ),
-              ),
-              Spacing.gap12,
-              IconButton.filled(
+              const _SectionLabel(label: 'Game Type'),
+              const Spacer(),
+              TextButton(
                 onPressed: () => _showAddGameTypeDialog(context, cubit),
-                icon: const Icon(Icons.add),
+                child: const Text('New'),
               ),
             ],
+          ),
+          Spacing.gap8,
+          _GameTypePickerField(
+            gameType: state.selectedGameType,
+            onTap: () async {
+              final selected = await PickerSheet.show<GameType>(
+                context: context,
+                title: 'Game Types',
+                items: state.availableGameTypes,
+                itemLabel: (t) => t.name,
+                itemKey: (t) => t.id,
+                itemBuilder: (context, t) => GameTypeTile(gameType: t),
+                emptyTitle: 'No game types found',
+                emptySubtitle: 'Create one with New.',
+              );
+              if (selected != null) cubit.setGameType(selected);
+            },
           ),
 
           Spacing.gap24,
 
-          // Players
+          // Players + "New" action (count moved out)
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const _SectionLabel(label: 'Players'),
-              Text(
-                '${state.selectedPlayers.length} added',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
+              const Spacer(),
+              TextButton(
+                onPressed: () => _showAddPlayerDialog(context, cubit),
+                child: const Text('New'),
               ),
             ],
           ),
           Spacing.gap8,
 
-          Row(
-            children: [
-              Expanded(
-                child: _PlayerPickerField(
-                  onTap: () async {
-                    final remaining = state.availablePlayers
-                        .where(
-                          (p) => !state.selectedPlayers.any(
-                            (sp) => sp.id == p.id,
-                          ),
-                        )
-                        .toList();
+          _PlayerPickerField(
+            onTap: () async {
+              final remaining = state.availablePlayers
+                  .where(
+                    (p) => !state.selectedPlayers.any(
+                      (sp) => sp.id == p.id,
+                    ),
+                  )
+                  .toList();
 
-                    final selected = await PickerSheet.show<Player>(
-                      context: context,
-                      title: 'Players',
-                      items: remaining,
-                      itemLabel: _playerDisplayName,
-                    );
-                    if (selected != null) cubit.addPlayer(selected);
-                  },
-                ),
-              ),
-              Spacing.gap12,
-              IconButton.filled(
-                onPressed: () => _showAddPlayerDialog(context, cubit),
-                icon: const Icon(Icons.person_add),
-              ),
-            ],
+              final selected = await PickerSheet.show<Player>(
+                context: context,
+                title: 'Players',
+                items: remaining,
+                itemLabel: _playerDisplayName,
+              );
+              if (selected != null) cubit.addPlayer(selected);
+            },
           ),
 
           Spacing.gap16,
@@ -487,11 +472,7 @@ class _GameTypePickerField extends StatelessWidget {
             ),
           ),
           if (hasValue) ...[
-            const SizedBox(height: 2),
-            Text(
-              gameType!.lowestScoreWins ? 'Lowest wins' : 'Highest wins',
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-            ),
+            WinConditionBadge(lowestScoreWins: gameType!.lowestScoreWins),
           ],
         ],
       ),
@@ -509,9 +490,9 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: Theme.of(
-        context,
-      ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
     );
   }
 }

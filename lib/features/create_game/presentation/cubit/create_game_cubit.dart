@@ -134,10 +134,19 @@ class CreateGameCubit extends Cubit<CreateGameState> {
       final newPlayer = await _createGameRepository.getPlayerById(id);
 
       if (newPlayer != null) {
+        final alreadyInAvailable =
+            state.availablePlayers.any((p) => p.id == newPlayer.id);
+        final alreadySelected =
+            state.selectedPlayers.any((p) => p.id == newPlayer.id);
+
         emit(
           state.copyWith(
-            availablePlayers: [...state.availablePlayers, newPlayer],
-            selectedPlayers: [...state.selectedPlayers, newPlayer],
+            availablePlayers: alreadyInAvailable
+                ? state.availablePlayers
+                : [...state.availablePlayers, newPlayer],
+            selectedPlayers: alreadySelected
+                ? state.selectedPlayers
+                : [...state.selectedPlayers, newPlayer],
           ),
         );
       }
