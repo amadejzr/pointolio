@@ -122,7 +122,7 @@ class GameCard extends StatelessWidget {
               if (isEditing) ...[
                 if (onToggleFinished != null)
                   _EditIconButton(
-                    tooltip: isFinished ? 'Mark as active' : 'Finish game',
+                    tooltip: isFinished ? 'Mark as active' : 'Finish party',
                     icon: isFinished ? Icons.undo : Icons.check_circle_outline,
                     onPressed: onToggleFinished,
                   ),

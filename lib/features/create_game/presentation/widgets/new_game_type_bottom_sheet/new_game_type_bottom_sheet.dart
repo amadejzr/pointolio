@@ -104,7 +104,7 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                     children: [
                       Expanded(
                         child: Text(
-                          'New Game Type',
+                          'New Game',
                           style: tt.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
@@ -224,7 +224,7 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: state.isValid ? _submit : null,
-                          child: const Text('Add Game Type'),
+                          child: const Text('Add Game'),
                         ),
                       );
                     },

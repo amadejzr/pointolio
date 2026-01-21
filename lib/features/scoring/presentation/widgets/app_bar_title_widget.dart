@@ -55,7 +55,7 @@ class AppBarTitleMenu extends StatelessWidget {
                   color: cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 12),
-                Text(isFinished ? 'Mark as active' : 'Finish game'),
+                Text(isFinished ? 'Mark as active' : 'Finish party'),
               ],
             ),
           ),

@@ -50,7 +50,7 @@ class _HomeView extends StatelessWidget {
           return Scaffold(
             backgroundColor: cs.surface,
             appBar: AppBar(
-              title: const Text('My Games'),
+              title: const Text('My Parties'),
               actions: [
                 if (state.isEditing)
                   TextButton(
@@ -114,10 +114,12 @@ class _HomeBody extends StatelessWidget {
       return const _EmptyGamesState();
     }
 
-    final activeGames =
-        state.games.where((g) => g.game.finishedAt == null).toList();
-    final completedGames =
-        state.games.where((g) => g.game.finishedAt != null).toList();
+    final activeGames = state.games
+        .where((g) => g.game.finishedAt == null)
+        .toList();
+    final completedGames = state.games
+        .where((g) => g.game.finishedAt != null)
+        .toList();
 
     return ListView(
       padding: Spacing.page,
@@ -168,7 +170,9 @@ class _HomeBody extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
             child: Text(
-              completedGames.isNotEmpty ? 'No active games' : 'No games yet',
+              completedGames.isNotEmpty
+                  ? 'No active parties'
+                  : 'No parties yet',
               style: tt.titleSmall?.copyWith(
                 color: cs.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
@@ -276,12 +280,12 @@ class _EmptyGamesState extends StatelessWidget {
             ),
             Spacing.gap16,
             Text(
-              'No games yet',
+              'No parties yet',
               style: tt.titleMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
             Spacing.gap8,
             Text(
-              'Tap + to create your first game',
+              'Tap + to create your first party',
               style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
           ],

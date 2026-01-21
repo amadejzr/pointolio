@@ -23,7 +23,7 @@ class ScoringState extends Equatable {
   final ScoringStatus status;
   final String? errorMessage;
 
-  /// Returns true if lowest score wins for this game type
+  /// Returns true if lowest score wins for this game
   bool get lowestScoreWins => gameType?.lowestScoreWins ?? false;
 
   /// Returns the game type color if set

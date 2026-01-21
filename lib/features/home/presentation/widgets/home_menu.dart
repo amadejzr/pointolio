@@ -56,7 +56,7 @@ class HomeOverflowMenu extends StatelessWidget {
                   color: cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 12),
-                const Text('Manage game types'),
+                const Text('Manage games'),
               ],
             ),
           ),

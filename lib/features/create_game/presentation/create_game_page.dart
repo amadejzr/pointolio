@@ -85,7 +85,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
         return Scaffold(
           backgroundColor: cs.surface,
           appBar: AppBar(
-            title: const Text('New Game'),
+            title: const Text('New Party'),
             leading: IconButton(
               icon: const Icon(Icons.close),
               onPressed: () => Navigator.pop(context),
@@ -109,7 +109,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Start Game'),
+                          : const Text('Start Party'),
                     ),
                   ),
                 ),
@@ -160,7 +160,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Game Name
-          const _SectionLabel(label: 'Game Name'),
+          const _SectionLabel(label: 'Party name'),
           Spacing.gap8,
           TextField(
             controller: _gameNameController,
@@ -176,7 +176,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
           // Game Type (picker sheet) + "New" action
           Row(
             children: [
-              const _SectionLabel(label: 'Game Type'),
+              const _SectionLabel(label: 'Game'),
               const Spacer(),
               TextButton(
                 onPressed: () => _showAddGameTypeDialog(context, cubit),
@@ -190,7 +190,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
             onTap: () async {
               final selected = await PickerSheet.show<GameType>(
                 context: context,
-                title: 'Game Types',
+                title: 'Games',
                 items: state.availableGameTypes,
                 itemLabel: (t) => t.name,
                 itemKey: (t) => t.id,
@@ -463,7 +463,7 @@ class _GameTypePickerField extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            hasValue ? gameType!.name : 'Choose game type',
+            hasValue ? gameType!.name : 'Choose game',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: tt.titleMedium?.copyWith(
