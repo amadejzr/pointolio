@@ -1,8 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/features/create_game/presentation/widgets/new_game_type_bottom_sheet/cubit/new_game_type_state.dart';
+import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/cubit/game_type_bottom_sheet_state.dart';
 
-class NewGameTypeCubit extends Cubit<NewGameTypeState> {
-  NewGameTypeCubit() : super(const NewGameTypeState());
+class GameTypeBottomSheetCubit extends Cubit<GameTypeBottomSheetState> {
+  GameTypeBottomSheetCubit({
+    String? initialName,
+    bool? initialLowestScoreWins,
+    int? initialColor,
+  }) : super(
+          GameTypeBottomSheetState(
+            name: initialName ?? '',
+            lowestScoreWins: initialLowestScoreWins ?? false,
+            selectedColor: initialColor,
+          ),
+        );
 
   void setName(String name) {
     emit(state.copyWith(name: name));

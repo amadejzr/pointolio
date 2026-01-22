@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:scoreio/router/app_router.dart';
 
 class HomeOverflowMenu extends StatelessWidget {
   const HomeOverflowMenu({super.key});
@@ -23,40 +26,22 @@ class HomeOverflowMenu extends StatelessWidget {
 
         onSelected: (action) {
           switch (action) {
-            case _HomeMenuAction.managePlayers:
-              // Navigator.pushNamed(context, AppRouter.managePlayers);
-              break;
-            case _HomeMenuAction.manageGameTypes:
-              // Navigator.pushNamed(context, AppRouter.manageGameTypes);
-              break;
+            case _HomeMenuAction.manage:
+              unawaited(Navigator.pushNamed(context, AppRouter.manage));
           }
         },
         itemBuilder: (context) => [
           PopupMenuItem(
-            value: _HomeMenuAction.managePlayers,
+            value: _HomeMenuAction.manage,
             child: Row(
               children: [
                 Icon(
-                  Icons.people_outline,
+                  Icons.settings_outlined,
                   size: 18,
                   color: cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 12),
-                const Text('Manage players'),
-              ],
-            ),
-          ),
-          PopupMenuItem(
-            value: _HomeMenuAction.manageGameTypes,
-            child: Row(
-              children: [
-                Icon(
-                  Icons.category_outlined,
-                  size: 18,
-                  color: cs.onSurfaceVariant,
-                ),
-                const SizedBox(width: 12),
-                const Text('Manage games'),
+                const Text('Manage'),
               ],
             ),
           ),
@@ -66,4 +51,4 @@ class HomeOverflowMenu extends StatelessWidget {
   }
 }
 
-enum _HomeMenuAction { managePlayers, manageGameTypes }
+enum _HomeMenuAction { manage }

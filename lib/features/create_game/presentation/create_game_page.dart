@@ -5,13 +5,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scoreio/common/data/database/database.dart';
 import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
 import 'package:scoreio/common/ui/widgets/picker_sheet.dart';
 import 'package:scoreio/features/create_game/data/create_game_repository.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_state.dart';
 import 'package:scoreio/features/create_game/presentation/widgets/add_player_dialog.dart';
 import 'package:scoreio/features/create_game/presentation/widgets/game_type_widgets.dart';
-import 'package:scoreio/features/create_game/presentation/widgets/new_game_type_bottom_sheet/new_game_type_bottom_sheet.dart';
 
 class CreateGamePage extends StatelessWidget {
   const CreateGamePage({super.key});
@@ -292,7 +292,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
     BuildContext context,
     CreateGameCubit cubit,
   ) async {
-    final result = await NewGameTypeBottomSheet.show(context);
+    final result = await GameTypeBottomSheet.show(context);
 
     if (result != null && result.name.trim().isNotEmpty) {
       unawaited(

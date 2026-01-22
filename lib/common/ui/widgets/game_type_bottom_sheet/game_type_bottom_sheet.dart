@@ -1,14 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/features/create_game/domain/models.dart';
-import 'package:scoreio/features/create_game/presentation/widgets/new_game_type_bottom_sheet/cubit/new_game_type_cubit.dart';
-import 'package:scoreio/features/create_game/presentation/widgets/new_game_type_bottom_sheet/cubit/new_game_type_state.dart';
+import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/cubit/game_type_bottom_sheet_cubit.dart';
+import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/cubit/game_type_bottom_sheet_state.dart';
+import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/game_type_result.dart';
 
-class NewGameTypeBottomSheet extends StatelessWidget {
-  const NewGameTypeBottomSheet({super.key});
+/// A reusable bottom sheet for creating or editing game types.
+///
+/// Supports both create mode (no initial values) and edit mode
+/// (with initial values).
+/// Returns a [GameTypeResult] when confirmed, or null if cancelled.
+class GameTypeBottomSheet extends StatelessWidget {
+  const GameTypeBottomSheet._({
+    required this.isEditMode,
+  });
 
+  final bool isEditMode;
+
+  /// Shows the bottom sheet for creating a new game type.
   static Future<GameTypeResult?> show(BuildContext context) {
+    return _showSheet(context, isEditMode: false);
+  }
+
+  /// Shows the bottom sheet for editing an existing game type.
+  static Future<GameTypeResult?> showForEdit(
+    BuildContext context, {
+    required String name,
+    required bool lowestScoreWins,
+    int? color,
+  }) {
+    return _showSheet(
+      context,
+      isEditMode: true,
+      initialName: name,
+      initialLowestScoreWins: lowestScoreWins,
+      initialColor: color,
+    );
+  }
+
+  static Future<GameTypeResult?> _showSheet(
+    BuildContext context, {
+    required bool isEditMode,
+    String? initialName,
+    bool? initialLowestScoreWins,
+    int? initialColor,
+  }) {
     final cs = Theme.of(context).colorScheme;
     return showModalBottomSheet<GameTypeResult>(
       context: context,
@@ -19,28 +55,41 @@ class NewGameTypeBottomSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (_) => BlocProvider(
-        create: (_) => NewGameTypeCubit(),
-        child: const NewGameTypeBottomSheet(),
+        create: (_) => GameTypeBottomSheetCubit(
+          initialName: initialName,
+          initialLowestScoreWins: initialLowestScoreWins,
+          initialColor: initialColor,
+        ),
+        child: GameTypeBottomSheet._(isEditMode: isEditMode),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return const _NewGameTypeSheetContent();
+    return _GameTypeSheetContent(isEditMode: isEditMode);
   }
 }
 
-class _NewGameTypeSheetContent extends StatefulWidget {
-  const _NewGameTypeSheetContent();
+class _GameTypeSheetContent extends StatefulWidget {
+  const _GameTypeSheetContent({required this.isEditMode});
+
+  final bool isEditMode;
 
   @override
-  State<_NewGameTypeSheetContent> createState() =>
-      _NewGameTypeSheetContentState();
+  State<_GameTypeSheetContent> createState() => _GameTypeSheetContentState();
 }
 
-class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
+class _GameTypeSheetContentState extends State<_GameTypeSheetContent> {
   final _nameController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Set initial text from cubit state
+    final initialName = context.read<GameTypeBottomSheetCubit>().state.name;
+    _nameController.text = initialName;
+  }
 
   @override
   void dispose() {
@@ -49,7 +98,7 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
   }
 
   void _submit() {
-    final state = context.read<NewGameTypeCubit>().state;
+    final state = context.read<GameTypeBottomSheetCubit>().state;
     if (!state.isValid) return;
 
     Navigator.pop(
@@ -66,7 +115,7 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final cubit = context.read<NewGameTypeCubit>();
+    final cubit = context.read<GameTypeBottomSheetCubit>();
 
     return SafeArea(
       top: false,
@@ -104,7 +153,7 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                     children: [
                       Expanded(
                         child: Text(
-                          'New Game',
+                          widget.isEditMode ? 'Edit Game' : 'New Game',
                           style: tt.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
@@ -123,7 +172,8 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                 // Color
                 const _SectionTitle('Color'),
                 Spacing.gap12,
-                BlocBuilder<NewGameTypeCubit, NewGameTypeState>(
+                BlocBuilder<GameTypeBottomSheetCubit,
+                    GameTypeBottomSheetState>(
                   buildWhen: (prev, curr) =>
                       prev.selectedColor != curr.selectedColor,
                   builder: (context, state) {
@@ -174,7 +224,8 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                 // Winning condition
                 const _SectionTitle('Winning Condition'),
                 Spacing.gap8,
-                BlocBuilder<NewGameTypeCubit, NewGameTypeState>(
+                BlocBuilder<GameTypeBottomSheetCubit,
+                    GameTypeBottomSheetState>(
                   buildWhen: (prev, curr) =>
                       prev.lowestScoreWins != curr.lowestScoreWins,
                   builder: (context, state) {
@@ -217,14 +268,17 @@ class _NewGameTypeSheetContentState extends State<_NewGameTypeSheetContent> {
                 // Button
                 Padding(
                   padding: Spacing.sheetBottom,
-                  child: BlocBuilder<NewGameTypeCubit, NewGameTypeState>(
+                  child: BlocBuilder<GameTypeBottomSheetCubit,
+                      GameTypeBottomSheetState>(
                     buildWhen: (prev, curr) => prev.isValid != curr.isValid,
                     builder: (context, state) {
                       return SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: state.isValid ? _submit : null,
-                          child: const Text('Add Game'),
+                          child: Text(
+                            widget.isEditMode ? 'Save Changes' : 'Add Game',
+                          ),
                         ),
                       );
                     },

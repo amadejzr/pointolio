@@ -46,4 +46,30 @@ class PlayerDao extends DatabaseAccessor<AppDatabase> with _$PlayerDaoMixin {
       ),
     );
   }
+
+  Stream<List<Player>> watchAll({bool includeArchived = false}) {
+    final query = select(players);
+    if (!includeArchived) {
+      query.where((p) => p.isArchived.equals(false));
+    }
+    query.orderBy([(p) => OrderingTerm.asc(p.firstName)]);
+    return query.watch();
+  }
+
+  Future<int> updatePlayer(int id, {
+    required String firstName,
+    String? lastName,
+  }) {
+    final l = lastName?.trim();
+    return (update(players)..where((p) => p.id.equals(id))).write(
+      PlayersCompanion(
+        firstName: Value(firstName.trim()),
+        lastName: Value(l?.isEmpty ?? false ? null : l),
+      ),
+    );
+  }
+
+  Future<int> deletePlayer(int id) {
+    return (delete(players)..where((p) => p.id.equals(id))).go();
+  }
 }

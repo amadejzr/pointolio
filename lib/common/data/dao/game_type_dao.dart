@@ -38,4 +38,28 @@ class GameTypeDao extends DatabaseAccessor<AppDatabase>
       ),
     );
   }
+
+  Stream<List<GameType>> watchAll() {
+    return (select(gameTypes)..orderBy([(t) => OrderingTerm.asc(t.name)]))
+        .watch();
+  }
+
+  Future<int> updateGameType(
+    int id, {
+    required String name,
+    required bool lowestScoreWins,
+    int? color,
+  }) {
+    return (update(gameTypes)..where((t) => t.id.equals(id))).write(
+      GameTypesCompanion(
+        name: Value(name.trim()),
+        lowestScoreWins: Value(lowestScoreWins),
+        color: Value(color),
+      ),
+    );
+  }
+
+  Future<int> deleteGameType(int id) {
+    return (delete(gameTypes)..where((t) => t.id.equals(id))).go();
+  }
 }

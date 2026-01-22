@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:scoreio/features/create_game/presentation/create_game_page.dart';
 import 'package:scoreio/features/home/presentation/home_page.dart';
+import 'package:scoreio/features/manage/presentation/manage_page.dart';
 import 'package:scoreio/features/scoring/presentation/scoring_page.dart';
 
 class AppRouter {
   static const String home = '/';
   static const String createGame = '/create-game';
   static const String scoring = '/scoring';
+  static const String manage = '/manage';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -14,6 +16,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const HomePage());
       case createGame:
         return MaterialPageRoute(builder: (_) => const CreateGamePage());
+      case manage:
+        return MaterialPageRoute(builder: (_) => const ManagePage());
       case scoring:
         final arg = settings.arguments;
         final gameId = arg is int ? arg : null;

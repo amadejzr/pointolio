@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// Available colors for game types.
 const gameTypeColors = [
   0xFFEF5350,
   0xFFEC407A,
@@ -19,29 +20,29 @@ const gameTypeColors = [
   0xFFFF7043,
 ];
 
-class NewGameTypeState extends Equatable {
-  const NewGameTypeState({
+class GameTypeBottomSheetState extends Equatable {
+  const GameTypeBottomSheetState({
     this.name = '',
     this.lowestScoreWins = false,
     this.selectedColor,
   });
+
   final String name;
   final bool lowestScoreWins;
   final int? selectedColor;
 
   bool get isValid => name.trim().isNotEmpty;
 
-  NewGameTypeState copyWith({
+  GameTypeBottomSheetState copyWith({
     String? name,
     bool? lowestScoreWins,
     int? Function()? selectedColor,
   }) {
-    return NewGameTypeState(
+    return GameTypeBottomSheetState(
       name: name ?? this.name,
       lowestScoreWins: lowestScoreWins ?? this.lowestScoreWins,
-      selectedColor: selectedColor != null
-          ? selectedColor()
-          : this.selectedColor,
+      selectedColor:
+          selectedColor != null ? selectedColor() : this.selectedColor,
     );
   }
 
