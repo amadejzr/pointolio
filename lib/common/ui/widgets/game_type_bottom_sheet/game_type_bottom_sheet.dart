@@ -172,8 +172,7 @@ class _GameTypeSheetContentState extends State<_GameTypeSheetContent> {
                 // Color
                 const _SectionTitle('Color'),
                 Spacing.gap12,
-                BlocBuilder<GameTypeBottomSheetCubit,
-                    GameTypeBottomSheetState>(
+                BlocBuilder<GameTypeBottomSheetCubit, GameTypeBottomSheetState>(
                   buildWhen: (prev, curr) =>
                       prev.selectedColor != curr.selectedColor,
                   builder: (context, state) {
@@ -224,8 +223,7 @@ class _GameTypeSheetContentState extends State<_GameTypeSheetContent> {
                 // Winning condition
                 const _SectionTitle('Winning Condition'),
                 Spacing.gap8,
-                BlocBuilder<GameTypeBottomSheetCubit,
-                    GameTypeBottomSheetState>(
+                BlocBuilder<GameTypeBottomSheetCubit, GameTypeBottomSheetState>(
                   buildWhen: (prev, curr) =>
                       prev.lowestScoreWins != curr.lowestScoreWins,
                   builder: (context, state) {
@@ -268,21 +266,24 @@ class _GameTypeSheetContentState extends State<_GameTypeSheetContent> {
                 // Button
                 Padding(
                   padding: Spacing.sheetBottom,
-                  child: BlocBuilder<GameTypeBottomSheetCubit,
-                      GameTypeBottomSheetState>(
-                    buildWhen: (prev, curr) => prev.isValid != curr.isValid,
-                    builder: (context, state) {
-                      return SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: state.isValid ? _submit : null,
-                          child: Text(
-                            widget.isEditMode ? 'Save Changes' : 'Add Game',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  child:
+                      BlocBuilder<
+                        GameTypeBottomSheetCubit,
+                        GameTypeBottomSheetState
+                      >(
+                        buildWhen: (prev, curr) => prev.isValid != curr.isValid,
+                        builder: (context, state) {
+                          return SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: state.isValid ? _submit : null,
+                              child: Text(
+                                widget.isEditMode ? 'Save Changes' : 'Add Game',
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                 ),
               ],
             ),

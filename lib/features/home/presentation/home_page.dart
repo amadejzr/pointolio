@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:scoreio/common/ui/widgets/confirm_dialog.dart';
+import 'package:scoreio/common/ui/widgets/toast_message.dart';
 import 'package:scoreio/features/home/data/home_repository.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_cubit.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
-import 'package:scoreio/features/home/presentation/widgets/delete_game_dialog.dart';
 import 'package:scoreio/features/home/presentation/widgets/game_card.dart';
 import 'package:scoreio/features/home/presentation/widgets/home_menu.dart';
 import 'package:scoreio/router/app_router.dart';
@@ -37,9 +38,7 @@ class _HomeView extends StatelessWidget {
       listener: (context, state) {
         final message = state.snackbarMessage;
         if (message != null) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(message)));
+          ToastMessage.error(context, message);
           context.read<HomeCubit>().clearSnackbar();
         }
       },
@@ -122,6 +121,7 @@ class _HomeBody extends StatelessWidget {
         .toList();
 
     return ListView(
+      physics: const ClampingScrollPhysics(),
       padding: Spacing.page,
       children: [
         // ===== Active =====
@@ -146,9 +146,10 @@ class _HomeBody extends StatelessWidget {
                 onLongPress: cubit.toggleEditMode,
                 isFinished: game.finishedAt != null,
                 onDelete: () async {
-                  final confirmed = await DeleteGameDialog.show(
+                  final confirmed = await ConfirmDialog.showDelete(
                     context,
-                    gameName: game.name,
+                    title: 'Delete Party',
+                    itemName: game.name,
                   );
                   if (confirmed && context.mounted) {
                     unawaited(cubit.deleteGame(game.id));
@@ -232,9 +233,10 @@ class _HomeBody extends StatelessWidget {
                   onLongPress: cubit.toggleEditMode,
                   isFinished: game.finishedAt != null,
                   onDelete: () async {
-                    final confirmed = await DeleteGameDialog.show(
+                    final confirmed = await ConfirmDialog.showDelete(
                       context,
-                      gameName: game.name,
+                      title: 'Delete Party',
+                      itemName: game.name,
                     );
                     if (confirmed && context.mounted) {
                       unawaited(cubit.deleteGame(game.id));

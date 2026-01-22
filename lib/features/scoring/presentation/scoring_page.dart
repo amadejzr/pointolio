@@ -53,6 +53,7 @@ class ScoringScreen extends StatelessWidget {
               lowestScoreWins: state.lowestScoreWins,
               isFinished: state.game?.finishedAt != null,
               gameTypeName: state.gameType?.name,
+              onEdit: () {},
               onToggleFinished: () {
                 if (state.game?.finishedAt != null) {
                   unawaited(context.read<ScoringCubit>().restoreGame());
@@ -669,7 +670,3 @@ Future<bool> confirmDialog(
       )) ??
       false;
 }
-
-// sdsd
-// ignore: flutter_style_todos
-// TODO: Add a sharing like strava for card games

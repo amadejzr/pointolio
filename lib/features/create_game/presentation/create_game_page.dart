@@ -6,12 +6,14 @@ import 'package:scoreio/common/data/database/database.dart';
 import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
 import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
+import 'package:scoreio/common/ui/widgets/game_type_widgets.dart';
 import 'package:scoreio/common/ui/widgets/picker_sheet.dart';
 import 'package:scoreio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
+import 'package:scoreio/common/ui/widgets/player_item_widget.dart';
 import 'package:scoreio/features/create_game/data/create_game_repository.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_state.dart';
-import 'package:scoreio/features/create_game/presentation/widgets/game_type_widgets.dart';
+import 'package:scoreio/features/create_game/presentation/widgets/picker_field_widget.dart';
 
 class CreateGamePage extends StatelessWidget {
   const CreateGamePage({super.key});
@@ -185,22 +187,43 @@ class _CreateGameViewState extends State<_CreateGameView> {
             ],
           ),
           Spacing.gap8,
-          _GameTypePickerField(
-            gameType: state.selectedGameType,
-            onTap: () async {
-              final selected = await PickerSheet.show<GameType>(
-                context: context,
-                title: 'Games',
-                items: state.availableGameTypes,
-                itemLabel: (t) => t.name,
-                itemKey: (t) => t.id,
-                itemBuilder: (context, t) => GameTypeTile(gameType: t),
-                emptyTitle: 'No game types found',
-                emptySubtitle: 'Create one with New.',
-              );
-              if (selected != null) cubit.setGameType(selected);
-            },
-          ),
+
+          if (state.selectedGameType == null)
+            PickerFieldBase(
+              text: 'Choose game',
+              icon: Icons.category_outlined,
+              onTap: () async {
+                final selected = await PickerSheet.show<GameType>(
+                  context: context,
+                  title: 'Games',
+                  items: state.availableGameTypes,
+                  itemLabel: (t) => t.name,
+                  itemKey: (t) => t.id,
+                  itemBuilder: (context, t) => GameTypeItem(gameType: t),
+                  emptyTitle: 'No game types found',
+                  emptySubtitle: 'Create one with New.',
+                );
+                if (selected != null) cubit.setGameType(selected);
+              },
+            )
+          else
+            GameTypeItem(
+              gameType: state.selectedGameType!,
+              showChevron: true,
+              onTap: () async {
+                final selected = await PickerSheet.show<GameType>(
+                  context: context,
+                  title: 'Games',
+                  items: state.availableGameTypes,
+                  itemLabel: (t) => t.name,
+                  itemKey: (t) => t.id,
+                  itemBuilder: (context, t) => GameTypeItem(gameType: t),
+                  emptyTitle: 'No game types found',
+                  emptySubtitle: 'Create one with New.',
+                );
+                if (selected != null) cubit.setGameType(selected);
+              },
+            ),
 
           Spacing.gap24,
 
@@ -217,7 +240,9 @@ class _CreateGameViewState extends State<_CreateGameView> {
           ),
           Spacing.gap8,
 
-          _PlayerPickerField(
+          PickerFieldBase(
+            text: 'Add player',
+            icon: Icons.person_outline,
             onTap: () async {
               final remaining = state.availablePlayers
                   .where(
@@ -232,7 +257,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
                 title: 'Players',
                 items: remaining,
                 itemLabel: _playerDisplayName,
-                itemBuilder: (context, player) => _PlayerPickerTile(
+                itemBuilder: (context, player) => PlayerItem(
                   player: player,
                 ),
               );
@@ -271,11 +296,14 @@ class _CreateGameViewState extends State<_CreateGameView> {
               },
               itemBuilder: (context, index) {
                 final player = state.selectedPlayers[index];
-                return _PlayerTile(
+                return Padding(
                   key: ValueKey(player.id),
-                  player: player,
-                  index: index,
-                  onRemove: () => cubit.removePlayer(player.id),
+                  padding: const EdgeInsets.only(bottom: Spacing.xs),
+                  child: PlayerItem(
+                    player: player,
+                    reorderIndex: index,
+                    onRemove: () => cubit.removePlayer(player.id),
+                  ),
                 );
               },
             ),
@@ -326,169 +354,6 @@ class _CreateGameViewState extends State<_CreateGameView> {
   }
 }
 
-// ========================= PICKER FIELD BASE =========================
-
-class _PickerFieldBase extends StatelessWidget {
-  const _PickerFieldBase({
-    required this.onTap,
-    required this.child,
-    this.leading,
-  });
-
-  final VoidCallback onTap;
-  final Widget child;
-  final Widget? leading;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Material(
-      color: cs.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: Spacing.sm,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cs.outlineVariant),
-          ),
-          child: Row(
-            children: [
-              if (leading != null) ...[
-                leading!,
-                Spacing.hGap12,
-              ],
-              Expanded(child: child),
-              Spacing.hGap12,
-              Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-Widget _defaultLeadingIconBox(BuildContext context, IconData icon) {
-  final cs = Theme.of(context).colorScheme;
-  return Container(
-    width: 34,
-    height: 34,
-    decoration: BoxDecoration(
-      color: cs.primary.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Icon(icon, size: 18, color: cs.primary),
-  );
-}
-
-// ========================= PLAYER PICKER FIELD =========================
-
-class _PlayerPickerField extends StatelessWidget {
-  const _PlayerPickerField({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return _PickerFieldBase(
-      onTap: onTap,
-      leading: _defaultLeadingIconBox(context, Icons.person_outline),
-      child: Text(
-        'Add player',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: tt.titleMedium?.copyWith(
-          fontWeight: FontWeight.w800,
-          color: cs.onSurfaceVariant,
-        ),
-      ),
-    );
-  }
-}
-
-// ========================= GAME TYPE PICKER FIELD =========================
-
-class _GameTypePickerField extends StatelessWidget {
-  const _GameTypePickerField({required this.gameType, required this.onTap});
-
-  final GameType? gameType;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    final hasValue = gameType != null;
-    final hasColor = gameType?.color != null;
-    final color = hasColor ? Color(gameType!.color!) : cs.primary;
-
-    final leading = Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: hasValue && hasColor
-            ? color
-            : cs.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: hasValue && !hasColor
-            ? Border.all(color: cs.outlineVariant)
-            : null,
-      ),
-      child: Center(
-        child: hasValue && hasColor
-            ? Text(
-                gameType!.name.isNotEmpty
-                    ? gameType!.name[0].toUpperCase()
-                    : '?',
-                style: tt.titleSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              )
-            : Icon(
-                Icons.category_outlined,
-                size: 18,
-                color: hasValue ? cs.onSurfaceVariant : cs.primary,
-              ),
-      ),
-    );
-
-    return _PickerFieldBase(
-      onTap: onTap,
-      leading: leading,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            hasValue ? gameType!.name : 'Choose game',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: tt.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: hasValue ? cs.onSurface : cs.onSurfaceVariant,
-            ),
-          ),
-          if (hasValue) ...[
-            WinConditionBadge(lowestScoreWins: gameType!.lowestScoreWins),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 // ========================= UI BITS =========================
 
 class _SectionLabel extends StatelessWidget {
@@ -529,142 +394,6 @@ class _EmptyPlayersCard extends StatelessWidget {
               context,
             ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PlayerTile extends StatelessWidget {
-  const _PlayerTile({
-    required this.player,
-    required this.index,
-    required this.onRemove,
-    super.key,
-  });
-
-  final Player player;
-  final int index;
-  final VoidCallback onRemove;
-
-  String get _displayName {
-    if (player.lastName != null && player.lastName!.isNotEmpty) {
-      return '${player.firstName} ${player.lastName}';
-    }
-    return player.firstName;
-  }
-
-  String get _initials {
-    final first = player.firstName.isNotEmpty ? player.firstName[0] : '';
-    final last =
-        player.lastName?.isNotEmpty ?? false ? player.lastName![0] : '';
-    return '$first$last'.toUpperCase();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    final hasColor = player.color != null;
-    final avatarColor = hasColor ? Color(player.color!) : cs.primaryContainer;
-    final textColor = hasColor ? Colors.white : cs.onPrimaryContainer;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: Spacing.xs),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: avatarColor,
-          child: Text(
-            _initials.isNotEmpty ? _initials : '?',
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        title: Text(_displayName),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.close, color: cs.error),
-              onPressed: onRemove,
-            ),
-            ReorderableDragStartListener(
-              index: index,
-              child: Icon(Icons.drag_handle, color: cs.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Player tile for the picker sheet - shows color if set.
-class _PlayerPickerTile extends StatelessWidget {
-  const _PlayerPickerTile({required this.player});
-
-  final Player player;
-
-  String get _displayName {
-    if (player.lastName != null && player.lastName!.isNotEmpty) {
-      return '${player.firstName} ${player.lastName}';
-    }
-    return player.firstName;
-  }
-
-  String get _initials {
-    final first = player.firstName.isNotEmpty ? player.firstName[0] : '';
-    final last =
-        player.lastName?.isNotEmpty ?? false ? player.lastName![0] : '';
-    return '$first$last'.toUpperCase();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    final hasColor = player.color != null;
-    final avatarColor = hasColor ? Color(player.color!) : cs.primaryContainer;
-    final textColor = hasColor ? Colors.white : cs.onPrimaryContainer;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: avatarColor,
-            child: Text(
-              _initials.isNotEmpty ? _initials : '?',
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _displayName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-          Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
         ],
       ),
     );

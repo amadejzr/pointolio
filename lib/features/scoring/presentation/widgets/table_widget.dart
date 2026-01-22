@@ -272,21 +272,21 @@ class _RoundsGridState extends State<RoundsGrid>
                             final initials = RoundsGrid.initialsFromName(name);
                             final isDragging = _dragIndex == index;
 
-                            return Container(
+                            return ReorderableDelayedDragStartListener(
                               key: ValueKey(ps.gamePlayer.id),
-                              margin: const EdgeInsets.symmetric(
-                                vertical: RoundsGrid.rowGap,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                color: isDragging
-                                    ? cs.primaryContainer.withValues(
-                                        alpha: 0.22,
-                                      )
-                                    : zebraBg(index),
-                              ),
-                              child: ReorderableDelayedDragStartListener(
-                                index: index,
+                              index: index,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                  vertical: RoundsGrid.rowGap,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  color: isDragging
+                                      ? cs.primaryContainer.withValues(
+                                          alpha: 0.22,
+                                        )
+                                      : zebraBg(index),
+                                ),
                                 child: _PlayerCellCompact(
                                   color: ps.player.color != null
                                       ? Color(ps.player.color!)

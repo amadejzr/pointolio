@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// A reusable confirmation dialog for delete operations.
-///
-/// This is a dumb widget that follows the existing dialog pattern
-/// seen in the codebase (e.g., DeleteGameDialog).
-class DeleteConfirmationDialog {
-  /// Shows a delete confirmation dialog.
-  ///
-  /// Returns `true` if the user confirmed, `false` otherwise.
-  static Future<bool> show(
+class ConfirmDialog {
+  static Future<bool> showDelete(
     BuildContext context, {
     required String title,
     required String itemName,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
 import 'package:scoreio/common/ui/widgets/game_leading_widget.dart';
+import 'package:scoreio/common/ui/widgets/small_action_buttons.dart';
+import 'package:scoreio/common/ui/widgets/win_condition_widgets.dart';
 import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
 
 class GameCard extends StatelessWidget {
@@ -95,7 +97,9 @@ class GameCard extends StatelessWidget {
                     Row(
                       children: [
                         if (_gameType != null) ...[
-                          _WinConditionChip(lowestScoreWins: _lowestScoreWins),
+                          WinConditionIndicator(
+                            lowestScoreWins: _lowestScoreWins,
+                          ),
                           Spacing.hGap8,
                         ],
                         Expanded(
@@ -121,17 +125,14 @@ class GameCard extends StatelessWidget {
 
               if (isEditing) ...[
                 if (onToggleFinished != null)
-                  _EditIconButton(
+                  SmallActionButton(
                     tooltip: isFinished ? 'Mark as active' : 'Finish party',
                     icon: isFinished ? Icons.undo : Icons.check_circle_outline,
                     onPressed: onToggleFinished,
                   ),
                 Spacing.hGap8,
-                _EditIconButton(
-                  tooltip: 'Delete',
-                  icon: Icons.delete_outline,
+                SmallActionButton.delete(
                   onPressed: onDelete,
-                  color: cs.error,
                 ),
               ] else
                 Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
@@ -139,63 +140,6 @@ class GameCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _EditIconButton extends StatelessWidget {
-  const _EditIconButton({
-    required this.icon,
-    required this.onPressed,
-    required this.tooltip,
-    this.color,
-  });
-
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final String tooltip;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final c = color ?? cs.primary;
-
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: c.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Icon(icon, size: 20, color: c),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _WinConditionChip extends StatelessWidget {
-  const _WinConditionChip({required this.lowestScoreWins});
-
-  final bool lowestScoreWins;
-
-  @override
-  Widget build(BuildContext context) {
-    final icon = lowestScoreWins ? Icons.arrow_downward : Icons.arrow_upward;
-    final color = lowestScoreWins ? Colors.blue : Colors.orange;
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Icon(icon, size: 12, color: color),
     );
   }
 }

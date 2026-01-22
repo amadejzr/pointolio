@@ -5,11 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scoreio/common/data/database/database.dart';
 import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:scoreio/common/ui/widgets/confirm_dialog.dart';
 import 'package:scoreio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
+import 'package:scoreio/common/ui/widgets/player_item_widget.dart';
 import 'package:scoreio/common/ui/widgets/search_scaffold.dart';
 import 'package:scoreio/features/manage/data/players_management_repository.dart';
 import 'package:scoreio/features/manage/presentation/cubit/players_management_cubit.dart';
-import 'package:scoreio/features/manage/presentation/widgets/delete_confirmation_dialog.dart';
 
 class PlayersManagementPage extends StatelessWidget {
   const PlayersManagementPage({super.key});
@@ -91,7 +92,7 @@ class _PlayersManagementView extends StatelessWidget {
       separatorBuilder: (_, _) => Spacing.gap12,
       itemBuilder: (context, index) {
         final player = players[index];
-        return _PlayerCard(
+        return PlayerItem(
           player: player,
           onTap: () => _showEditPlayerDialog(context, player),
           onDelete: () => _showDeleteConfirmation(context, player),
@@ -150,7 +151,7 @@ class _PlayersManagementView extends StatelessWidget {
         ? '${player.firstName} ${player.lastName}'
         : player.firstName;
 
-    final confirmed = await DeleteConfirmationDialog.show(
+    final confirmed = await ConfirmDialog.showDelete(
       context,
       title: 'Delete Player',
       itemName: displayName,
@@ -160,92 +161,6 @@ class _PlayersManagementView extends StatelessWidget {
     if (confirmed && context.mounted) {
       unawaited(cubit.deletePlayer(player.id));
     }
-  }
-}
-
-class _PlayerCard extends StatelessWidget {
-  const _PlayerCard({
-    required this.player,
-    this.onTap,
-    this.onDelete,
-  });
-
-  final Player player;
-  final VoidCallback? onTap;
-  final VoidCallback? onDelete;
-
-  String get _displayName {
-    if (player.lastName != null && player.lastName!.isNotEmpty) {
-      return '${player.firstName} ${player.lastName}';
-    }
-    return player.firstName;
-  }
-
-  String get _initials {
-    final first = player.firstName.isNotEmpty ? player.firstName[0] : '';
-    final last = player.lastName?.isNotEmpty ?? false
-        ? player.lastName![0]
-        : '';
-    return '$first$last'.toUpperCase();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final avatarColor = player.color != null
-        ? Color(player.color!)
-        : cs.primaryContainer;
-    final textColor = player.color != null
-        ? Colors.white
-        : cs.onPrimaryContainer;
-
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: cs.outlineVariant),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: Spacing.page,
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: avatarColor,
-                child: Text(
-                  _initials.isNotEmpty ? _initials : '?',
-                  style: tt.titleMedium?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Spacing.hGap16,
-              Expanded(
-                child: Text(
-                  _displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: tt.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Spacing.hGap12,
-              IconButton(
-                icon: Icon(Icons.delete_outline, color: cs.error),
-                onPressed: onDelete,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

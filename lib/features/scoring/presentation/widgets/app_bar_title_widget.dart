@@ -10,6 +10,7 @@ class AppBarTitleMenu extends StatelessWidget {
     required this.isFinished,
     required this.onToggleFinished,
     required this.onShare,
+    required this.onEdit,
     super.key,
   });
 
@@ -21,6 +22,7 @@ class AppBarTitleMenu extends StatelessWidget {
 
   final VoidCallback onToggleFinished;
   final VoidCallback onShare;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +44,8 @@ class AppBarTitleMenu extends StatelessWidget {
               onToggleFinished();
             case _ScoringMenuAction.share:
               onShare();
+            case _ScoringMenuAction.edit:
+              onEdit();
           }
         },
         itemBuilder: (context) => [
@@ -56,6 +60,21 @@ class AppBarTitleMenu extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(isFinished ? 'Mark as active' : 'Finish party'),
+              ],
+            ),
+          ),
+
+          PopupMenuItem(
+            value: _ScoringMenuAction.edit,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.edit_rounded,
+                  size: 18,
+                  color: cs.onSurfaceVariant,
+                ),
+                const SizedBox(width: 12),
+                const Text('Edit'),
               ],
             ),
           ),
@@ -128,4 +147,4 @@ class AppBarTitleMenu extends StatelessWidget {
   }
 }
 
-enum _ScoringMenuAction { toggleFinished, share }
+enum _ScoringMenuAction { toggleFinished, edit, share }

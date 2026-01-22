@@ -73,28 +73,31 @@ class HomeRepository {
   }
 
   Stream<List<GameWithPlayerCount>> watchGamesWithMetadata() {
-    return _db.gameDao.watchGamesWithMetadata().map((rows) {
-      return rows
-          .map(
-            (r) => GameWithPlayerCount(
-              game: r.$1,
-              playerCount: r.$2,
-              gameType: r.$3,
-            ),
-          )
-          .toList();
-    }).handleError(
-      (Object e) {
-        if (e is SqliteException) {
-          throw e.toDomainException(operation: 'watchGamesWithMetadata');
-        }
-        throw DomainException(
-          DomainErrorCode.storage,
-          context: {'op': 'watchGamesWithMetadata'},
-          cause: e,
+    return _db.gameDao
+        .watchGamesWithMetadata()
+        .map((rows) {
+          return rows
+              .map(
+                (r) => GameWithPlayerCount(
+                  game: r.$1,
+                  playerCount: r.$2,
+                  gameType: r.$3,
+                ),
+              )
+              .toList();
+        })
+        .handleError(
+          (Object e) {
+            if (e is SqliteException) {
+              throw e.toDomainException(operation: 'watchGamesWithMetadata');
+            }
+            throw DomainException(
+              DomainErrorCode.storage,
+              context: {'op': 'watchGamesWithMetadata'},
+              cause: e,
+            );
+          },
         );
-      },
-    );
   }
 
   Future<void> setGameFinished(int id, {required bool finished}) async {
