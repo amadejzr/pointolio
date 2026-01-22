@@ -96,6 +96,7 @@ class CreateGameRepository {
   Future<int> addPlayer({
     required String firstName,
     String? lastName,
+    int? color,
   }) async {
     try {
       final existing = await _db.playerDao.getByName(firstName, lastName);
@@ -103,6 +104,7 @@ class CreateGameRepository {
       return await _db.playerDao.add(
         firstName: firstName,
         lastName: lastName,
+        color: color,
       );
     } on SqliteException catch (e) {
       throw e.toDomainException(

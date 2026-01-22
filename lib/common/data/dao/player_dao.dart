@@ -37,12 +37,14 @@ class PlayerDao extends DatabaseAccessor<AppDatabase> with _$PlayerDaoMixin {
   Future<int> add({
     required String firstName,
     String? lastName,
+    int? color,
   }) {
     final l = lastName?.trim();
     return into(players).insert(
       PlayersCompanion.insert(
         firstName: firstName.trim(),
         lastName: Value(l?.isEmpty ?? false ? null : l),
+        color: Value(color),
       ),
     );
   }
@@ -59,12 +61,14 @@ class PlayerDao extends DatabaseAccessor<AppDatabase> with _$PlayerDaoMixin {
   Future<int> updatePlayer(int id, {
     required String firstName,
     String? lastName,
+    int? color,
   }) {
     final l = lastName?.trim();
     return (update(players)..where((p) => p.id.equals(id))).write(
       PlayersCompanion(
         firstName: Value(firstName.trim()),
         lastName: Value(l?.isEmpty ?? false ? null : l),
+        color: Value(color),
       ),
     );
   }

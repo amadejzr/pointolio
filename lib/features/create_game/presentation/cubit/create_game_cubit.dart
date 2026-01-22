@@ -129,13 +129,18 @@ class CreateGameCubit extends Cubit<CreateGameState> {
     }
   }
 
-  Future<void> addNewPlayer(String firstName, String? lastName) async {
+  Future<void> addNewPlayer(
+    String firstName,
+    String? lastName,
+    int? color,
+  ) async {
     if (firstName.trim().isEmpty) return;
 
     try {
       final id = await _createGameRepository.addPlayer(
         firstName: firstName,
         lastName: lastName,
+        color: color,
       );
       final newPlayer = await _createGameRepository.getPlayerById(id);
 

@@ -40,11 +40,12 @@ class PlayersManagementCubit extends Cubit<PlayersManagementState> {
     );
   }
 
-  Future<void> addPlayer(String firstName, String? lastName) async {
+  Future<void> addPlayer(String firstName, String? lastName, int? color) async {
     try {
       await _repository.addPlayer(
         firstName: firstName,
         lastName: lastName,
+        color: color,
       );
       emit(
         state.copyWith(
@@ -65,12 +66,14 @@ class PlayersManagementCubit extends Cubit<PlayersManagementState> {
     int id,
     String firstName,
     String? lastName,
+    int? color,
   ) async {
     try {
       await _repository.updatePlayer(
         id,
         firstName: firstName,
         lastName: lastName,
+        color: color,
       );
       emit(
         state.copyWith(

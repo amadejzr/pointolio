@@ -7,10 +7,10 @@ import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
 import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
 import 'package:scoreio/common/ui/widgets/picker_sheet.dart';
+import 'package:scoreio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
 import 'package:scoreio/features/create_game/data/create_game_repository.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:scoreio/features/create_game/presentation/cubit/create_game_state.dart';
-import 'package:scoreio/features/create_game/presentation/widgets/add_player_dialog.dart';
 import 'package:scoreio/features/create_game/presentation/widgets/game_type_widgets.dart';
 
 class CreateGamePage extends StatelessWidget {
@@ -232,6 +232,9 @@ class _CreateGameViewState extends State<_CreateGameView> {
                 title: 'Players',
                 items: remaining,
                 itemLabel: _playerDisplayName,
+                itemBuilder: (context, player) => _PlayerPickerTile(
+                  player: player,
+                ),
               );
               if (selected != null) cubit.addPlayer(selected);
             },
@@ -309,10 +312,16 @@ class _CreateGameViewState extends State<_CreateGameView> {
     BuildContext context,
     CreateGameCubit cubit,
   ) async {
-    final result = await AddPlayerDialog.show(context);
+    final result = await PlayerBottomSheet.show(context);
 
-    if (result != null && (result['firstName'] ?? '').trim().isNotEmpty) {
-      unawaited(cubit.addNewPlayer(result['firstName']!, result['lastName']));
+    if (result != null) {
+      unawaited(
+        cubit.addNewPlayer(
+          result.firstName,
+          result.lastName,
+          result.color,
+        ),
+      );
     }
   }
 }
@@ -545,9 +554,20 @@ class _PlayerTile extends StatelessWidget {
     return player.firstName;
   }
 
+  String get _initials {
+    final first = player.firstName.isNotEmpty ? player.firstName[0] : '';
+    final last =
+        player.lastName?.isNotEmpty ?? false ? player.lastName![0] : '';
+    return '$first$last'.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
+    final hasColor = player.color != null;
+    final avatarColor = hasColor ? Color(player.color!) : cs.primaryContainer;
+    final textColor = hasColor ? Colors.white : cs.onPrimaryContainer;
 
     return Container(
       margin: const EdgeInsets.only(bottom: Spacing.xs),
@@ -558,13 +578,11 @@ class _PlayerTile extends StatelessWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: cs.primaryContainer,
+          backgroundColor: avatarColor,
           child: Text(
-            player.firstName.isNotEmpty
-                ? player.firstName[0].toUpperCase()
-                : '?',
+            _initials.isNotEmpty ? _initials : '?',
             style: TextStyle(
-              color: cs.onPrimaryContainer,
+              color: textColor,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -583,6 +601,71 @@ class _PlayerTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Player tile for the picker sheet - shows color if set.
+class _PlayerPickerTile extends StatelessWidget {
+  const _PlayerPickerTile({required this.player});
+
+  final Player player;
+
+  String get _displayName {
+    if (player.lastName != null && player.lastName!.isNotEmpty) {
+      return '${player.firstName} ${player.lastName}';
+    }
+    return player.firstName;
+  }
+
+  String get _initials {
+    final first = player.firstName.isNotEmpty ? player.firstName[0] : '';
+    final last =
+        player.lastName?.isNotEmpty ?? false ? player.lastName![0] : '';
+    return '$first$last'.toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    final hasColor = player.color != null;
+    final avatarColor = hasColor ? Color(player.color!) : cs.primaryContainer;
+    final textColor = hasColor ? Colors.white : cs.onPrimaryContainer;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: avatarColor,
+            child: Text(
+              _initials.isNotEmpty ? _initials : '?',
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+        ],
       ),
     );
   }

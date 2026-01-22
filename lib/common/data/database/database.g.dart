@@ -964,6 +964,15 @@ class $PlayersTable extends Players with TableInfo<$PlayersTable, Player> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -971,6 +980,7 @@ class $PlayersTable extends Players with TableInfo<$PlayersTable, Player> {
     lastName,
     createdAt,
     isArchived,
+    color,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1013,6 +1023,12 @@ class $PlayersTable extends Players with TableInfo<$PlayersTable, Player> {
         isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
       );
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     return context;
   }
 
@@ -1046,6 +1062,10 @@ class $PlayersTable extends Players with TableInfo<$PlayersTable, Player> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
       )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      ),
     );
   }
 
@@ -1061,12 +1081,14 @@ class Player extends DataClass implements Insertable<Player> {
   final String? lastName;
   final DateTime createdAt;
   final bool isArchived;
+  final int? color;
   const Player({
     required this.id,
     required this.firstName,
     this.lastName,
     required this.createdAt,
     required this.isArchived,
+    this.color,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1078,6 +1100,9 @@ class Player extends DataClass implements Insertable<Player> {
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['is_archived'] = Variable<bool>(isArchived);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<int>(color);
+    }
     return map;
   }
 
@@ -1090,6 +1115,9 @@ class Player extends DataClass implements Insertable<Player> {
           : Value(lastName),
       createdAt: Value(createdAt),
       isArchived: Value(isArchived),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
     );
   }
 
@@ -1104,6 +1132,7 @@ class Player extends DataClass implements Insertable<Player> {
       lastName: serializer.fromJson<String?>(json['lastName']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
+      color: serializer.fromJson<int?>(json['color']),
     );
   }
   @override
@@ -1115,6 +1144,7 @@ class Player extends DataClass implements Insertable<Player> {
       'lastName': serializer.toJson<String?>(lastName),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'isArchived': serializer.toJson<bool>(isArchived),
+      'color': serializer.toJson<int?>(color),
     };
   }
 
@@ -1124,12 +1154,14 @@ class Player extends DataClass implements Insertable<Player> {
     Value<String?> lastName = const Value.absent(),
     DateTime? createdAt,
     bool? isArchived,
+    Value<int?> color = const Value.absent(),
   }) => Player(
     id: id ?? this.id,
     firstName: firstName ?? this.firstName,
     lastName: lastName.present ? lastName.value : this.lastName,
     createdAt: createdAt ?? this.createdAt,
     isArchived: isArchived ?? this.isArchived,
+    color: color.present ? color.value : this.color,
   );
   Player copyWithCompanion(PlayersCompanion data) {
     return Player(
@@ -1140,6 +1172,7 @@ class Player extends DataClass implements Insertable<Player> {
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
+      color: data.color.present ? data.color.value : this.color,
     );
   }
 
@@ -1150,14 +1183,15 @@ class Player extends DataClass implements Insertable<Player> {
           ..write('firstName: $firstName, ')
           ..write('lastName: $lastName, ')
           ..write('createdAt: $createdAt, ')
-          ..write('isArchived: $isArchived')
+          ..write('isArchived: $isArchived, ')
+          ..write('color: $color')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, firstName, lastName, createdAt, isArchived);
+      Object.hash(id, firstName, lastName, createdAt, isArchived, color);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1166,7 +1200,8 @@ class Player extends DataClass implements Insertable<Player> {
           other.firstName == this.firstName &&
           other.lastName == this.lastName &&
           other.createdAt == this.createdAt &&
-          other.isArchived == this.isArchived);
+          other.isArchived == this.isArchived &&
+          other.color == this.color);
 }
 
 class PlayersCompanion extends UpdateCompanion<Player> {
@@ -1175,12 +1210,14 @@ class PlayersCompanion extends UpdateCompanion<Player> {
   final Value<String?> lastName;
   final Value<DateTime> createdAt;
   final Value<bool> isArchived;
+  final Value<int?> color;
   const PlayersCompanion({
     this.id = const Value.absent(),
     this.firstName = const Value.absent(),
     this.lastName = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.color = const Value.absent(),
   });
   PlayersCompanion.insert({
     this.id = const Value.absent(),
@@ -1188,6 +1225,7 @@ class PlayersCompanion extends UpdateCompanion<Player> {
     this.lastName = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.color = const Value.absent(),
   }) : firstName = Value(firstName);
   static Insertable<Player> custom({
     Expression<int>? id,
@@ -1195,6 +1233,7 @@ class PlayersCompanion extends UpdateCompanion<Player> {
     Expression<String>? lastName,
     Expression<DateTime>? createdAt,
     Expression<bool>? isArchived,
+    Expression<int>? color,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1202,6 +1241,7 @@ class PlayersCompanion extends UpdateCompanion<Player> {
       if (lastName != null) 'last_name': lastName,
       if (createdAt != null) 'created_at': createdAt,
       if (isArchived != null) 'is_archived': isArchived,
+      if (color != null) 'color': color,
     });
   }
 
@@ -1211,6 +1251,7 @@ class PlayersCompanion extends UpdateCompanion<Player> {
     Value<String?>? lastName,
     Value<DateTime>? createdAt,
     Value<bool>? isArchived,
+    Value<int?>? color,
   }) {
     return PlayersCompanion(
       id: id ?? this.id,
@@ -1218,6 +1259,7 @@ class PlayersCompanion extends UpdateCompanion<Player> {
       lastName: lastName ?? this.lastName,
       createdAt: createdAt ?? this.createdAt,
       isArchived: isArchived ?? this.isArchived,
+      color: color ?? this.color,
     );
   }
 
@@ -1239,6 +1281,9 @@ class PlayersCompanion extends UpdateCompanion<Player> {
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
     return map;
   }
 
@@ -1249,7 +1294,8 @@ class PlayersCompanion extends UpdateCompanion<Player> {
           ..write('firstName: $firstName, ')
           ..write('lastName: $lastName, ')
           ..write('createdAt: $createdAt, ')
-          ..write('isArchived: $isArchived')
+          ..write('isArchived: $isArchived, ')
+          ..write('color: $color')
           ..write(')'))
         .toString();
   }
@@ -2788,6 +2834,7 @@ typedef $$PlayersTableCreateCompanionBuilder =
       Value<String?> lastName,
       Value<DateTime> createdAt,
       Value<bool> isArchived,
+      Value<int?> color,
     });
 typedef $$PlayersTableUpdateCompanionBuilder =
     PlayersCompanion Function({
@@ -2796,6 +2843,7 @@ typedef $$PlayersTableUpdateCompanionBuilder =
       Value<String?> lastName,
       Value<DateTime> createdAt,
       Value<bool> isArchived,
+      Value<int?> color,
     });
 
 final class $$PlayersTableReferences
@@ -2852,6 +2900,11 @@ class $$PlayersTableFilterComposer
 
   ColumnFilters<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2914,6 +2967,11 @@ class $$PlayersTableOrderingComposer
     column: $table.isArchived,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PlayersTableAnnotationComposer
@@ -2941,6 +2999,9 @@ class $$PlayersTableAnnotationComposer
     column: $table.isArchived,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
 
   Expression<T> gamePlayersRefs<T extends Object>(
     Expression<T> Function($$GamePlayersTableAnnotationComposer a) f,
@@ -3001,12 +3062,14 @@ class $$PlayersTableTableManager
                 Value<String?> lastName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<int?> color = const Value.absent(),
               }) => PlayersCompanion(
                 id: id,
                 firstName: firstName,
                 lastName: lastName,
                 createdAt: createdAt,
                 isArchived: isArchived,
+                color: color,
               ),
           createCompanionCallback:
               ({
@@ -3015,12 +3078,14 @@ class $$PlayersTableTableManager
                 Value<String?> lastName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<int?> color = const Value.absent(),
               }) => PlayersCompanion.insert(
                 id: id,
                 firstName: firstName,
                 lastName: lastName,
                 createdAt: createdAt,
                 isArchived: isArchived,
+                color: color,
               ),
           withReferenceMapper: (p0) => p0
               .map(

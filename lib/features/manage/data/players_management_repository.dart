@@ -25,16 +25,18 @@ class PlayersManagementRepository {
   Future<void> addPlayer({
     required String firstName,
     String? lastName,
+    int? color,
   }) async {
     try {
       await _db.playerDao.add(
         firstName: firstName,
         lastName: lastName,
+        color: color,
       );
     } on SqliteException catch (e) {
       throw e.toDomainException(
         operation: 'addPlayer',
-        context: {'firstName': firstName, 'lastName': lastName},
+        context: {'firstName': firstName, 'lastName': lastName, 'color': color},
       );
     } on Object catch (e) {
       throw DomainException(
@@ -43,6 +45,7 @@ class PlayersManagementRepository {
           'op': 'addPlayer',
           'firstName': firstName,
           'lastName': lastName,
+          'color': color,
         },
         cause: e,
       );
@@ -53,12 +56,14 @@ class PlayersManagementRepository {
     int id, {
     required String firstName,
     String? lastName,
+    int? color,
   }) async {
     try {
       final updated = await _db.playerDao.updatePlayer(
         id,
         firstName: firstName,
         lastName: lastName,
+        color: color,
       );
       if (updated == 0) {
         throw DomainException(
@@ -69,7 +74,12 @@ class PlayersManagementRepository {
     } on SqliteException catch (e) {
       throw e.toDomainException(
         operation: 'updatePlayer',
-        context: {'playerId': id, 'firstName': firstName, 'lastName': lastName},
+        context: {
+          'playerId': id,
+          'firstName': firstName,
+          'lastName': lastName,
+          'color': color,
+        },
       );
     } on DomainException {
       rethrow;

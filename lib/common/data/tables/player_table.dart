@@ -12,6 +12,8 @@ class Players extends Table {
   // Useful later (soft delete / hide)
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
 
+  IntColumn get color => integer().nullable()();
+
   // Prevent duplicates (basic). If you want “John Smith” twice, remove this.
   @override
   List<Set<Column>> get uniqueKeys => [

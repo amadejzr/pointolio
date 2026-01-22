@@ -5,11 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scoreio/common/data/database/database.dart';
 import 'package:scoreio/common/di/locator.dart';
 import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:scoreio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
 import 'package:scoreio/common/ui/widgets/search_scaffold.dart';
 import 'package:scoreio/features/manage/data/players_management_repository.dart';
 import 'package:scoreio/features/manage/presentation/cubit/players_management_cubit.dart';
 import 'package:scoreio/features/manage/presentation/widgets/delete_confirmation_dialog.dart';
-import 'package:scoreio/features/manage/presentation/widgets/edit_player_dialog.dart';
 
 class PlayersManagementPage extends StatelessWidget {
   const PlayersManagementPage({super.key});
@@ -103,16 +103,14 @@ class _PlayersManagementView extends StatelessWidget {
   Future<void> _showAddPlayerDialog(BuildContext context) async {
     final cubit = context.read<PlayersManagementCubit>();
 
-    final result = await EditPlayerDialog.show(
-      context,
-      firstName: '',
-    );
+    final result = await PlayerBottomSheet.show(context);
 
     if (result != null && context.mounted) {
       unawaited(
         cubit.addPlayer(
-          result['firstName']!,
-          result['lastName'],
+          result.firstName,
+          result.lastName,
+          result.color,
         ),
       );
     }
@@ -124,18 +122,20 @@ class _PlayersManagementView extends StatelessWidget {
   ) async {
     final cubit = context.read<PlayersManagementCubit>();
 
-    final result = await EditPlayerDialog.show(
+    final result = await PlayerBottomSheet.showForEdit(
       context,
       firstName: player.firstName,
       lastName: player.lastName,
+      color: player.color,
     );
 
     if (result != null && context.mounted) {
       unawaited(
         cubit.updatePlayer(
           player.id,
-          result['firstName']!,
-          result['lastName'],
+          result.firstName,
+          result.lastName,
+          result.color,
         ),
       );
     }
@@ -193,6 +193,12 @@ class _PlayerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final avatarColor = player.color != null
+        ? Color(player.color!)
+        : cs.primaryContainer;
+    final textColor = player.color != null
+        ? Colors.white
+        : cs.onPrimaryContainer;
 
     return Card(
       elevation: 0,
@@ -210,11 +216,11 @@ class _PlayerCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: cs.primaryContainer,
+                backgroundColor: avatarColor,
                 child: Text(
                   _initials.isNotEmpty ? _initials : '?',
                   style: tt.titleMedium?.copyWith(
-                    color: cs.onPrimaryContainer,
+                    color: textColor,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

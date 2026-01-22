@@ -255,6 +255,9 @@ class _RoundsGridState extends State<RoundsGrid>
                                 child: _PlayerCellCompact(
                                   height: RoundsGrid.rowHeight,
                                   expanded: _showFullNames,
+                                  color: ps.player.color != null
+                                      ? Color(ps.player.color!)
+                                      : null,
                                   fullName: name,
                                   initials: initials,
                                   animate: false,
@@ -285,6 +288,9 @@ class _RoundsGridState extends State<RoundsGrid>
                               child: ReorderableDelayedDragStartListener(
                                 index: index,
                                 child: _PlayerCellCompact(
+                                  color: ps.player.color != null
+                                      ? Color(ps.player.color!)
+                                      : null,
                                   height: RoundsGrid.rowHeight,
                                   expanded: _showFullNames,
                                   fullName: name,
@@ -451,6 +457,7 @@ class _PlayerCellCompact extends StatelessWidget {
     required this.fullName,
     required this.initials,
     this.animate = true,
+    this.color,
   });
 
   final double height;
@@ -458,6 +465,7 @@ class _PlayerCellCompact extends StatelessWidget {
   final String fullName;
   final String initials;
   final bool animate;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -473,6 +481,7 @@ class _PlayerCellCompact extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 16,
+              backgroundColor: color,
               child: Text(
                 initials,
                 style: const TextStyle(fontWeight: FontWeight.w800),
