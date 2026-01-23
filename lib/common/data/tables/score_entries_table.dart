@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'package:scoreio/common/data/tables/game_players_table.dart';
+import 'package:pointolio/common/data/tables/game_players_table.dart';
 
 class ScoreEntries extends Table {
   IntColumn get id => integer().autoIncrement()();

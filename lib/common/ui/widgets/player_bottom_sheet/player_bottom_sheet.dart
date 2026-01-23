@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/common/ui/widgets/player_bottom_sheet/cubit/player_bottom_sheet_cubit.dart';
-import 'package:scoreio/common/ui/widgets/player_bottom_sheet/cubit/player_bottom_sheet_state.dart';
-import 'package:scoreio/common/ui/widgets/player_bottom_sheet/player_result.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/widgets/player_bottom_sheet/cubit/player_bottom_sheet_cubit.dart';
+import 'package:pointolio/common/ui/widgets/player_bottom_sheet/cubit/player_bottom_sheet_state.dart';
+import 'package:pointolio/common/ui/widgets/player_bottom_sheet/player_result.dart';
 
 /// A reusable bottom sheet for creating or editing players.
 ///

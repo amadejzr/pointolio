@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/common/ui/widgets/small_action_buttons.dart';
-import 'package:scoreio/common/ui/widgets/win_condition_widgets.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/widgets/small_action_buttons.dart';
+import 'package:pointolio/common/ui/widgets/win_condition_widgets.dart';
 
 class GameTypeItem extends StatelessWidget {
   const GameTypeItem({

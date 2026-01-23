@@ -1,5 +1,5 @@
 import 'package:drift/native.dart';
-import 'package:scoreio/common/exception/domain_exception.dart';
+import 'package:pointolio/common/exception/domain_exception.dart';
 
 extension SqliteExceptionDomainX on SqliteException {
   DomainException toDomainException({

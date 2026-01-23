@@ -1,9 +1,9 @@
 import 'package:drift/native.dart';
-import 'package:scoreio/common/data/dao/scoring_dao.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/exception/domain_exception.dart';
-import 'package:scoreio/common/exception/exception_mapper.dart';
-import 'package:scoreio/features/scoring/domain/models.dart';
+import 'package:pointolio/common/data/dao/scoring_dao.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/exception/domain_exception.dart';
+import 'package:pointolio/common/exception/exception_mapper.dart';
+import 'package:pointolio/features/scoring/domain/models.dart';
 
 class ScoringRepository {
   const ScoringRepository(this._db);

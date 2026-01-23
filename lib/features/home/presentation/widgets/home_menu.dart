@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:scoreio/router/app_router.dart';
+import 'package:pointolio/router/app_router.dart';
 
 class HomeOverflowMenu extends StatelessWidget {
   const HomeOverflowMenu({super.key});

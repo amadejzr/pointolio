@@ -2,18 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/di/locator.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
-import 'package:scoreio/common/ui/widgets/game_type_widgets.dart';
-import 'package:scoreio/common/ui/widgets/picker_sheet.dart';
-import 'package:scoreio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
-import 'package:scoreio/common/ui/widgets/player_item_widget.dart';
-import 'package:scoreio/features/create_game/data/create_game_repository.dart';
-import 'package:scoreio/features/create_game/presentation/cubit/create_game_cubit.dart';
-import 'package:scoreio/features/create_game/presentation/cubit/create_game_state.dart';
-import 'package:scoreio/features/create_game/presentation/widgets/picker_field_widget.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/di/locator.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
+import 'package:pointolio/common/ui/widgets/game_type_widgets.dart';
+import 'package:pointolio/common/ui/widgets/picker_sheet.dart';
+import 'package:pointolio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
+import 'package:pointolio/common/ui/widgets/player_item_widget.dart';
+import 'package:pointolio/features/create_game/data/create_game_repository.dart';
+import 'package:pointolio/features/create_game/presentation/cubit/create_game_cubit.dart';
+import 'package:pointolio/features/create_game/presentation/cubit/create_game_state.dart';
+import 'package:pointolio/features/create_game/presentation/widgets/picker_field_widget.dart';
 
 class CreateGamePage extends StatelessWidget {
   const CreateGamePage({super.key});

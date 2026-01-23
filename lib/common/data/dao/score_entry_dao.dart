@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/data/tables/game_players_table.dart';
-import 'package:scoreio/common/data/tables/score_entries_table.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/data/tables/game_players_table.dart';
+import 'package:pointolio/common/data/tables/score_entries_table.dart';
 
 part 'score_entry_dao.g.dart';
 

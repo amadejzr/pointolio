@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/cubit/game_type_bottom_sheet_state.dart';
+import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/cubit/game_type_bottom_sheet_state.dart';
 
 class GameTypeBottomSheetCubit extends Cubit<GameTypeBottomSheetState> {
   GameTypeBottomSheetCubit({

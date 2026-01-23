@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
 
 class WinConditionIndicator extends StatelessWidget {
   const WinConditionIndicator({

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/di/locator.dart';
-import 'package:scoreio/common/theme/app_theme.dart';
-import 'package:scoreio/router/app_router.dart';
+import 'package:pointolio/common/di/locator.dart';
+import 'package:pointolio/common/theme/app_theme.dart';
+import 'package:pointolio/router/app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

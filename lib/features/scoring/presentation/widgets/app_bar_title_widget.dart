@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/ui/widgets/game_leading_widget.dart';
+import 'package:pointolio/common/ui/widgets/game_leading_widget.dart';
 
 class AppBarTitleMenu extends StatelessWidget {
   const AppBarTitleMenu({

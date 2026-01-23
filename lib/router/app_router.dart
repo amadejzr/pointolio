@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/features/create_game/presentation/create_game_page.dart';
-import 'package:scoreio/features/home/presentation/home_page.dart';
-import 'package:scoreio/features/manage/presentation/manage_page.dart';
-import 'package:scoreio/features/scoring/presentation/scoring_page.dart';
+import 'package:pointolio/features/create_game/presentation/create_game_page.dart';
+import 'package:pointolio/features/home/presentation/home_page.dart';
+import 'package:pointolio/features/manage/presentation/manage_page.dart';
+import 'package:pointolio/features/scoring/presentation/scoring_page.dart';
 
 class AppRouter {
   static const String home = '/';

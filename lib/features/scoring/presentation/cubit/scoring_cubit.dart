@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/exception/domain_exception.dart';
-import 'package:scoreio/features/scoring/data/scoring_repository.dart';
-import 'package:scoreio/features/scoring/domain/models.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/exception/domain_exception.dart';
+import 'package:pointolio/features/scoring/data/scoring_repository.dart';
+import 'package:pointolio/features/scoring/domain/models.dart';
 
 part 'scoring_state.dart';
 

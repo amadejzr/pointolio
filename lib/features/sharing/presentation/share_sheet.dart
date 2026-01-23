@@ -3,10 +3,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/features/scoring/domain/models.dart';
-import 'package:scoreio/features/sharing/presentation/cubit/share_sheet_cubit.dart';
-import 'package:scoreio/features/sharing/presentation/widgets/share_score_card_transparent.dart';
-import 'package:scoreio/features/sharing/presentation/widgets/share_score_card_transparent_alt.dart';
+import 'package:pointolio/features/scoring/domain/models.dart';
+import 'package:pointolio/features/sharing/presentation/cubit/share_sheet_cubit.dart';
+import 'package:pointolio/features/sharing/presentation/widgets/share_score_card_transparent.dart';
+import 'package:pointolio/features/sharing/presentation/widgets/share_score_card_transparent_alt.dart';
 
 class ShareSheet extends StatefulWidget {
   const ShareSheet({

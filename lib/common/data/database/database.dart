@@ -1,15 +1,15 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:scoreio/common/data/dao/game_dao.dart';
-import 'package:scoreio/common/data/dao/game_type_dao.dart';
-import 'package:scoreio/common/data/dao/player_dao.dart';
-import 'package:scoreio/common/data/dao/score_entry_dao.dart';
-import 'package:scoreio/common/data/dao/scoring_dao.dart';
-import 'package:scoreio/common/data/tables/game_players_table.dart';
-import 'package:scoreio/common/data/tables/games_table.dart';
-import 'package:scoreio/common/data/tables/player_table.dart';
-import 'package:scoreio/common/data/tables/score_entries_table.dart';
+import 'package:pointolio/common/data/dao/game_dao.dart';
+import 'package:pointolio/common/data/dao/game_type_dao.dart';
+import 'package:pointolio/common/data/dao/player_dao.dart';
+import 'package:pointolio/common/data/dao/score_entry_dao.dart';
+import 'package:pointolio/common/data/dao/scoring_dao.dart';
+import 'package:pointolio/common/data/tables/game_players_table.dart';
+import 'package:pointolio/common/data/tables/games_table.dart';
+import 'package:pointolio/common/data/tables/player_table.dart';
+import 'package:pointolio/common/data/tables/score_entries_table.dart';
 
 part 'database.g.dart';
 

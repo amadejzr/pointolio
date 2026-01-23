@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/common/ui/widgets/game_leading_widget.dart';
-import 'package:scoreio/common/ui/widgets/small_action_buttons.dart';
-import 'package:scoreio/common/ui/widgets/win_condition_widgets.dart';
-import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/widgets/game_leading_widget.dart';
+import 'package:pointolio/common/ui/widgets/small_action_buttons.dart';
+import 'package:pointolio/common/ui/widgets/win_condition_widgets.dart';
+import 'package:pointolio/features/home/presentation/cubit/home_state.dart';
 
 class GameCard extends StatelessWidget {
   const GameCard({

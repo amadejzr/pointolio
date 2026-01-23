@@ -1,6 +1,6 @@
 import 'package:drift/native.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/exception/exception_mapper.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/exception/exception_mapper.dart';
 
 class CreateGameRepository {
   const CreateGameRepository(this._db);

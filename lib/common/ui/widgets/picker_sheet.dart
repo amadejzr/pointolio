@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
 
 typedef PickerItemLabel<T> = String Function(T item);
 typedef PickerItemSearchText<T> = String Function(T item);

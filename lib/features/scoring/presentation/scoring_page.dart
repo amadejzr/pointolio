@@ -2,17 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/di/locator.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/features/scoring/data/scoring_repository.dart';
-import 'package:scoreio/features/scoring/domain/models.dart';
-import 'package:scoreio/features/scoring/presentation/cubit/scoring_cubit.dart';
-import 'package:scoreio/features/scoring/presentation/widgets/app_bar_title_widget.dart';
-import 'package:scoreio/features/scoring/presentation/widgets/edit_party_bottom_sheet.dart';
-import 'package:scoreio/features/scoring/presentation/widgets/table_widget.dart';
-import 'package:scoreio/features/scoring/presentation/widgets/totals_bottom_sheet.dart';
-import 'package:scoreio/features/sharing/presentation/share_sheet.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/di/locator.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/features/scoring/data/scoring_repository.dart';
+import 'package:pointolio/features/scoring/domain/models.dart';
+import 'package:pointolio/features/scoring/presentation/cubit/scoring_cubit.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/app_bar_title_widget.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/edit_party_bottom_sheet.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/table_widget.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/totals_bottom_sheet.dart';
+import 'package:pointolio/features/sharing/presentation/share_sheet.dart';
 
 class ScoringPage extends StatelessWidget {
   const ScoringPage({required this.gameId, super.key});

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/exception/domain_exception.dart';
-import 'package:scoreio/features/home/data/home_repository.dart';
-import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
+import 'package:pointolio/common/exception/domain_exception.dart';
+import 'package:pointolio/features/home/data/home_repository.dart';
+import 'package:pointolio/features/home/presentation/cubit/home_state.dart';
 
 class HomeCubit extends Cubit<HomeState> {
   HomeCubit({required HomeRepository homeRepository})

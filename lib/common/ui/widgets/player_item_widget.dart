@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/ui/widgets/small_action_buttons.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/ui/widgets/small_action_buttons.dart';
 
 class PlayerItem extends StatelessWidget {
   const PlayerItem({

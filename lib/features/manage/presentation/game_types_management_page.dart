@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/di/locator.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/common/ui/widgets/confirm_dialog.dart';
-import 'package:scoreio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
-import 'package:scoreio/common/ui/widgets/search_scaffold.dart';
-import 'package:scoreio/common/ui/widgets/small_action_buttons.dart';
-import 'package:scoreio/common/ui/widgets/win_condition_widgets.dart';
-import 'package:scoreio/features/manage/data/game_types_management_repository.dart';
-import 'package:scoreio/features/manage/presentation/cubit/game_types_management_cubit.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/di/locator.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/widgets/confirm_dialog.dart';
+import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
+import 'package:pointolio/common/ui/widgets/search_scaffold.dart';
+import 'package:pointolio/common/ui/widgets/small_action_buttons.dart';
+import 'package:pointolio/common/ui/widgets/win_condition_widgets.dart';
+import 'package:pointolio/features/manage/data/game_types_management_repository.dart';
+import 'package:pointolio/features/manage/presentation/cubit/game_types_management_cubit.dart';
 
 class GameTypesManagementPage extends StatelessWidget {
   const GameTypesManagementPage({super.key});

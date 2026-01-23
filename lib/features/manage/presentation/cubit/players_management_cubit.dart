@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/exception/domain_exception.dart';
-import 'package:scoreio/features/manage/data/players_management_repository.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/exception/domain_exception.dart';
+import 'package:pointolio/features/manage/data/players_management_repository.dart';
 
 part 'players_management_state.dart';
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/common/ui/widgets/picker_sheet.dart';
-import 'package:scoreio/common/ui/widgets/player_item_widget.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/widgets/picker_sheet.dart';
+import 'package:pointolio/common/ui/widgets/player_item_widget.dart';
 
 /// Result data returned from EditPartyBottomSheet.
 class EditPartyResult {

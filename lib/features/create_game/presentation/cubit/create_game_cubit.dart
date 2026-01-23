@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/common/exception/domain_exception.dart';
-import 'package:scoreio/features/create_game/data/create_game_repository.dart';
-import 'package:scoreio/features/create_game/presentation/cubit/create_game_state.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/exception/domain_exception.dart';
+import 'package:pointolio/features/create_game/data/create_game_repository.dart';
+import 'package:pointolio/features/create_game/presentation/cubit/create_game_state.dart';
 
 class CreateGameCubit extends Cubit<CreateGameState> {
   CreateGameCubit({

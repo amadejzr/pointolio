@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:scoreio/common/data/database/database.dart';
+import 'package:pointolio/common/data/database/database.dart';
 
 enum CreateGameStatus { initial, loading, success, error }
 

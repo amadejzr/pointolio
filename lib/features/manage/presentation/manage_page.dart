@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/features/manage/presentation/game_types_management_page.dart';
-import 'package:scoreio/features/manage/presentation/players_management_page.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/features/manage/presentation/game_types_management_page.dart';
+import 'package:pointolio/features/manage/presentation/players_management_page.dart';
 
 class ManagePage extends StatelessWidget {
   const ManagePage({super.key});

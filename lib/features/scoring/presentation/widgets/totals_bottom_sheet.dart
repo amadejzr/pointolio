@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/features/scoring/domain/models.dart';
-import 'package:scoreio/features/scoring/presentation/cubit/scoring_cubit.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/features/scoring/domain/models.dart';
+import 'package:pointolio/features/scoring/presentation/cubit/scoring_cubit.dart';
 
 class TotalsBar extends StatelessWidget {
   const TotalsBar({required this.state, required this.onShowTotals, super.key});

@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scoreio/common/di/locator.dart';
-import 'package:scoreio/common/ui/tokens/spacing.dart';
-import 'package:scoreio/common/ui/widgets/confirm_dialog.dart';
-import 'package:scoreio/common/ui/widgets/toast_message.dart';
-import 'package:scoreio/features/home/data/home_repository.dart';
-import 'package:scoreio/features/home/presentation/cubit/home_cubit.dart';
-import 'package:scoreio/features/home/presentation/cubit/home_state.dart';
-import 'package:scoreio/features/home/presentation/widgets/game_card.dart';
-import 'package:scoreio/features/home/presentation/widgets/home_menu.dart';
-import 'package:scoreio/router/app_router.dart';
+import 'package:pointolio/common/di/locator.dart';
+import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/widgets/confirm_dialog.dart';
+import 'package:pointolio/common/ui/widgets/toast_message.dart';
+import 'package:pointolio/features/home/data/home_repository.dart';
+import 'package:pointolio/features/home/presentation/cubit/home_cubit.dart';
+import 'package:pointolio/features/home/presentation/cubit/home_state.dart';
+import 'package:pointolio/features/home/presentation/widgets/game_card.dart';
+import 'package:pointolio/features/home/presentation/widgets/home_menu.dart';
+import 'package:pointolio/router/app_router.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

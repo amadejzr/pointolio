@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:scoreio/common/data/database/database.dart';
-import 'package:scoreio/features/scoring/domain/models.dart';
+import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/features/scoring/domain/models.dart';
 
 class ShareScoreCardTransparentAlt extends StatelessWidget {
   const ShareScoreCardTransparentAlt({
