@@ -233,4 +233,48 @@ class ScoringRepository {
       );
     }
   }
+
+  Future<List<Player>> getAllPlayers() async {
+    try {
+      return await _db.playerDao.getAll();
+    } on SqliteException catch (e) {
+      throw e.toDomainException(
+        operation: 'getAllPlayers',
+        context: {},
+      );
+    } on Object catch (e) {
+      throw DomainException(
+        DomainErrorCode.storage,
+        context: {'op': 'getAllPlayers'},
+        cause: e,
+      );
+    }
+  }
+
+  Future<void> updateGameParty({
+    required int gameId,
+    required String name,
+    required List<int> playerIds,
+  }) async {
+    try {
+      await _dao.updateGameParty(
+        gameId: gameId,
+        name: name,
+        playerIds: playerIds,
+      );
+    } on SqliteException catch (e) {
+      throw e.toDomainException(
+        operation: 'updateGameParty',
+        context: {'gameId': gameId, 'name': name},
+      );
+    } on DomainException {
+      rethrow;
+    } on Object catch (e) {
+      throw DomainException(
+        DomainErrorCode.storage,
+        context: {'op': 'updateGameParty', 'gameId': gameId},
+        cause: e,
+      );
+    }
+  }
 }

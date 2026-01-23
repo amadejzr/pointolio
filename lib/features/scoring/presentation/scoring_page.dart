@@ -54,28 +54,7 @@ class ScoringScreen extends StatelessWidget {
               lowestScoreWins: state.lowestScoreWins,
               isFinished: state.game?.finishedAt != null,
               gameTypeName: state.gameType?.name,
-              onEdit: () async {
-                final initialPlayers = state.playerScores
-                    .map((ps) => ps.player)
-                    .toList();
-                final allPlayers = await locator<AppDatabase>().playerDao
-                    .getAll();
-
-                if (!context.mounted) return;
-
-                final result = await EditPartyBottomSheet.show(
-                  context,
-                  initialName: state.game?.name ?? '',
-                  initialPlayers: initialPlayers,
-                  availablePlayers: allPlayers,
-                );
-
-                if (result != null) {
-                  // TODO: Handle the result - update game name and players
-                  // result.name - the new party name
-                  // result.players - the updated player list
-                }
-              },
+              onEdit: () => _onEditPartyPressed(context, state),
               onToggleFinished: () {
                 if (state.game?.finishedAt != null) {
                   unawaited(context.read<ScoringCubit>().restoreGame());
@@ -175,6 +154,29 @@ class ScoringScreen extends StatelessWidget {
   }
 
   // --- Screen actions (only here touches cubit) ---
+
+  Future<void> _onEditPartyPressed(
+    BuildContext context,
+    ScoringState state,
+  ) async {
+    final cubit = context.read<ScoringCubit>();
+
+    final initialPlayers = state.playerScores.map((ps) => ps.player).toList();
+    final allPlayers = await cubit.getAllPlayers();
+
+    if (!context.mounted) return;
+
+    final result = await EditPartyBottomSheet.show(
+      context,
+      initialName: state.game?.name ?? '',
+      initialPlayers: initialPlayers,
+      availablePlayers: allPlayers,
+    );
+
+    if (result != null) {
+      unawaited(cubit.updateParty(name: result.name, players: result.players));
+    }
+  }
 
   void _onAddRoundPressed(BuildContext context, ScoringState state) {
     final cubit = context.read<ScoringCubit>();

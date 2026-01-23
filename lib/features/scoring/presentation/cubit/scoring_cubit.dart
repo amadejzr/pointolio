@@ -236,6 +236,40 @@ class ScoringCubit extends Cubit<ScoringState> {
     }
   }
 
+  /// Returns all available players for editing the party.
+  Future<List<Player>> getAllPlayers() async {
+    try {
+      return await _repository.getAllPlayers();
+    } on DomainException {
+      return [];
+    }
+  }
+
+  /// Updates the game party name and player list.
+  Future<void> updateParty({
+    required String name,
+    required List<Player> players,
+  }) async {
+    try {
+      await _repository.updateGameParty(
+        gameId: state.gameId,
+        name: name,
+        playerIds: players.map((p) => p.id).toList(),
+      );
+      // Reload game to get updated name
+      final game = await _repository.getGame(state.gameId);
+      emit(state.copyWith(game: game));
+      // Players will be updated reactively via the stream subscription
+    } on DomainException catch (e) {
+      emit(
+        state.copyWith(
+          status: ScoringStatus.error,
+          errorMessage: _mapDomainError(e, 'update party'),
+        ),
+      );
+    }
+  }
+
   String _mapDomainError(DomainException e, String operation) {
     return switch (e.code) {
       DomainErrorCode.notFound => 'Could not find the requested data',

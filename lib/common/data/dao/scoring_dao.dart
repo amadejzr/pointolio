@@ -222,4 +222,67 @@ class ScoringDao extends DatabaseAccessor<AppDatabase> with _$ScoringDaoMixin {
       ),
     );
   }
+
+  /// Updates a game's name and player list in a single transaction.
+  ///
+  /// - Updates the game name
+  /// - Removes players that are no longer in the list
+  /// - Adds new players that weren't in the list before
+  /// - Reorders existing players to match the new order
+  Future<void> updateGameParty({
+    required int gameId,
+    required String name,
+    required List<int> playerIds,
+  }) {
+    return transaction(() async {
+      // Update game name
+      await (update(games)..where((g) => g.id.equals(gameId))).write(
+        GamesCompanion(name: Value(name.trim())),
+      );
+
+      // Get current game players
+      final currentGamePlayers = await (select(gamePlayers)
+            ..where((gp) => gp.gameId.equals(gameId)))
+          .get();
+
+      final currentPlayerIds =
+          currentGamePlayers.map((gp) => gp.playerId).toSet();
+      final newPlayerIds = playerIds.toSet();
+
+      // Remove players that are no longer in the list
+      final toRemove = currentPlayerIds.difference(newPlayerIds);
+      if (toRemove.isNotEmpty) {
+        await (delete(gamePlayers)
+              ..where(
+                (gp) =>
+                    gp.gameId.equals(gameId) & gp.playerId.isIn(toRemove),
+              ))
+            .go();
+      }
+
+      // Add new players
+      final toAdd = newPlayerIds.difference(currentPlayerIds);
+      for (final playerId in toAdd) {
+        await into(gamePlayers).insert(
+          GamePlayersCompanion.insert(
+            gameId: gameId,
+            playerId: playerId,
+            orderIndex: const Value(999), // Will be fixed by reorder below
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+
+      // Reorder all players to match the new order
+      for (var i = 0; i < playerIds.length; i++) {
+        await (update(gamePlayers)
+              ..where(
+                (gp) =>
+                    gp.gameId.equals(gameId) &
+                    gp.playerId.equals(playerIds[i]),
+              ))
+            .write(GamePlayersCompanion(orderIndex: Value(i)));
+      }
+    });
+  }
 }
