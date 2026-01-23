@@ -89,8 +89,6 @@ class AppBarTitleMenu extends StatelessWidget {
             ),
           ),
         ],
-
-        // ✅ THIS is where title + color + arrow live
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -105,39 +103,51 @@ class AppBarTitleMenu extends StatelessWidget {
               badgeOffset: 4,
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                Row(
-                  children: [
-                    Icon(
-                      lowestScoreWins
-                          ? Icons.arrow_downward
-                          : Icons.arrow_upward,
-                      size: 12,
-                      color: lowestScoreWins ? Colors.blue : Colors.orange,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      lowestScoreWins ? 'Lowest wins' : 'Highest wins',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        lowestScoreWins
+                            ? Icons.arrow_downward
+                            : Icons.arrow_upward,
+                        size: 12,
                         color: lowestScoreWins ? Colors.blue : Colors.orange,
-                        fontWeight: FontWeight.w600,
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          lowestScoreWins ? 'Lowest wins' : 'Highest wins',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: lowestScoreWins
+                                    ? Colors.blue
+                                    : Colors.orange,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
+
             const SizedBox(width: 6),
             Icon(Icons.expand_more, color: cs.onSurfaceVariant),
           ],

@@ -9,6 +9,7 @@ import 'package:scoreio/features/scoring/data/scoring_repository.dart';
 import 'package:scoreio/features/scoring/domain/models.dart';
 import 'package:scoreio/features/scoring/presentation/cubit/scoring_cubit.dart';
 import 'package:scoreio/features/scoring/presentation/widgets/app_bar_title_widget.dart';
+import 'package:scoreio/features/scoring/presentation/widgets/edit_party_bottom_sheet.dart';
 import 'package:scoreio/features/scoring/presentation/widgets/table_widget.dart';
 import 'package:scoreio/features/scoring/presentation/widgets/totals_bottom_sheet.dart';
 import 'package:scoreio/features/sharing/presentation/share_sheet.dart';
@@ -41,7 +42,7 @@ class ScoringScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ScoringCubit, ScoringState>(
       builder: (context, state) {
-        final title = state.game?.gameTypeNameSnapshot ?? 'Scoring';
+        final title = state.game?.name ?? 'Scoring';
         final isLandscape =
             MediaQuery.orientationOf(context) == Orientation.landscape;
 
@@ -53,7 +54,28 @@ class ScoringScreen extends StatelessWidget {
               lowestScoreWins: state.lowestScoreWins,
               isFinished: state.game?.finishedAt != null,
               gameTypeName: state.gameType?.name,
-              onEdit: () {},
+              onEdit: () async {
+                final initialPlayers = state.playerScores
+                    .map((ps) => ps.player)
+                    .toList();
+                final allPlayers = await locator<AppDatabase>().playerDao
+                    .getAll();
+
+                if (!context.mounted) return;
+
+                final result = await EditPartyBottomSheet.show(
+                  context,
+                  initialName: state.game?.name ?? '',
+                  initialPlayers: initialPlayers,
+                  availablePlayers: allPlayers,
+                );
+
+                if (result != null) {
+                  // TODO: Handle the result - update game name and players
+                  // result.name - the new party name
+                  // result.players - the updated player list
+                }
+              },
               onToggleFinished: () {
                 if (state.game?.finishedAt != null) {
                   unawaited(context.read<ScoringCubit>().restoreGame());

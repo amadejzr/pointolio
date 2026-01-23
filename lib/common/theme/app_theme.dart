@@ -46,6 +46,29 @@ class AppTheme {
     const r18 = BorderRadius.all(Radius.circular(18));
 
     return ThemeData(
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: r12,
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.9),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.18),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        textStyle: Typography.material2021().black.bodySmall?.copyWith(
+          color: colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        waitDuration: const Duration(milliseconds: 400),
+        showDuration: const Duration(seconds: 3),
+      ),
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
@@ -215,6 +238,29 @@ class AppTheme {
     const r18 = BorderRadius.all(Radius.circular(18));
 
     return ThemeData(
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: _dCard,
+          borderRadius: r12,
+          border: Border.all(
+            color: _dOutline.withValues(alpha: 0.9),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.45),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        textStyle: Typography.material2021().white.bodySmall?.copyWith(
+          color: _dText,
+          fontWeight: FontWeight.w600,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        waitDuration: const Duration(milliseconds: 400),
+        showDuration: const Duration(seconds: 3),
+      ),
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
