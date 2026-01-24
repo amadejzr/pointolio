@@ -375,7 +375,7 @@ class ShareScoreCardTransparent extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'Scoreio',
+            'Pointolio',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(

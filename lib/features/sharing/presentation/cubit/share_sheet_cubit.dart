@@ -1,11 +1,8 @@
-// share_sheet_cubit.dart
 import 'dart:io';
-import 'dart:ui' as ui;
+import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -13,18 +10,13 @@ import 'package:share_plus/share_plus.dart';
 
 part 'share_sheet_state.dart';
 
+/// Result of a share or save operation.
+enum ShareActionResult { success, cancelled, permissionDenied, failed }
+
 class ShareSheetCubit extends Cubit<ShareSheetState> {
-  ShareSheetCubit({
-    required int previewCount,
-    this.pixelRatio = 3.0,
-  }) : _keys = List.generate(previewCount, (_) => GlobalKey()),
-       super(const ShareSheetState());
+  ShareSheetCubit() : super(const ShareSheetState());
 
-  final double pixelRatio;
-  final List<GlobalKey> _keys;
   int _toastSeq = 0;
-
-  List<GlobalKey> get captureKeys => _keys;
 
   void setIndex(int index) {
     if (isClosed) return;
@@ -41,29 +33,28 @@ class ShareSheetCubit extends Cubit<ShareSheetState> {
     );
   }
 
-  Future<void> share(BuildContext context) async {
-    if (state.busy || isClosed) return;
+  /// Shows an error toast message.
+  void showError(String message) {
+    _toast(message, ShareSheetToastType.error);
+  }
+
+  /// Shares the image bytes using the system share sheet.
+  /// Returns the result of the share action.
+  Future<ShareActionResult> share({
+    required Uint8List imageBytes,
+    required double screenWidth,
+    required double screenHeight,
+  }) async {
+    if (state.busy || isClosed) return ShareActionResult.cancelled;
     emit(state.copyWith(busy: true));
 
     try {
-      final bytes = await _captureCurrent();
-      if (isClosed) return;
-
-      if (bytes == null) {
-        emit(state.copyWith(busy: false));
-        _toast('Failed to capture image', ShareSheetToastType.error);
-        return;
-      }
-
-      if (!context.mounted || isClosed) return;
-
-      final size = MediaQuery.sizeOf(context);
       final ts = DateTime.now().millisecondsSinceEpoch;
 
       final xfile = XFile.fromData(
-        bytes,
+        imageBytes,
         mimeType: 'image/png',
-        name: 'scoreio_$ts.png',
+        name: 'pointolio_$ts.png',
         lastModified: DateTime.now(),
       );
 
@@ -72,67 +63,64 @@ class ShareSheetCubit extends Cubit<ShareSheetState> {
           files: [xfile],
           sharePositionOrigin: Rect.fromLTWH(
             0,
-            size.height - 1,
-            size.width,
+            screenHeight - 1,
+            screenWidth,
             1,
           ),
         ),
       );
 
-      if (isClosed) return;
+      if (isClosed) return ShareActionResult.cancelled;
       emit(state.copyWith(busy: false));
 
-      if (result.status == ShareResultStatus.success && context.mounted) {
-        Navigator.of(context).pop();
+      if (result.status == ShareResultStatus.success) {
+        return ShareActionResult.success;
       }
+      return ShareActionResult.cancelled;
     } on Object catch (e) {
-      if (isClosed) return;
+      if (isClosed) return ShareActionResult.failed;
       emit(state.copyWith(busy: false));
       _toast('Share failed: $e', ShareSheetToastType.error);
+      return ShareActionResult.failed;
     }
   }
 
-  Future<void> saveToGallery(BuildContext context) async {
-    if (state.busy || isClosed) return;
+  /// Saves the image bytes to the device gallery.
+  /// Returns the result of the save action.
+  Future<ShareActionResult> saveToGallery(Uint8List imageBytes) async {
+    if (state.busy || isClosed) return ShareActionResult.cancelled;
     emit(state.copyWith(busy: true));
 
     try {
-      final ok = await _ensureGalleryPermission();
-      if (isClosed) return;
+      final permissionGranted = await _ensureGalleryPermission();
+      if (isClosed) return ShareActionResult.cancelled;
 
-      if (!ok) {
+      if (!permissionGranted) {
         emit(state.copyWith(busy: false));
         _toast('Photos permission not granted', ShareSheetToastType.error);
-        return;
+        return ShareActionResult.permissionDenied;
       }
 
-      final bytes = await _captureCurrent();
-      if (isClosed) return;
+      final result = await ImageGallerySaverPlus.saveImage(imageBytes);
 
-      if (bytes == null) {
-        emit(state.copyWith(busy: false));
-        _toast('Failed to capture image', ShareSheetToastType.error);
-        return;
-      }
-
-      final result =
-          await ImageGallerySaverPlus.saveImage(bytes);
-
-      if (isClosed) return;
-
+      if (isClosed) return ShareActionResult.cancelled;
       emit(state.copyWith(busy: false));
 
+      // saveImage function is returning dynamic result
+      // ignore: avoid_dynamic_calls
       final success = result['isSuccess'] as bool? ?? false;
       if (success) {
         _toast('Image saved to gallery', ShareSheetToastType.success);
-        if (context.mounted) Navigator.of(context).pop();
+        return ShareActionResult.success;
       } else {
         _toast('Failed to save to gallery', ShareSheetToastType.error);
+        return ShareActionResult.failed;
       }
     } on Object catch (e) {
-      if (isClosed) return;
+      if (isClosed) return ShareActionResult.failed;
       emit(state.copyWith(busy: false));
       _toast('Save failed: $e', ShareSheetToastType.error);
+      return ShareActionResult.failed;
     }
   }
 
@@ -162,29 +150,6 @@ class ShareSheetCubit extends Cubit<ShareSheetState> {
     }
 
     return false;
-  }
-
-  Future<Uint8List?> _captureCurrent() async {
-    if (isClosed) return null;
-
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-    if (isClosed) return null;
-
-    final index = state.index.clamp(0, _keys.length - 1);
-    final boundary =
-        _keys[index].currentContext?.findRenderObject()
-            as RenderRepaintBoundary?;
-
-    if (boundary == null) return null;
-
-    if (boundary.debugNeedsPaint) {
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      if (isClosed) return null;
-    }
-
-    final image = await boundary.toImage(pixelRatio: pixelRatio);
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    return byteData?.buffer.asUint8List();
   }
 
   void clearToast() {

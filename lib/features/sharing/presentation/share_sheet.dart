@@ -1,7 +1,9 @@
-// share_sheet.dart
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pointolio/features/scoring/domain/models.dart';
 import 'package:pointolio/features/sharing/presentation/cubit/share_sheet_cubit.dart';
@@ -41,7 +43,7 @@ class ShareSheet extends StatefulWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (_) => BlocProvider(
-        create: (_) => ShareSheetCubit(previewCount: 2),
+        create: (_) => ShareSheetCubit(),
         child: FractionallySizedBox(
           heightFactor: 0.95,
           child: ShareSheet(
@@ -60,8 +62,13 @@ class ShareSheet extends StatefulWidget {
 }
 
 class _ShareSheetState extends State<ShareSheet> {
+  static const double _capturePixelRatio = 3;
+
   late final PageController _pageController;
   late final List<Widget> _previews;
+
+  // Keys for the VISIBLE repaint boundaries (one per page)
+  late final List<GlobalKey> _previewKeys;
 
   Timer? _toastTimer;
 
@@ -70,7 +77,6 @@ class _ShareSheetState extends State<ShareSheet> {
     super.initState();
     _pageController = PageController();
 
-    // Build previews INSIDE the sheet
     _previews = [
       ShareScoreCardTransparent(
         scoringData: widget.scoringData,
@@ -83,6 +89,8 @@ class _ShareSheetState extends State<ShareSheet> {
         primaryColor: widget.primaryColor,
       ),
     ];
+
+    _previewKeys = List.generate(_previews.length, (_) => GlobalKey());
   }
 
   @override
@@ -100,6 +108,112 @@ class _ShareSheetState extends State<ShareSheet> {
     });
   }
 
+  Future<Uint8List?> _captureVisiblePreviewPng(int index) async {
+    if (!mounted) return null;
+
+    final i = index.clamp(0, _previewKeys.length - 1);
+
+    // Make sure correct page is visible
+    if (_pageController.hasClients) {
+      final currentPage =
+          (_pageController.page ?? _pageController.initialPage.toDouble())
+              .round();
+      if (currentPage != i) {
+        _pageController.jumpToPage(i);
+      }
+    }
+
+    // Simple delay - works reliably in both debug and release modes
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    if (!mounted) return null;
+
+    for (var attempt = 0; attempt < 10; attempt++) {
+      if (!mounted) return null;
+
+      try {
+        final ctx = _previewKeys[i].currentContext;
+        if (ctx == null) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          continue;
+        }
+
+        if (!ctx.mounted) return null;
+
+        final ro = ctx.findRenderObject();
+        if (ro is! RenderRepaintBoundary) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          continue;
+        }
+
+        if (ro.size.isEmpty) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          continue;
+        }
+
+        // Capture the image
+        final image = await ro.toImage(pixelRatio: _capturePixelRatio);
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        image.dispose();
+
+        if (byteData == null) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          continue;
+        }
+
+        return byteData.buffer.asUint8List();
+      } on Object {
+        // Catch ALL errors (Exception and Error), wait and retry
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        continue;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _onSharePressed() async {
+    final cubit = context.read<ShareSheetCubit>();
+    final currentIndex = cubit.state.index;
+
+    final bytes = await _captureVisiblePreviewPng(currentIndex);
+    if (!mounted) return;
+
+    if (bytes == null) {
+      cubit.showError('Failed to capture image');
+      return;
+    }
+
+    final size = MediaQuery.sizeOf(context);
+    final result = await cubit.share(
+      imageBytes: bytes,
+      screenWidth: size.width,
+      screenHeight: size.height,
+    );
+
+    if (result == ShareActionResult.success && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _onSavePressed() async {
+    final cubit = context.read<ShareSheetCubit>();
+    final currentIndex = cubit.state.index;
+
+    final bytes = await _captureVisiblePreviewPng(currentIndex);
+    if (!mounted) return;
+
+    if (bytes == null) {
+      cubit.showError('Failed to capture image');
+      return;
+    }
+
+    final result = await cubit.saveToGallery(bytes);
+
+    if (result == ShareActionResult.success && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -108,9 +222,7 @@ class _ShareSheetState extends State<ShareSheet> {
 
     return BlocListener<ShareSheetCubit, ShareSheetState>(
       listenWhen: (p, n) => p.toast?.id != n.toast?.id && n.toast != null,
-      listener: (context, state) {
-        _scheduleToastClear(context);
-      },
+      listener: (context, state) => _scheduleToastClear(context),
       child: AnimatedPadding(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
@@ -166,17 +278,13 @@ class _ShareSheetState extends State<ShareSheet> {
                             onPageChanged: (i) =>
                                 context.read<ShareSheetCubit>().setIndex(i),
                             itemBuilder: (context, i) {
-                              final key = context
-                                  .read<ShareSheetCubit>()
-                                  .captureKeys[i];
-
                               return Padding(
                                 padding: const EdgeInsets.all(14),
                                 child: Center(
                                   child: FittedBox(
-                                    fit: BoxFit.scaleDown, // preview can crop
+                                    fit: BoxFit.scaleDown,
                                     child: RepaintBoundary(
-                                      key: key,
+                                      key: _previewKeys[i],
                                       child: _previews[i],
                                     ),
                                   ),
@@ -185,7 +293,7 @@ class _ShareSheetState extends State<ShareSheet> {
                             },
                           ),
 
-                          // subtle gradient
+                          // subtle gradient (UI only, not captured)
                           Positioned(
                             left: 0,
                             right: 0,
@@ -241,9 +349,7 @@ class _ShareSheetState extends State<ShareSheet> {
                               icon: Icons.ios_share_rounded,
                               label: 'More',
                               busy: state.busy,
-                              onTap: () => context
-                                  .read<ShareSheetCubit>()
-                                  .share(context),
+                              onTap: _onSharePressed,
                               prominent: true,
                             ),
                           ),
@@ -253,9 +359,7 @@ class _ShareSheetState extends State<ShareSheet> {
                               icon: Icons.download_rounded,
                               label: 'Save image',
                               busy: state.busy,
-                              onTap: () => context
-                                  .read<ShareSheetCubit>()
-                                  .saveToGallery(context),
+                              onTap: _onSavePressed,
                             ),
                           ),
                         ],
@@ -266,7 +370,7 @@ class _ShareSheetState extends State<ShareSheet> {
               ],
             ),
 
-            // ===== TOP MESSAGE OVERLAY (always above sheet content) =====
+            // ===== TOP MESSAGE OVERLAY =====
             Positioned(
               left: 12,
               right: 12,
@@ -276,8 +380,6 @@ class _ShareSheetState extends State<ShareSheet> {
                 builder: (context, state) {
                   final toast = state.toast;
                   if (toast == null) return const SizedBox.shrink();
-
-                  final cs = Theme.of(context).colorScheme;
 
                   final Color bg;
                   final Color fg;
@@ -345,7 +447,6 @@ class _ShareSheetState extends State<ShareSheet> {
     );
   }
 }
-
 // ===== UI bits =====
 
 class _ActionButton extends StatelessWidget {

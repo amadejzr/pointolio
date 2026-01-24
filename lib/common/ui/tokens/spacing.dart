@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-/// Design spacing tokens used across Scoreio UI.
+/// Design spacing tokens used across Pointolio UI.
 ///
 /// Use these instead of raw numbers like `8`, `12`, `16`
 /// so spacing stays consistent and easy to tweak.
