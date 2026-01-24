@@ -8,7 +8,6 @@ class PlayersManagementState extends Equatable {
     this.status = PlayersManagementStatus.initial,
     this.searchQuery,
     this.errorMessage,
-    this.snackbarMessage,
     this.playerToDeleteId,
     this.playerToEdit,
   });
@@ -19,7 +18,6 @@ class PlayersManagementState extends Equatable {
   final PlayersManagementStatus status;
   final String? searchQuery;
   final String? errorMessage;
-  final String? snackbarMessage;
   final int? playerToDeleteId;
   final Player? playerToEdit;
 
@@ -43,11 +41,9 @@ class PlayersManagementState extends Equatable {
     PlayersManagementStatus? status,
     String? searchQuery,
     String? errorMessage,
-    String? snackbarMessage,
     int? playerToDeleteId,
     Player? playerToEdit,
     bool clearSearchQuery = false,
-    bool clearSnackbar = false,
     bool clearPlayerToDelete = false,
     bool clearPlayerToEdit = false,
   }) {
@@ -56,8 +52,6 @@ class PlayersManagementState extends Equatable {
       status: status ?? this.status,
       searchQuery: clearSearchQuery ? null : searchQuery ?? this.searchQuery,
       errorMessage: errorMessage ?? this.errorMessage,
-      snackbarMessage:
-          clearSnackbar ? null : snackbarMessage ?? this.snackbarMessage,
       playerToDeleteId: clearPlayerToDelete
           ? null
           : playerToDeleteId ?? this.playerToDeleteId,
@@ -72,7 +66,6 @@ class PlayersManagementState extends Equatable {
         status,
         searchQuery,
         errorMessage,
-        snackbarMessage,
         playerToDeleteId,
         playerToEdit,
       ];

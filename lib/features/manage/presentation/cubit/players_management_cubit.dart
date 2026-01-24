@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/exception/domain_exception.dart';
+import 'package:pointolio/common/result/action_result.dart';
 import 'package:pointolio/features/manage/data/players_management_repository.dart';
 
 part 'players_management_state.dart';
@@ -40,29 +41,29 @@ class PlayersManagementCubit extends Cubit<PlayersManagementState> {
     );
   }
 
-  Future<void> addPlayer(String firstName, String? lastName, int? color) async {
+  Future<ActionResult> addPlayer(
+    String firstName,
+    String? lastName,
+    int? color,
+  ) async {
     try {
       await _repository.addPlayer(
         firstName: firstName,
         lastName: lastName,
         color: color,
       );
-      emit(
-        state.copyWith(
-          snackbarMessage: 'Player added successfully',
-        ),
-      );
+      return const ActionSuccess('Player added successfully');
     } on DomainException catch (e) {
       final message = switch (e.code) {
         DomainErrorCode.conflict => 'A player with this name already exists',
         DomainErrorCode.validation => 'Invalid player information',
         _ => 'Failed to add player',
       };
-      emit(state.copyWith(snackbarMessage: message));
+      return ActionFailure(message);
     }
   }
 
-  Future<void> updatePlayer(
+  Future<ActionResult> updatePlayer(
     int id,
     String firstName,
     String? lastName,
@@ -75,12 +76,8 @@ class PlayersManagementCubit extends Cubit<PlayersManagementState> {
         lastName: lastName,
         color: color,
       );
-      emit(
-        state.copyWith(
-          snackbarMessage: 'Player updated successfully',
-          clearPlayerToEdit: true,
-        ),
-      );
+      emit(state.copyWith(clearPlayerToEdit: true));
+      return const ActionSuccess('Player updated successfully');
     } on DomainException catch (e) {
       final message = switch (e.code) {
         DomainErrorCode.notFound => 'Player not found',
@@ -88,30 +85,22 @@ class PlayersManagementCubit extends Cubit<PlayersManagementState> {
         DomainErrorCode.validation => 'Invalid player information',
         _ => 'Failed to update player',
       };
-      emit(state.copyWith(snackbarMessage: message));
+      return ActionFailure(message);
     }
   }
 
-  Future<void> deletePlayer(int id) async {
+  Future<ActionResult> deletePlayer(int id) async {
     try {
       await _repository.deletePlayer(id);
-      emit(
-        state.copyWith(
-          snackbarMessage: 'Player deleted successfully',
-          clearPlayerToDelete: true,
-        ),
-      );
+      emit(state.copyWith(clearPlayerToDelete: true));
+      return const ActionSuccess('Player deleted successfully');
     } on DomainException catch (e) {
       final message = switch (e.code) {
         DomainErrorCode.notFound => 'Player not found',
         _ => 'Failed to delete player',
       };
-      emit(
-        state.copyWith(
-          snackbarMessage: message,
-          clearPlayerToDelete: true,
-        ),
-      );
+      emit(state.copyWith(clearPlayerToDelete: true));
+      return ActionFailure(message);
     }
   }
 
@@ -138,10 +127,6 @@ class PlayersManagementCubit extends Cubit<PlayersManagementState> {
 
   void hideEditPlayer() {
     emit(state.copyWith(clearPlayerToEdit: true));
-  }
-
-  void clearSnackbar() {
-    emit(state.copyWith(clearSnackbar: true));
   }
 
   @override

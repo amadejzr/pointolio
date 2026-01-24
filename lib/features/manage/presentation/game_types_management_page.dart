@@ -1,14 +1,14 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/di/locator.dart';
+import 'package:pointolio/common/result/action_result.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
 import 'package:pointolio/common/ui/widgets/confirm_dialog.dart';
 import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
 import 'package:pointolio/common/ui/widgets/search_scaffold.dart';
 import 'package:pointolio/common/ui/widgets/small_action_buttons.dart';
+import 'package:pointolio/common/ui/widgets/toast_message.dart';
 import 'package:pointolio/common/ui/widgets/win_condition_widgets.dart';
 import 'package:pointolio/features/manage/data/game_types_management_repository.dart';
 import 'package:pointolio/features/manage/presentation/cubit/game_types_management_cubit.dart';
@@ -34,33 +34,21 @@ class _GameTypesManagementView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    return BlocListener<GameTypesManagementCubit, GameTypesManagementState>(
-      listenWhen: (prev, curr) => prev.snackbarMessage != curr.snackbarMessage,
-      listener: (context, state) {
-        final message = state.snackbarMessage;
-        if (message != null) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(message)));
-          context.read<GameTypesManagementCubit>().clearSnackbar();
-        }
+    return BlocBuilder<GameTypesManagementCubit, GameTypesManagementState>(
+      builder: (context, state) {
+        return SearchScaffold(
+          backgroundColor: cs.surface,
+          body: _buildBody(context, state),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _showAddGameTypeDialog(context),
+            child: const Icon(Icons.add),
+          ),
+          title: const Text('Games'),
+          onSearchChanged: (value) {
+            context.read<GameTypesManagementCubit>().setSearchQuery(value);
+          },
+        );
       },
-      child: BlocBuilder<GameTypesManagementCubit, GameTypesManagementState>(
-        builder: (context, state) {
-          return SearchScaffold(
-            backgroundColor: cs.surface,
-            body: _buildBody(context, state),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () => _showAddGameTypeDialog(context),
-              child: const Icon(Icons.add),
-            ),
-            title: const Text('Games'),
-            onSearchChanged: (value) {
-              context.read<GameTypesManagementCubit>().setSearchQuery(value);
-            },
-          );
-        },
-      ),
     );
   }
 
@@ -105,16 +93,23 @@ class _GameTypesManagementView extends StatelessWidget {
   Future<void> _showAddGameTypeDialog(BuildContext context) async {
     final cubit = context.read<GameTypesManagementCubit>();
 
-    final result = await GameTypeBottomSheet.show(context);
+    final input = await GameTypeBottomSheet.show(context);
 
-    if (result != null && context.mounted) {
-      unawaited(
-        cubit.addGameType(
-          name: result.name,
-          lowestScoreWins: result.lowestScoreWins,
-          color: result.color,
-        ),
+    if (input != null && context.mounted) {
+      final result = await cubit.addGameType(
+        name: input.name,
+        lowestScoreWins: input.lowestScoreWins,
+        color: input.color,
       );
+
+      if (context.mounted) {
+        switch (result) {
+          case ActionSuccess(:final message):
+            if (message != null) ToastMessage.success(context, message);
+          case ActionFailure(:final message):
+            ToastMessage.error(context, message);
+        }
+      }
     }
   }
 
@@ -124,22 +119,29 @@ class _GameTypesManagementView extends StatelessWidget {
   ) async {
     final cubit = context.read<GameTypesManagementCubit>();
 
-    final result = await GameTypeBottomSheet.showForEdit(
+    final input = await GameTypeBottomSheet.showForEdit(
       context,
       name: gameType.name,
       lowestScoreWins: gameType.lowestScoreWins,
       color: gameType.color,
     );
 
-    if (result != null && context.mounted) {
-      unawaited(
-        cubit.updateGameType(
-          gameType.id,
-          name: result.name,
-          lowestScoreWins: result.lowestScoreWins,
-          color: result.color,
-        ),
+    if (input != null && context.mounted) {
+      final result = await cubit.updateGameType(
+        gameType.id,
+        name: input.name,
+        lowestScoreWins: input.lowestScoreWins,
+        color: input.color,
       );
+
+      if (context.mounted) {
+        switch (result) {
+          case ActionSuccess(:final message):
+            if (message != null) ToastMessage.success(context, message);
+          case ActionFailure(:final message):
+            ToastMessage.error(context, message);
+        }
+      }
     }
   }
 
@@ -157,7 +159,16 @@ class _GameTypesManagementView extends StatelessWidget {
     );
 
     if (confirmed && context.mounted) {
-      unawaited(cubit.deleteGameType(gameType.id));
+      final result = await cubit.deleteGameType(gameType.id);
+
+      if (context.mounted) {
+        switch (result) {
+          case ActionSuccess(:final message):
+            if (message != null) ToastMessage.success(context, message);
+          case ActionFailure(:final message):
+            ToastMessage.error(context, message);
+        }
+      }
     }
   }
 }

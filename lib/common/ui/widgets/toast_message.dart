@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-enum ToastType { info, error, warning }
+enum ToastType { info, error, warning, success }
 
 class ToastMessage {
   static OverlayEntry? _currentToast;
@@ -78,6 +78,10 @@ class ToastMessage {
 
   static void warning(BuildContext context, String message) {
     show(context, message: message, type: ToastType.warning);
+  }
+
+  static void success(BuildContext context, String message) {
+    show(context, message: message, type: ToastType.success);
   }
 }
 
@@ -220,6 +224,7 @@ class _ToastContent extends StatelessWidget {
       ToastType.info => Icons.info_outline_rounded,
       ToastType.error => Icons.error_outline_rounded,
       ToastType.warning => Icons.warning_amber_rounded,
+      ToastType.success => Icons.check_circle_outline_rounded,
     };
   }
 
@@ -253,6 +258,15 @@ class _ToastContent extends StatelessWidget {
         iconBackground: isDark
             ? const Color(0xFFF57F17).withValues(alpha: 0.3)
             : const Color(0xFFFFECB3),
+      ),
+      ToastType.success => _ToastColors(
+        background: isDark ? const Color(0xFF1E5F2E) : const Color(0xFFE8F5E9),
+        border: isDark ? const Color(0xFF2E8F4A) : const Color(0xFFA5D6A7),
+        foreground: isDark ? const Color(0xFFE8F5E9) : const Color(0xFF1E5F2E),
+        icon: isDark ? const Color(0xFF66BB6A) : const Color(0xFF388E3C),
+        iconBackground: isDark
+            ? const Color(0xFF1B5E20).withValues(alpha: 0.3)
+            : const Color(0xFFC8E6C9),
       ),
     };
   }

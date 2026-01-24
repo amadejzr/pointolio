@@ -8,7 +8,6 @@ class GameTypesManagementState extends Equatable {
     this.status = GameTypesManagementStatus.initial,
     this.searchQuery,
     this.errorMessage,
-    this.snackbarMessage,
     this.gameTypeToDeleteId,
     this.gameTypeToEdit,
   });
@@ -21,7 +20,6 @@ class GameTypesManagementState extends Equatable {
   final GameTypesManagementStatus status;
   final String? searchQuery;
   final String? errorMessage;
-  final String? snackbarMessage;
   final int? gameTypeToDeleteId;
   final GameType? gameTypeToEdit;
 
@@ -40,11 +38,9 @@ class GameTypesManagementState extends Equatable {
     GameTypesManagementStatus? status,
     String? searchQuery,
     String? errorMessage,
-    String? snackbarMessage,
     int? gameTypeToDeleteId,
     GameType? gameTypeToEdit,
     bool clearSearchQuery = false,
-    bool clearSnackbar = false,
     bool clearGameTypeToDelete = false,
     bool clearGameTypeToEdit = false,
   }) {
@@ -53,8 +49,6 @@ class GameTypesManagementState extends Equatable {
       status: status ?? this.status,
       searchQuery: clearSearchQuery ? null : searchQuery ?? this.searchQuery,
       errorMessage: errorMessage ?? this.errorMessage,
-      snackbarMessage:
-          clearSnackbar ? null : snackbarMessage ?? this.snackbarMessage,
       gameTypeToDeleteId: clearGameTypeToDelete
           ? null
           : gameTypeToDeleteId ?? this.gameTypeToDeleteId,
@@ -69,7 +63,6 @@ class GameTypesManagementState extends Equatable {
         status,
         searchQuery,
         errorMessage,
-        snackbarMessage,
         gameTypeToDeleteId,
         gameTypeToEdit,
       ];

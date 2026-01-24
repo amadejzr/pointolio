@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/exception/domain_exception.dart';
+import 'package:pointolio/common/result/action_result.dart';
 import 'package:pointolio/features/manage/data/game_types_management_repository.dart';
 
 part 'game_types_management_state.dart';
@@ -40,7 +41,7 @@ class GameTypesManagementCubit extends Cubit<GameTypesManagementState> {
     );
   }
 
-  Future<void> addGameType({
+  Future<ActionResult> addGameType({
     required String name,
     required bool lowestScoreWins,
     int? color,
@@ -51,22 +52,18 @@ class GameTypesManagementCubit extends Cubit<GameTypesManagementState> {
         lowestScoreWins: lowestScoreWins,
         color: color,
       );
-      emit(
-        state.copyWith(
-          snackbarMessage: 'Game type added successfully',
-        ),
-      );
+      return const ActionSuccess('Game added successfully');
     } on DomainException catch (e) {
       final message = switch (e.code) {
-        DomainErrorCode.conflict => 'A game type with this name already exists',
-        DomainErrorCode.validation => 'Invalid game type information',
-        _ => 'Failed to add game type',
+        DomainErrorCode.conflict => 'A game with this name already exists',
+        DomainErrorCode.validation => 'Invalid game information',
+        _ => 'Failed to add game',
       };
-      emit(state.copyWith(snackbarMessage: message));
+      return ActionFailure(message);
     }
   }
 
-  Future<void> updateGameType(
+  Future<ActionResult> updateGameType(
     int id, {
     required String name,
     required bool lowestScoreWins,
@@ -79,43 +76,31 @@ class GameTypesManagementCubit extends Cubit<GameTypesManagementState> {
         lowestScoreWins: lowestScoreWins,
         color: color,
       );
-      emit(
-        state.copyWith(
-          snackbarMessage: 'Game type updated successfully',
-          clearGameTypeToEdit: true,
-        ),
-      );
+      emit(state.copyWith(clearGameTypeToEdit: true));
+      return const ActionSuccess('Game updated successfully');
     } on DomainException catch (e) {
       final message = switch (e.code) {
-        DomainErrorCode.notFound => 'Game type not found',
-        DomainErrorCode.conflict => 'A game type with this name already exists',
-        DomainErrorCode.validation => 'Invalid game type information',
-        _ => 'Failed to update game type',
+        DomainErrorCode.notFound => 'Game not found',
+        DomainErrorCode.conflict => 'A game with this name already exists',
+        DomainErrorCode.validation => 'Invalid game information',
+        _ => 'Failed to update game',
       };
-      emit(state.copyWith(snackbarMessage: message));
+      return ActionFailure(message);
     }
   }
 
-  Future<void> deleteGameType(int id) async {
+  Future<ActionResult> deleteGameType(int id) async {
     try {
       await _repository.deleteGameType(id);
-      emit(
-        state.copyWith(
-          snackbarMessage: 'Game type deleted successfully',
-          clearGameTypeToDelete: true,
-        ),
-      );
+      emit(state.copyWith(clearGameTypeToDelete: true));
+      return const ActionSuccess('Game deleted successfully');
     } on DomainException catch (e) {
       final message = switch (e.code) {
-        DomainErrorCode.notFound => 'Game type not found',
-        _ => 'Failed to delete game type',
+        DomainErrorCode.notFound => 'Game not found',
+        _ => 'Failed to delete game',
       };
-      emit(
-        state.copyWith(
-          snackbarMessage: message,
-          clearGameTypeToDelete: true,
-        ),
-      );
+      emit(state.copyWith(clearGameTypeToDelete: true));
+      return ActionFailure(message);
     }
   }
 
@@ -142,10 +127,6 @@ class GameTypesManagementCubit extends Cubit<GameTypesManagementState> {
 
   void hideEditGameType() {
     emit(state.copyWith(clearGameTypeToEdit: true));
-  }
-
-  void clearSnackbar() {
-    emit(state.copyWith(clearSnackbar: true));
   }
 
   @override

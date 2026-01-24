@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pointolio/common/ui/widgets/toast_message.dart';
 import 'package:pointolio/features/scoring/domain/models.dart';
 import 'package:pointolio/features/sharing/presentation/cubit/share_sheet_cubit.dart';
 import 'package:pointolio/features/sharing/presentation/widgets/share_score_card_transparent.dart';
@@ -70,8 +70,6 @@ class _ShareSheetState extends State<ShareSheet> {
   // Keys for the VISIBLE repaint boundaries (one per page)
   late final List<GlobalKey> _previewKeys;
 
-  Timer? _toastTimer;
-
   @override
   void initState() {
     super.initState();
@@ -95,17 +93,8 @@ class _ShareSheetState extends State<ShareSheet> {
 
   @override
   void dispose() {
-    _toastTimer?.cancel();
     _pageController.dispose();
     super.dispose();
-  }
-
-  void _scheduleToastClear(BuildContext context) {
-    _toastTimer?.cancel();
-    _toastTimer = Timer(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      context.read<ShareSheetCubit>().clearToast();
-    });
   }
 
   Future<Uint8List?> _captureVisiblePreviewPng(int index) async {
@@ -179,7 +168,7 @@ class _ShareSheetState extends State<ShareSheet> {
     if (!mounted) return;
 
     if (bytes == null) {
-      cubit.showError('Failed to capture image');
+      ToastMessage.error(context, 'Failed to capture image');
       return;
     }
 
@@ -190,8 +179,16 @@ class _ShareSheetState extends State<ShareSheet> {
       screenHeight: size.height,
     );
 
-    if (result == ShareActionResult.success && mounted) {
-      Navigator.of(context).pop();
+    if (!mounted) return;
+
+    switch (result) {
+      case ShareActionResult.success:
+        Navigator.of(context).pop();
+      case ShareActionResult.failed:
+        ToastMessage.error(context, 'Failed to share image');
+      case ShareActionResult.cancelled:
+      case ShareActionResult.permissionDenied:
+        break;
     }
   }
 
@@ -203,14 +200,24 @@ class _ShareSheetState extends State<ShareSheet> {
     if (!mounted) return;
 
     if (bytes == null) {
-      cubit.showError('Failed to capture image');
+      ToastMessage.error(context, 'Failed to capture image');
       return;
     }
 
     final result = await cubit.saveToGallery(bytes);
 
-    if (result == ShareActionResult.success && mounted) {
-      Navigator.of(context).pop();
+    if (!mounted) return;
+
+    switch (result) {
+      case ShareActionResult.success:
+        ToastMessage.success(context, 'Image saved to gallery');
+        Navigator.of(context).pop();
+      case ShareActionResult.failed:
+        ToastMessage.error(context, 'Failed to save image');
+      case ShareActionResult.permissionDenied:
+        ToastMessage.error(context, 'Photos permission not granted');
+      case ShareActionResult.cancelled:
+        break;
     }
   }
 
@@ -220,229 +227,148 @@ class _ShareSheetState extends State<ShareSheet> {
     final text = Theme.of(context).textTheme;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
-    return BlocListener<ShareSheetCubit, ShareSheetState>(
-      listenWhen: (p, n) => p.toast?.id != n.toast?.id && n.toast != null,
-      listener: (context, state) => _scheduleToastClear(context),
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(bottom: bottomInset + 5),
-        child: Stack(
-          children: [
-            Column(
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: bottomInset + 5),
+      child: Column(
+        children: [
+          const SizedBox(height: 6),
+
+          // ===== Header =====
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+            child: Row(
               children: [
-                const SizedBox(height: 6),
-
-                // ===== Header =====
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-                  child: Row(
-                    children: [
-                      Text(
-                        widget.title,
-                        style: text.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const Spacer(),
-                      BlocBuilder<ShareSheetCubit, ShareSheetState>(
-                        builder: (context, state) => _ChipCounter(
-                          current: state.index + 1,
-                          total: _previews.length,
-                        ),
-                      ),
-                    ],
+                Text(
+                  widget.title,
+                  style: text.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-
-                // ===== Preview Carousel =====
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxHeight: 400,
-                      minHeight: 200,
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: cs.outlineVariant),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Stack(
-                        children: [
-                          PageView.builder(
-                            controller: _pageController,
-                            itemCount: _previews.length,
-                            onPageChanged: (i) =>
-                                context.read<ShareSheetCubit>().setIndex(i),
-                            itemBuilder: (context, i) {
-                              return Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: Center(
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: RepaintBoundary(
-                                      key: _previewKeys[i],
-                                      child: _previews[i],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-
-                          // subtle gradient (UI only, not captured)
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: IgnorePointer(
-                              child: Container(
-                                height: 70,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      cs.surface.withAlpha(0),
-                                      cs.surface.withAlpha(200),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          // dots
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 10,
-                            child:
-                                BlocBuilder<ShareSheetCubit, ShareSheetState>(
-                                  builder: (context, state) => _Dots(
-                                    count: _previews.length,
-                                    index: state.index,
-                                  ),
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
                 const Spacer(),
-
-                // ===== Actions =====
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: BlocBuilder<ShareSheetCubit, ShareSheetState>(
-                    builder: (context, state) {
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: _ActionButton(
-                              icon: Icons.ios_share_rounded,
-                              label: 'More',
-                              busy: state.busy,
-                              onTap: _onSharePressed,
-                              prominent: true,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _ActionButton(
-                              icon: Icons.download_rounded,
-                              label: 'Save image',
-                              busy: state.busy,
-                              onTap: _onSavePressed,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                BlocBuilder<ShareSheetCubit, ShareSheetState>(
+                  builder: (context, state) => _ChipCounter(
+                    current: state.index + 1,
+                    total: _previews.length,
                   ),
                 ),
               ],
             ),
+          ),
 
-            // ===== TOP MESSAGE OVERLAY =====
-            Positioned(
-              left: 12,
-              right: 12,
-              top: 0,
-              child: BlocBuilder<ShareSheetCubit, ShareSheetState>(
-                buildWhen: (p, n) => p.toast?.id != n.toast?.id,
-                builder: (context, state) {
-                  final toast = state.toast;
-                  if (toast == null) return const SizedBox.shrink();
-
-                  final Color bg;
-                  final Color fg;
-                  final IconData icon;
-
-                  switch (toast.type) {
-                    case ShareSheetToastType.success:
-                      bg = cs.primaryContainer;
-                      fg = cs.onPrimaryContainer;
-                      icon = Icons.check_circle_rounded;
-                    case ShareSheetToastType.error:
-                      bg = cs.errorContainer;
-                      fg = cs.onErrorContainer;
-                      icon = Icons.error_rounded;
-                    case ShareSheetToastType.info:
-                      bg = cs.surfaceContainerHighest;
-                      fg = cs.onSurface;
-                      icon = Icons.info_rounded;
-                  }
-
-                  return Material(
-                    color: Colors.transparent,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: bg,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: cs.outlineVariant),
-                        boxShadow: const [
-                          BoxShadow(
-                            blurRadius: 18,
-                            offset: Offset(0, 8),
-                            color: Color(0x33000000),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(icon, size: 18, color: fg),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              toast.message,
-                              style: TextStyle(
-                                color: fg,
-                                fontWeight: FontWeight.w800,
+          // ===== Preview Carousel =====
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxHeight: 400,
+                minHeight: 200,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: cs.outlineVariant),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  children: [
+                    PageView.builder(
+                      controller: _pageController,
+                      itemCount: _previews.length,
+                      onPageChanged: (i) =>
+                          context.read<ShareSheetCubit>().setIndex(i),
+                      itemBuilder: (context, i) {
+                        return Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: RepaintBoundary(
+                                key: _previewKeys[i],
+                                child: _previews[i],
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ],
+                        );
+                      },
+                    ),
+
+                    // subtle gradient (UI only, not captured)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: IgnorePointer(
+                        child: Container(
+                          height: 70,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                cs.surface.withAlpha(0),
+                                cs.surface.withAlpha(200),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  );
-                },
+
+                    // dots
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 10,
+                      child: BlocBuilder<ShareSheetCubit, ShareSheetState>(
+                        builder: (context, state) => _Dots(
+                          count: _previews.length,
+                          index: state.index,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          const SizedBox(height: 12),
+          const Spacer(),
+
+          // ===== Actions =====
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: BlocBuilder<ShareSheetCubit, ShareSheetState>(
+              builder: (context, state) {
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.ios_share_rounded,
+                        label: 'More',
+                        busy: state.busy,
+                        onTap: _onSharePressed,
+                        prominent: true,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.download_rounded,
+                        label: 'Save image',
+                        busy: state.busy,
+                        onTap: _onSavePressed,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

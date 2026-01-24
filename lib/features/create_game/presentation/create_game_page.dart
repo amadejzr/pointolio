@@ -10,6 +10,7 @@ import 'package:pointolio/common/ui/widgets/game_type_widgets.dart';
 import 'package:pointolio/common/ui/widgets/picker_sheet.dart';
 import 'package:pointolio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
 import 'package:pointolio/common/ui/widgets/player_item_widget.dart';
+import 'package:pointolio/common/ui/widgets/toast_message.dart';
 import 'package:pointolio/features/create_game/data/create_game_repository.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_state.dart';
@@ -75,9 +76,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
 
         final message = state.snackbarMessage;
         if (message != null) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(message)));
+          ToastMessage.error(context, message);
           context.read<CreateGameCubit>().clearSnackbar();
         }
       },

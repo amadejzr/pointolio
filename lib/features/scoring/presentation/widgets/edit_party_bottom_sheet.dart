@@ -3,6 +3,7 @@ import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
 import 'package:pointolio/common/ui/widgets/picker_sheet.dart';
 import 'package:pointolio/common/ui/widgets/player_item_widget.dart';
+import 'package:pointolio/common/ui/widgets/toast_message.dart';
 
 /// Result data returned from EditPartyBottomSheet.
 class EditPartyResult {
@@ -121,11 +122,7 @@ class _EditPartyContentState extends State<_EditPartyContent> {
         .toList();
 
     if (remaining.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('All players have been added'),
-        ),
-      );
+      ToastMessage.info(context, 'All players have been added');
       return;
     }
 
@@ -165,6 +162,8 @@ class _EditPartyContentState extends State<_EditPartyContent> {
 
   void _onSave() {
     if (!_isValid) return;
+
+    ToastMessage.success(context, 'Edit successfull');
 
     Navigator.pop(
       context,
