@@ -227,7 +227,7 @@ class TotalsSheet extends StatelessWidget {
     final ranks = _computeRanks(sorted);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(Spacing.md, Spacing.xs, Spacing.md, 0),
       child: Column(
         children: [
           // Header
@@ -255,71 +255,25 @@ class TotalsSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          Spacing.gap12,
 
           // List
           Expanded(
             child: ListView.separated(
               physics: const ClampingScrollPhysics(),
               itemCount: sorted.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => Spacing.gap8,
               itemBuilder: (context, index) {
                 final ps = sorted[index];
                 final name = _fullName(ps);
                 final isLeader = top != null && ps.total == top;
                 final rank = ranks[index];
 
-                return DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: isLeader ? cs.primaryContainer : cs.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: cs.outlineVariant),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    leading: _RankBadge(rank: rank),
-                    title: Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: text.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: isLeader ? cs.onPrimaryContainer : null,
-                      ),
-                    ),
-                    subtitle: Text(
-                      _subtitleForRank(rank),
-                      style: text.labelMedium?.copyWith(
-                        color: isLeader
-                            ? cs.onPrimaryContainer.withValues(alpha: 0.85)
-                            : cs.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isLeader
-                            ? cs.onPrimaryContainer.withValues(alpha: 0.12)
-                            : cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: cs.outlineVariant),
-                      ),
-                      child: Text(
-                        ps.total.toString(),
-                        style: text.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: isLeader ? cs.onPrimaryContainer : null,
-                        ),
-                      ),
-                    ),
-                  ),
+                return _PlayerTotalCard(
+                  playerScore: ps,
+                  rank: rank,
+                  isLeader: isLeader,
+                  name: name,
                 );
               },
             ),
@@ -369,10 +323,136 @@ class TotalsSheet extends StatelessWidget {
   }
 }
 
+/// Player card widget inspired by PlayerItem design
+class _PlayerTotalCard extends StatelessWidget {
+  const _PlayerTotalCard({
+    required this.playerScore,
+    required this.rank,
+    required this.isLeader,
+    required this.name,
+  });
+
+  final PlayerScore playerScore;
+  final int rank;
+  final bool isLeader;
+  final String name;
+
+  String get _initials {
+    final first = playerScore.player.firstName.isNotEmpty
+        ? playerScore.player.firstName[0]
+        : '';
+    final last = playerScore.player.lastName?.isNotEmpty ?? false
+        ? playerScore.player.lastName![0]
+        : '';
+    return '$first$last'.toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    final hasColor = playerScore.player.color != null;
+    final avatarColor = hasColor
+        ? Color(playerScore.player.color!)
+        : cs.primaryContainer;
+    final avatarTextColor = hasColor ? Colors.white : cs.onPrimaryContainer;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isLeader ? cs.primaryContainer : cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: 10),
+      child: Row(
+        children: [
+          // Rank badge
+          _RankBadge(
+            rank: rank,
+            isLeader: isLeader,
+          ),
+          Spacing.hGap12,
+
+          // Player avatar
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: avatarColor,
+            child: Text(
+              _initials.isNotEmpty ? _initials : '?',
+              style: text.bodyLarge?.copyWith(
+                color: avatarTextColor,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Spacing.hGap12,
+
+          // Player name and rank subtitle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: isLeader ? cs.onPrimaryContainer : null,
+                  ),
+                ),
+                Text(
+                  TotalsSheet._subtitleForRank(rank),
+                  style: text.labelMedium?.copyWith(
+                    color: isLeader
+                        ? cs.onPrimaryContainer.withValues(alpha: 0.85)
+                        : cs.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Spacing.hGap12,
+
+          // Score pill badge
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: isLeader
+                  ? cs.onPrimaryContainer.withValues(alpha: 0.12)
+                  : cs.surface,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: cs.outlineVariant),
+            ),
+            child: Text(
+              playerScore.total.toString(),
+              style: text.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: isLeader ? cs.onPrimaryContainer : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _RankBadge extends StatelessWidget {
-  const _RankBadge({required this.rank});
+  const _RankBadge({
+    required this.rank,
+    this.isLeader = false,
+  });
 
   final int rank;
+  final bool isLeader;
 
   @override
   Widget build(BuildContext context) {
@@ -386,18 +466,23 @@ class _RankBadge extends StatelessWidget {
       _ => Icons.tag,
     };
 
+    final badgeColor = isLeader
+        ? cs.onPrimaryContainer.withValues(alpha: 0.12)
+        : cs.surface;
+    final iconColor = isLeader ? cs.onPrimaryContainer : cs.onSurfaceVariant;
+
     return Container(
       width: 38,
       height: 38,
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
+        color: badgeColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cs.outlineVariant),
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Icon(icon, size: 18, color: cs.onSurfaceVariant),
+          Icon(icon, size: 18, color: iconColor),
           Positioned(
             bottom: 4,
             right: 6,
@@ -405,7 +490,7 @@ class _RankBadge extends StatelessWidget {
               '$rank',
               style: text.labelSmall?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: cs.onSurfaceVariant,
+                color: iconColor,
               ),
             ),
           ),
