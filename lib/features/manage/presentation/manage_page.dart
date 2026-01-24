@@ -50,8 +50,8 @@ class _ManageView extends StatelessWidget {
           ),
           Spacing.gap16,
           _ManagementSection(
-            title: 'Game Types',
-            subtitle: 'Manage your game types',
+            title: 'Games',
+            subtitle: 'Manage your games',
             icon: Icons.category_outlined,
             onTap: () {
               unawaited(

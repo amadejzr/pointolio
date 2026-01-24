@@ -5,9 +5,8 @@ import 'package:pointolio/common/di/locator.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
 import 'package:pointolio/common/ui/widgets/confirm_dialog.dart';
 import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
+import 'package:pointolio/common/ui/widgets/game_type_widgets.dart';
 import 'package:pointolio/common/ui/widgets/search_scaffold.dart';
-import 'package:pointolio/common/ui/widgets/small_action_buttons.dart';
-import 'package:pointolio/common/ui/widgets/win_condition_widgets.dart';
 import 'package:pointolio/features/manage/data/game_types_management_repository.dart';
 import 'package:pointolio/features/manage/presentation/cubit/game_types_management_cubit.dart';
 
@@ -79,8 +78,9 @@ class _GameTypesManagementView extends StatelessWidget {
       separatorBuilder: (_, _) => Spacing.gap12,
       itemBuilder: (context, index) {
         final gameType = gameTypes[index];
-        return _GameTypeCard(
+        return GameTypeItem(
           gameType: gameType,
+          showDelete: true,
           onTap: () => _showEditGameTypeDialog(context, gameType),
           onDelete: () => _showDeleteConfirmation(context, gameType),
         );
@@ -147,103 +147,6 @@ class _GameTypesManagementView extends StatelessWidget {
   }
 }
 
-class _GameTypeCard extends StatelessWidget {
-  const _GameTypeCard({
-    required this.gameType,
-    this.onTap,
-    this.onDelete,
-  });
-
-  final GameType gameType;
-  final VoidCallback? onTap;
-  final VoidCallback? onDelete;
-
-  String get _initial =>
-      gameType.name.isNotEmpty ? gameType.name[0].toUpperCase() : '?';
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    final hasColor = gameType.color != null;
-    final typeColor = hasColor ? Color(gameType.color!) : cs.primaryContainer;
-
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: cs.outlineVariant),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: Spacing.page,
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: typeColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: hasColor
-                      ? null
-                      : Border.all(color: cs.outlineVariant),
-                ),
-                child: Center(
-                  child: hasColor
-                      ? Text(
-                          _initial,
-                          style: tt.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        )
-                      : Icon(
-                          Icons.category_outlined,
-                          color: cs.onPrimaryContainer,
-                        ),
-                ),
-              ),
-              Spacing.hGap16,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            gameType.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: tt.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        Spacing.hGap8,
-                        WinConditionIndicator(
-                          lowestScoreWins: gameType.lowestScoreWins,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Spacing.hGap12,
-              SmallActionButton.delete(onPressed: onDelete),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyGameTypesState extends StatelessWidget {
   const _EmptyGameTypesState();
 
@@ -265,7 +168,7 @@ class _EmptyGameTypesState extends StatelessWidget {
             ),
             Spacing.gap16,
             Text(
-              'No game types yet',
+              'No games',
               style: tt.titleMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
             Spacing.gap8,
