@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/di/locator.dart';
-import 'package:pointolio/common/result/action_result.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
 import 'package:pointolio/common/ui/widgets/confirm_dialog.dart';
 import 'package:pointolio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
 import 'package:pointolio/common/ui/widgets/player_item_widget.dart';
 import 'package:pointolio/common/ui/widgets/search_scaffold.dart';
-import 'package:pointolio/common/ui/widgets/toast_message.dart';
 import 'package:pointolio/features/manage/data/players_management_repository.dart';
 import 'package:pointolio/features/manage/presentation/cubit/players_management_cubit.dart';
 
@@ -100,15 +98,7 @@ class _PlayersManagementView extends StatelessWidget {
         input.lastName,
         input.color,
       );
-
-      if (context.mounted) {
-        switch (result) {
-          case ActionSuccess(:final message):
-            if (message != null) ToastMessage.success(context, message);
-          case ActionFailure(:final message):
-            ToastMessage.error(context, message);
-        }
-      }
+      if (context.mounted) result.showToast(context);
     }
   }
 
@@ -132,15 +122,7 @@ class _PlayersManagementView extends StatelessWidget {
         input.lastName,
         input.color,
       );
-
-      if (context.mounted) {
-        switch (result) {
-          case ActionSuccess(:final message):
-            if (message != null) ToastMessage.success(context, message);
-          case ActionFailure(:final message):
-            ToastMessage.error(context, message);
-        }
-      }
+      if (context.mounted) result.showToast(context);
     }
   }
 
@@ -162,15 +144,7 @@ class _PlayersManagementView extends StatelessWidget {
 
     if (confirmed && context.mounted) {
       final result = await cubit.deletePlayer(player.id);
-
-      if (context.mounted) {
-        switch (result) {
-          case ActionSuccess(:final message):
-            if (message != null) ToastMessage.success(context, message);
-          case ActionFailure(:final message):
-            ToastMessage.error(context, message);
-        }
-      }
+      if (context.mounted) result.showToast(context);
     }
   }
 }
