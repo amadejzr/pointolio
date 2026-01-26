@@ -192,35 +192,6 @@ class _ShareSheetState extends State<ShareSheet> {
     }
   }
 
-  Future<void> _onSavePressed() async {
-    final cubit = context.read<ShareSheetCubit>();
-    final currentIndex = cubit.state.index;
-
-    final bytes = await _captureVisiblePreviewPng(currentIndex);
-    if (!mounted) return;
-
-    if (bytes == null) {
-      ToastMessage.error(context, 'Failed to capture image');
-      return;
-    }
-
-    final result = await cubit.saveToGallery(bytes);
-
-    if (!mounted) return;
-
-    switch (result) {
-      case ShareActionResult.success:
-        ToastMessage.success(context, 'Image saved to gallery');
-        Navigator.of(context).pop();
-      case ShareActionResult.failed:
-        ToastMessage.error(context, 'Failed to save image');
-      case ShareActionResult.permissionDenied:
-        ToastMessage.error(context, 'Photos permission not granted');
-      case ShareActionResult.cancelled:
-        break;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -343,27 +314,14 @@ class _ShareSheetState extends State<ShareSheet> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: BlocBuilder<ShareSheetCubit, ShareSheetState>(
               builder: (context, state) {
-                return Row(
-                  children: [
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.ios_share_rounded,
-                        label: 'More',
-                        busy: state.busy,
-                        onTap: _onSharePressed,
-                        prominent: true,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.download_rounded,
-                        label: 'Save image',
-                        busy: state.busy,
-                        onTap: _onSavePressed,
-                      ),
-                    ),
-                  ],
+                return Expanded(
+                  child: _ActionButton(
+                    icon: Icons.ios_share_rounded,
+                    label: 'More',
+                    busy: state.busy,
+                    onTap: _onSharePressed,
+                    prominent: true,
+                  ),
                 );
               },
             ),
