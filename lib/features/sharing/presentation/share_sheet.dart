@@ -214,7 +214,7 @@ class _ShareSheetState extends State<ShareSheet> {
                 Text(
                   widget.title,
                   style: text.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const Spacer(),
@@ -383,7 +383,7 @@ class _ActionButton extends StatelessWidget {
                     Text(
                       label,
                       style: text.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w500,
                         color: fg,
                       ),
                     ),
@@ -415,7 +415,7 @@ class _ChipCounter extends StatelessWidget {
       ),
       child: Text(
         '$current / $total',
-        style: text.labelMedium?.copyWith(fontWeight: FontWeight.w900),
+        style: text.labelMedium?.copyWith(fontWeight: FontWeight.w500),
       ),
     );
   }

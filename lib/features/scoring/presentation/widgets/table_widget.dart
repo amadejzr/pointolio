@@ -443,7 +443,7 @@ class _PlayersHeaderCompact extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(
                     context,
-                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900),
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
                 ),
               ),
             ] else ...[
@@ -482,7 +482,7 @@ class _PlayerCellCompact extends StatelessWidget {
   Widget build(BuildContext context) {
     final nameStyle = Theme.of(
       context,
-    ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900);
+    ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500);
 
     return SizedBox(
       height: height,
@@ -495,7 +495,7 @@ class _PlayerCellCompact extends StatelessWidget {
               backgroundColor: color,
               child: Text(
                 initials,
-                style: const TextStyle(fontWeight: FontWeight.w800),
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(width: 10),
@@ -679,7 +679,7 @@ class _TableHeaderCell extends StatelessWidget {
           label,
           style: Theme.of(
             context,
-          ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900),
+          ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
         ),
       ),
     );
@@ -737,7 +737,7 @@ class _TableScoreCell extends StatelessWidget {
         textAlign: TextAlign.center,
         style: Theme.of(
           context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500),
       ),
     );
 

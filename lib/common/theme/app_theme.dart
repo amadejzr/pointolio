@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AppTheme {
+  static const _fontFamily = 'Rubik';
   // ===== Light palette (your current) =====
   static const _primary = Color(0xFF1D4ED8); // Blue 700
   static const _secondary = Color(0xFF06B6D4); // Cyan 500
@@ -73,12 +74,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
-
-      textTheme: Typography.material2021().black.apply(
-        bodyColor: colorScheme.onSurface,
-        displayColor: colorScheme.onSurface,
-      ),
-
+      fontFamily: _fontFamily,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -266,13 +262,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
-
-      // Typography
-      textTheme: Typography.material2021().white.apply(
-        bodyColor: colorScheme.onSurface,
-        displayColor: colorScheme.onSurface,
-      ),
-
+      fontFamily: _fontFamily,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

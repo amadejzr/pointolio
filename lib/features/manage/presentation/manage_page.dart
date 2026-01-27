@@ -123,7 +123,7 @@ class _ManagementSection extends StatelessWidget {
                     Text(
                       title,
                       style: tt.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     Spacing.gap4,

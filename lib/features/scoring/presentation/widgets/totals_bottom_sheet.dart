@@ -146,7 +146,7 @@ class _MiniChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: tt.labelLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: cs.onSurfaceVariant,
             ),
           ),
@@ -194,7 +194,7 @@ class _TotalsPillButton extends StatelessWidget {
               Text(
                 'Totals',
                 style: tt.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: cs.onPrimary,
                 ),
               ),
@@ -235,7 +235,7 @@ class TotalsSheet extends StatelessWidget {
             children: [
               Text(
                 'Totals',
-                style: text.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                style: text.titleLarge?.copyWith(fontWeight: FontWeight.w500),
               ),
               const Spacer(),
               Container(
@@ -250,7 +250,7 @@ class TotalsSheet extends StatelessWidget {
                 ),
                 child: Text(
                   '${sorted.length} players',
-                  style: text.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+                  style: text.labelLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -382,7 +382,7 @@ class _PlayerTotalCard extends StatelessWidget {
               _initials.isNotEmpty ? _initials : '?',
               style: text.bodyLarge?.copyWith(
                 color: avatarTextColor,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -399,7 +399,7 @@ class _PlayerTotalCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: text.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                     color: isLeader ? cs.onPrimaryContainer : null,
                   ),
                 ),
@@ -409,7 +409,7 @@ class _PlayerTotalCard extends StatelessWidget {
                     color: isLeader
                         ? cs.onPrimaryContainer.withValues(alpha: 0.85)
                         : cs.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -434,7 +434,7 @@ class _PlayerTotalCard extends StatelessWidget {
             child: Text(
               playerScore.total.toString(),
               style: text.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w500,
                 color: isLeader ? cs.onPrimaryContainer : null,
               ),
             ),
@@ -489,7 +489,7 @@ class _RankBadge extends StatelessWidget {
             child: Text(
               '$rank',
               style: text.labelSmall?.copyWith(
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w500,
                 color: iconColor,
               ),
             ),

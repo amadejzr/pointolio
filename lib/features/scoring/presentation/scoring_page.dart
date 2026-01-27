@@ -429,7 +429,7 @@ class _MiniChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: tt.labelLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: cs.onSurfaceVariant,
             ),
           ),
@@ -540,7 +540,7 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
                   'Add Round R$roundNumber',
                   style: Theme.of(
                     context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
                 TextButton(
@@ -580,7 +580,7 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),

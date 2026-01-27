@@ -71,7 +71,7 @@ class PlayerItem extends StatelessWidget {
                   _initials.isNotEmpty ? _initials : '?',
                   style: tt.bodyLarge?.copyWith(
                     color: textColor,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -82,7 +82,7 @@ class PlayerItem extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: tt.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),

@@ -54,7 +54,7 @@ class GameLeadingWidget extends StatelessWidget {
                       label,
                       style: tt.titleMedium?.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     )
                   : Icon(

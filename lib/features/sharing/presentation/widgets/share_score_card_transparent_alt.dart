@@ -99,7 +99,7 @@ class ShareScoreCardTransparentAlt extends StatelessWidget {
                           style: TextStyle(
                             color: textColor,
                             fontSize: 22,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w500,
                             height: 1.05,
                             letterSpacing: -0.4,
                           ),
@@ -138,7 +138,7 @@ class ShareScoreCardTransparentAlt extends StatelessWidget {
                             style: TextStyle(
                               color: textColor.withValues(alpha: 0.80),
                               fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w500,
                               letterSpacing: 0.2,
                             ),
                           ),
@@ -149,7 +149,7 @@ class ShareScoreCardTransparentAlt extends StatelessWidget {
                           style: TextStyle(
                             color: textColor.withValues(alpha: 0.35),
                             fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -204,7 +204,7 @@ class ShareScoreCardTransparentAlt extends StatelessWidget {
                             style: TextStyle(
                               color: textColor.withValues(alpha: 0.70),
                               fontSize: 11,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w500,
                               letterSpacing: 2,
                             ),
                           ),
@@ -216,7 +216,7 @@ class ShareScoreCardTransparentAlt extends StatelessWidget {
                             style: TextStyle(
                               color: textColor,
                               fontSize: 18,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w500,
                               height: 1.05,
                             ),
                           ),
@@ -243,7 +243,7 @@ class ShareScoreCardTransparentAlt extends StatelessWidget {
                         style: TextStyle(
                           color: textColor.withValues(alpha: 0.95),
                           fontSize: 18,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
@@ -292,7 +292,7 @@ class ShareScoreCardTransparentAlt extends StatelessWidget {
                       style: TextStyle(
                         color: textColor.withValues(alpha: 0.35),
                         fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w500,
                         letterSpacing: 0.4,
                       ),
                     ),
@@ -409,7 +409,7 @@ class _RowAltNoScale extends StatelessWidget {
                 style: TextStyle(
                   color: rankColor,
                   fontSize: 12.5,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -423,7 +423,7 @@ class _RowAltNoScale extends StatelessWidget {
               style: TextStyle(
                 color: textColor.withValues(alpha: 0.92),
                 fontSize: 14.5,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -433,7 +433,7 @@ class _RowAltNoScale extends StatelessWidget {
             style: TextStyle(
               color: textColor.withValues(alpha: 0.92),
               fontSize: 16,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

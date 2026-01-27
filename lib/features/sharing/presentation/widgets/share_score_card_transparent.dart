@@ -121,7 +121,7 @@ class ShareScoreCardTransparent extends StatelessWidget {
                           style: TextStyle(
                             color: textColor.withValues(alpha: 0.95),
                             fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -154,7 +154,7 @@ class ShareScoreCardTransparent extends StatelessWidget {
             style: TextStyle(
               color: textColor,
               fontSize: 24,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w500,
               letterSpacing: -0.5,
               height: 1.05,
             ),
@@ -227,7 +227,7 @@ class ShareScoreCardTransparent extends StatelessWidget {
             style: TextStyle(
               color: textColor.withValues(alpha: 0.70),
               fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               letterSpacing: 1.8,
             ),
           ),
@@ -237,7 +237,7 @@ class ShareScoreCardTransparent extends StatelessWidget {
             style: TextStyle(
               color: textColor,
               fontSize: 20,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               height: 1.05,
             ),
             textAlign: TextAlign.center,
@@ -325,7 +325,7 @@ class ShareScoreCardTransparent extends StatelessWidget {
             style: TextStyle(
               color: textColor.withValues(alpha: 0.92),
               fontSize: 16.5,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -356,7 +356,7 @@ class ShareScoreCardTransparent extends StatelessWidget {
                 style: TextStyle(
                   color: color,
                   fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
       ),
@@ -381,7 +381,7 @@ class ShareScoreCardTransparent extends StatelessWidget {
             style: TextStyle(
               color: textColor.withValues(alpha: 0.35),
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w500,
               letterSpacing: 0.4,
             ),
           ),

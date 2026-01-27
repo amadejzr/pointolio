@@ -224,7 +224,7 @@ class _EditPartyContentState extends State<_EditPartyContent> {
                       child: Text(
                         'Edit Party',
                         style: tt.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -272,7 +272,7 @@ class _EditPartyContentState extends State<_EditPartyContent> {
                             Text(
                               '(${_selectedPlayers.length})',
                               style: tt.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w500,
                                 color: cs.onSurfaceVariant,
                               ),
                             ),
@@ -407,7 +407,7 @@ class _SectionTitle extends StatelessWidget {
       padding: Spacing.sheetHorizontal,
       child: Text(
         text,
-        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w500),
       ),
     );
   }

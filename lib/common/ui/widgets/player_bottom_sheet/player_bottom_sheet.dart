@@ -158,7 +158,7 @@ class _PlayerSheetContentState extends State<_PlayerSheetContent> {
                         child: Text(
                           widget.isEditMode ? 'Edit Player' : 'New Player',
                           style: tt.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -283,7 +283,7 @@ class _SectionTitle extends StatelessWidget {
       padding: Spacing.sheetHorizontal,
       child: Text(
         text,
-        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w500),
       ),
     );
   }

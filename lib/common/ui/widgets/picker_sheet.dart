@@ -152,7 +152,7 @@ class _PickerSheetState<T> extends State<PickerSheet<T>> {
                   child: Text(
                     widget.title,
                     style: tt.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -246,7 +246,7 @@ class _DefaultPickerTile extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+              style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
             ),
           ),
           Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
@@ -278,7 +278,7 @@ class _EmptySheetState extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
             Text(

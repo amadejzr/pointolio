@@ -67,7 +67,7 @@ class GameTypeItem extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: tt.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
 
@@ -128,7 +128,7 @@ class _LeadingTypeIcon extends StatelessWidget {
                 initial,
                 style: tt.titleMedium?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               )
             : Icon(
