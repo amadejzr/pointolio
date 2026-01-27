@@ -46,3 +46,17 @@ app.*.map.json
 
 
 *.g.dart
+
+.env
+
+# Fastlane
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
+**/fastlane/README.md
+**/fastlane/AuthKey_*.p8
+**/fastlane/api_key.json
+**/ios/*.ipa
+**/ios/*.app.dSYM.zip
+**/ios/Gemfile.lock
