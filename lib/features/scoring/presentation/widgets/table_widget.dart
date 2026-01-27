@@ -8,17 +8,17 @@ import 'package:pointolio/features/scoring/presentation/cubit/scoring_cubit.dart
 class RoundsGrid extends StatefulWidget {
   const RoundsGrid({
     required this.state,
-    required this.onDeleteRound,
-    required this.onEditScore,
-    required this.onReorderPlayers,
+    this.onDeleteRound,
+    this.onEditScore,
+    this.onReorderPlayers,
     super.key,
   });
 
   final ScoringState state;
-  final FutureOr<void> Function(int roundNumber) onDeleteRound;
-  final FutureOr<void> Function(int scoreEntryId, int currentPoints)
+  final FutureOr<void> Function(int roundNumber)? onDeleteRound;
+  final FutureOr<void> Function(int scoreEntryId, int currentPoints)?
   onEditScore;
-  final FutureOr<void> Function(int oldIndex, int newIndex) onReorderPlayers;
+  final FutureOr<void> Function(int oldIndex, int newIndex)? onReorderPlayers;
 
   static const initialsColWidth = 90.0;
   static const expandedColWidth = 220.0;
@@ -221,10 +221,11 @@ class _RoundsGridState extends State<RoundsGrid>
                           onReorderEnd: (_) =>
                               setState(() => _dragIndex = null),
                           onReorder: (oldIndex, newIndex) async {
+                            if (widget.onReorderPlayers == null) return;
                             if (newIndex > oldIndex) {
                               newIndex--;
                             }
-                            widget.onReorderPlayers(oldIndex, newIndex);
+                            widget.onReorderPlayers!(oldIndex, newIndex);
                           },
                           proxyDecorator: (child, index, animation) {
                             final ps = widget.state.playerScores[index];
@@ -271,32 +272,42 @@ class _RoundsGridState extends State<RoundsGrid>
                             final name = RoundsGrid.fullName(ps);
                             final initials = RoundsGrid.initialsFromName(name);
                             final isDragging = _dragIndex == index;
+                            final canReorder = widget.onReorderPlayers != null;
+
+                            final cell = Container(
+                              margin: const EdgeInsets.symmetric(
+                                vertical: RoundsGrid.rowGap,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(14),
+                                color: isDragging
+                                    ? cs.primaryContainer.withValues(
+                                        alpha: 0.22,
+                                      )
+                                    : zebraBg(index),
+                              ),
+                              child: _PlayerCellCompact(
+                                color: ps.player.color != null
+                                    ? Color(ps.player.color!)
+                                    : null,
+                                height: RoundsGrid.rowHeight,
+                                expanded: _showFullNames,
+                                fullName: name,
+                                initials: initials,
+                              ),
+                            );
+
+                            if (!canReorder) {
+                              return KeyedSubtree(
+                                key: ValueKey(ps.gamePlayer.id),
+                                child: cell,
+                              );
+                            }
 
                             return ReorderableDelayedDragStartListener(
                               key: ValueKey(ps.gamePlayer.id),
                               index: index,
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: RoundsGrid.rowGap,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14),
-                                  color: isDragging
-                                      ? cs.primaryContainer.withValues(
-                                          alpha: 0.22,
-                                        )
-                                      : zebraBg(index),
-                                ),
-                                child: _PlayerCellCompact(
-                                  color: ps.player.color != null
-                                      ? Color(ps.player.color!)
-                                      : null,
-                                  height: RoundsGrid.rowHeight,
-                                  expanded: _showFullNames,
-                                  fullName: name,
-                                  initials: initials,
-                                ),
-                              ),
+                              child: cell,
                             );
                           },
                         ),
@@ -535,14 +546,14 @@ class _RoundsHeaderRowTable extends StatelessWidget {
   const _RoundsHeaderRowTable({
     required this.roundCount,
     required this.sidePad,
-    required this.onDeleteRound,
     required this.highlightRound,
     required this.pulse01,
+    this.onDeleteRound,
   });
 
   final int roundCount;
   final double sidePad;
-  final FutureOr<void> Function(int roundNumber) onDeleteRound;
+  final FutureOr<void> Function(int roundNumber)? onDeleteRound;
 
   final int? highlightRound; // 1-based
   final double pulse01;
@@ -566,7 +577,9 @@ class _RoundsHeaderRowTable extends StatelessWidget {
               width: RoundsGrid.roundColWidth,
               label: 'R$r',
               showDivider: r != roundCount,
-              onLongPress: () => onDeleteRound(r),
+              onLongPress: onDeleteRound == null
+                  ? null
+                  : () => onDeleteRound!(r),
               highlight: highlightRound == r,
               pulse01: pulse01,
             ),
@@ -581,14 +594,14 @@ class _RoundsPlayerRowTable extends StatelessWidget {
   const _RoundsPlayerRowTable({
     required this.playerScore,
     required this.roundCount,
-    required this.onEditScore,
     required this.highlightRound,
     required this.pulse01,
+    this.onEditScore,
   });
 
   final PlayerScore playerScore;
   final int roundCount;
-  final FutureOr<void> Function(int scoreEntryId, int currentPoints)
+  final FutureOr<void> Function(int scoreEntryId, int currentPoints)?
   onEditScore;
 
   final int? highlightRound;
@@ -624,15 +637,15 @@ class _TableHeaderCell extends StatelessWidget {
     required this.width,
     required this.label,
     required this.showDivider,
-    required this.onLongPress,
     required this.highlight,
     required this.pulse01,
+    this.onLongPress,
   });
 
   final double width;
   final String label;
   final bool showDivider;
-  final VoidCallback onLongPress;
+  final VoidCallback? onLongPress;
 
   final bool highlight;
   final double pulse01;
@@ -679,16 +692,16 @@ class _TableScoreCell extends StatelessWidget {
     required this.playerScore,
     required this.round,
     required this.showDivider,
-    required this.onEdit,
     required this.highlight,
     required this.pulse01,
+    this.onEdit,
   });
 
   final double width;
   final PlayerScore playerScore;
   final int round;
   final bool showDivider;
-  final FutureOr<void> Function(int scoreEntryId, int currentPoints) onEdit;
+  final FutureOr<void> Function(int scoreEntryId, int currentPoints)? onEdit;
 
   final bool highlight;
   final double pulse01;
@@ -730,7 +743,9 @@ class _TableScoreCell extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(10),
-      onTap: entry == null ? null : () => onEdit(entry.id, entry.points),
+      onTap: entry == null || onEdit == null
+          ? null
+          : () => onEdit!(entry.id, entry.points),
       child: child,
     );
   }

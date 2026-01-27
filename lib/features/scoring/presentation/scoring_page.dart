@@ -131,6 +131,7 @@ class ScoringScreen extends StatelessWidget {
           ),
           body: _ScoringBody(
             state: state,
+            isFinished: state.game?.finishedAt != null,
             onRetry: () => context.read<ScoringCubit>().loadData(),
             onDeleteRound: (round) => _onDeleteRoundPressed(context, round),
             onEditScore: (entryId, current) =>
@@ -246,6 +247,7 @@ class ScoringScreen extends StatelessWidget {
 class _ScoringBody extends StatelessWidget {
   const _ScoringBody({
     required this.state,
+    required this.isFinished,
     required this.onRetry,
     required this.onDeleteRound,
     required this.onEditScore,
@@ -253,6 +255,7 @@ class _ScoringBody extends StatelessWidget {
   });
 
   final ScoringState state;
+  final bool isFinished;
   final VoidCallback onRetry;
   final FutureOr<void> Function(int roundNumber) onDeleteRound;
   final FutureOr<void> Function(int scoreEntryId, int currentPoints)
@@ -280,9 +283,9 @@ class _ScoringBody extends StatelessWidget {
         return SafeArea(
           child: RoundsGrid(
             state: state,
-            onDeleteRound: onDeleteRound,
-            onEditScore: onEditScore,
-            onReorderPlayers: onReorderPlayers,
+            onDeleteRound: isFinished ? null : onDeleteRound,
+            onEditScore: isFinished ? null : onEditScore,
+            onReorderPlayers: isFinished ? null : onReorderPlayers,
           ),
         );
     }
