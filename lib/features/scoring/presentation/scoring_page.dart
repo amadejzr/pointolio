@@ -186,6 +186,7 @@ class ScoringScreen extends StatelessWidget {
 
     unawaited(
       showModalBottomSheet(
+        isDismissible: false,
         context: context,
         isScrollControlled: true,
         showDragHandle: true,
@@ -642,6 +643,7 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
 Future<int?> editPointsDialog(BuildContext context, int current) async {
   final controller = TextEditingController(text: current.toString());
   return showDialog<int>(
+    barrierDismissible: false,
     context: context,
     builder: (_) => AlertDialog(
       title: const Text('Edit points'),
