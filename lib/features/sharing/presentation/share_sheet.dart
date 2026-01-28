@@ -314,14 +314,12 @@ class _ShareSheetState extends State<ShareSheet> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: BlocBuilder<ShareSheetCubit, ShareSheetState>(
               builder: (context, state) {
-                return Expanded(
-                  child: _ActionButton(
-                    icon: Icons.ios_share_rounded,
-                    label: 'More',
-                    busy: state.busy,
-                    onTap: _onSharePressed,
-                    prominent: true,
-                  ),
+                return _ActionButton(
+                  icon: Icons.ios_share_rounded,
+                  label: 'More',
+                  busy: state.busy,
+                  onTap: _onSharePressed,
+                  prominent: true,
                 );
               },
             ),

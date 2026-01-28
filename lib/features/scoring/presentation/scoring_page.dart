@@ -49,6 +49,7 @@ class ScoringScreen extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: AppBarTitleMenu(
+              key: const Key('appbar_title_menu'),
               title: title,
               gameTypeColor: state.gameTypeColor,
               lowestScoreWins: state.lowestScoreWins,
@@ -89,6 +90,7 @@ class ScoringScreen extends StatelessWidget {
                 ),
               if (state.game?.finishedAt == null)
                 IconButton.filled(
+                  key: const Key('add_round_button'),
                   tooltip: 'Add round',
                   icon: const Icon(
                     Icons.add,

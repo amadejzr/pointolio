@@ -60,3 +60,5 @@ app.*.map.json
 **/ios/*.ipa
 **/ios/*.app.dSYM.zip
 **/ios/Gemfile.lock
+
+/screenshots/output
