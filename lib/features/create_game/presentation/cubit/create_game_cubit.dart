@@ -3,6 +3,7 @@ import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/exception/domain_exception.dart';
 import 'package:pointolio/features/create_game/data/create_game_repository.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_state.dart';
+import 'package:pointolio/features/create_game/presentation/cubit/create_game_validation.dart';
 
 class CreateGameCubit extends Cubit<CreateGameState> {
   CreateGameCubit({
@@ -47,11 +48,27 @@ class CreateGameCubit extends Cubit<CreateGameState> {
   }
 
   void setGameName(String name) {
-    emit(state.copyWith(gameName: name));
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove(CreateGameValidation.gameNameField);
+    emit(
+      state.copyWith(
+        gameName: name,
+        fieldErrors: updatedErrors,
+      ),
+    );
+    _clearValidationErrorsIfValid();
   }
 
   void setGameType(GameType? gameType) {
-    emit(state.copyWith(selectedGameType: gameType));
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove(CreateGameValidation.gameTypeField);
+    emit(
+      state.copyWith(
+        selectedGameType: gameType,
+        fieldErrors: updatedErrors,
+      ),
+    );
+    _clearValidationErrorsIfValid();
   }
 
   void setGameDate(DateTime date) {
@@ -60,19 +77,26 @@ class CreateGameCubit extends Cubit<CreateGameState> {
 
   void addPlayer(Player player) {
     if (state.selectedPlayers.any((p) => p.id == player.id)) return;
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove(CreateGameValidation.playersField);
     emit(
       state.copyWith(
         selectedPlayers: [...state.selectedPlayers, player],
+        fieldErrors: updatedErrors,
       ),
     );
+    _clearValidationErrorsIfValid();
   }
 
   void removePlayer(int id) {
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove(CreateGameValidation.playersField);
     emit(
       state.copyWith(
         selectedPlayers: state.selectedPlayers
             .where((p) => p.id != id)
             .toList(),
+        fieldErrors: updatedErrors,
       ),
     );
   }
@@ -171,7 +195,17 @@ class CreateGameCubit extends Cubit<CreateGameState> {
   }
 
   Future<void> createGame() async {
-    if (!state.isValid) return;
+    final errors = _validateForm();
+
+    if (errors.isNotEmpty) {
+      emit(
+        state.copyWith(
+          fieldErrors: errors,
+          showValidationErrors: true,
+        ),
+      );
+      return;
+    }
 
     emit(state.copyWith(status: CreateGameStatus.loading));
 
@@ -202,6 +236,39 @@ class CreateGameCubit extends Cubit<CreateGameState> {
         state.copyWith(
           status: CreateGameStatus.initial,
           snackbarMessage: 'Failed to create game',
+        ),
+      );
+    }
+  }
+
+  Map<String, String> _validateForm() {
+    final errors = <String, String>{};
+
+    if (state.gameName.trim().isEmpty) {
+      errors[CreateGameValidation.gameNameField] =
+          CreateGameValidation.gameNameEmptyError;
+    }
+
+    if (state.selectedGameType == null) {
+      errors[CreateGameValidation.gameTypeField] =
+          CreateGameValidation.gameTypeRequiredError;
+    }
+
+    if (state.selectedPlayers.length <
+        CreateGameValidation.minimumPlayersRequired) {
+      errors[CreateGameValidation.playersField] =
+          CreateGameValidation.playersMinimumError;
+    }
+
+    return errors;
+  }
+
+  void _clearValidationErrorsIfValid() {
+    if (state.showValidationErrors && state.isValid) {
+      emit(
+        state.copyWith(
+          fieldErrors: {},
+          showValidationErrors: false,
         ),
       );
     }

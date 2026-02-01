@@ -15,6 +15,8 @@ class CreateGameState extends Equatable {
     this.createdGameId,
     this.availableGameTypes = const [],
     this.availablePlayers = const [],
+    this.fieldErrors = const {},
+    this.showValidationErrors = false,
   });
   factory CreateGameState.initial() {
     return CreateGameState(
@@ -34,6 +36,10 @@ class CreateGameState extends Equatable {
   final List<GameType> availableGameTypes;
   final List<Player> availablePlayers;
 
+  // Validation
+  final Map<String, String> fieldErrors;
+  final bool showValidationErrors;
+
   bool get isValid =>
       gameName.trim().isNotEmpty &&
       selectedGameType != null &&
@@ -50,6 +56,8 @@ class CreateGameState extends Equatable {
     int? createdGameId,
     List<GameType>? availableGameTypes,
     List<Player>? availablePlayers,
+    Map<String, String>? fieldErrors,
+    bool? showValidationErrors,
   }) {
     return CreateGameState(
       gameName: gameName ?? this.gameName,
@@ -62,6 +70,8 @@ class CreateGameState extends Equatable {
       createdGameId: createdGameId ?? this.createdGameId,
       availableGameTypes: availableGameTypes ?? this.availableGameTypes,
       availablePlayers: availablePlayers ?? this.availablePlayers,
+      fieldErrors: fieldErrors ?? this.fieldErrors,
+      showValidationErrors: showValidationErrors ?? this.showValidationErrors,
     );
   }
 
@@ -77,5 +87,18 @@ class CreateGameState extends Equatable {
     createdGameId,
     availableGameTypes,
     availablePlayers,
+    fieldErrors,
+    showValidationErrors,
   ];
+}
+
+// Extension to simplify validation checks
+extension CreateGameStateValidationExtension on CreateGameState {
+  bool hasError(String fieldName) {
+    return showValidationErrors && fieldErrors.containsKey(fieldName);
+  }
+
+  String? getError(String fieldName) {
+    return showValidationErrors ? fieldErrors[fieldName] : null;
+  }
 }

@@ -6,12 +6,14 @@ class PickerFieldBase extends StatelessWidget {
     required this.text,
     required this.icon,
     this.onTap,
+    this.hasError = false,
     super.key,
   });
 
   final String text;
   final IconData icon;
   final VoidCallback? onTap;
+  final bool hasError;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,9 @@ class PickerFieldBase extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cs.outlineVariant),
+            border: Border.all(
+              color: hasError ? cs.error : cs.outlineVariant,
+            ),
           ),
           child: Row(
             children: [
