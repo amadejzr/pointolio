@@ -1,21 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/features/manage/presentation/cubit/theme_cubit.dart';
+import 'package:pointolio/features/manage/presentation/cubit/theme_state.dart';
 import 'package:pointolio/features/manage/presentation/game_types_management_page.dart';
 import 'package:pointolio/features/manage/presentation/players_management_page.dart';
+import 'package:pointolio/features/manage/presentation/widgets/management_section_card.dart';
+import 'package:pointolio/features/manage/presentation/widgets/theme_selector.dart';
 
 class ManagePage extends StatelessWidget {
   const ManagePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const _ManageView();
-  }
-}
-
-class _ManageView extends StatelessWidget {
-  const _ManageView();
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +29,7 @@ class _ManageView extends StatelessWidget {
       body: ListView(
         padding: Spacing.page,
         children: [
-          _ManagementSection(
+          ManagementSectionCard(
             title: 'Players',
             subtitle: 'Manage your players',
             icon: Icons.people_outline,
@@ -49,7 +45,7 @@ class _ManageView extends StatelessWidget {
             },
           ),
           Spacing.gap16,
-          _ManagementSection(
+          ManagementSectionCard(
             title: 'Games',
             subtitle: 'Manage your games',
             icon: Icons.category_outlined,
@@ -64,83 +60,20 @@ class _ManageView extends StatelessWidget {
               );
             },
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ManagementSection extends StatelessWidget {
-  const _ManagementSection({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: cs.outlineVariant),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: Spacing.page,
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: cs.primary,
-                  size: 24,
-                ),
-              ),
-              Spacing.hGap16,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: tt.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Spacing.gap4,
-                    Text(
-                      subtitle,
-                      style: tt.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Spacing.hGap12,
-              Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
-            ],
+          Spacing.gap24,
+          BlocSelector<ThemeCubit, ThemeState, AppThemeMode>(
+            selector: (state) => state.themeMode,
+            builder: (context, themeMode) {
+              return ThemeSelector(
+                selectedTheme: themeMode,
+                onThemeChanged: (theme) {
+                  unawaited(context.read<ThemeCubit>().setTheme(theme));
+                },
+              );
+            },
           ),
-        ),
+          Spacing.gap16,
+        ],
       ),
     );
   }
