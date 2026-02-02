@@ -7,13 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Theme Selector**: Added appearance settings with System/Light/Dark theme options in Manage page
-- **Theme Persistence**: Theme preference is saved and restored across app sessions using SharedPreferences
-- **Onboarding Flow**: First-time user onboarding to introduce the app and basic usage
-
-
-
 ## [1.1.0] - 02-02-26
 
 ### Added
@@ -23,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enhanced Edit Points Dialog**: Displays player name and round number in dialog header
 - **Haptic Feedback**: Added haptic feedback on calculator button presses for better tactile feedback
 - **Backspace Button in Toolbar**: Single-character deletion button in the calculator toolbar
+- **Theme Selector**: Added appearance settings with System/Light/Dark theme options in Manage page
+- **Theme Persistence**: Theme preference is saved and restored across app sessions using SharedPreferences
+- **Onboarding Flow**: First-time user onboarding to introduce the app and basic usage
 
 ### Changed
 - **Replaced Native Keyboard**: Replaced system numeric keyboard with custom calculator keyboard in score entry forms
