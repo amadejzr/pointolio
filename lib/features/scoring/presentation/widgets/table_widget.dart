@@ -16,8 +16,12 @@ class RoundsGrid extends StatefulWidget {
 
   final ScoringState state;
   final FutureOr<void> Function(int roundNumber)? onDeleteRound;
-  final FutureOr<void> Function(int scoreEntryId, int currentPoints)?
-  onEditScore;
+  final FutureOr<void> Function(
+    int scoreEntryId,
+    int currentPoints,
+    String playerName,
+    int round,
+  )? onEditScore;
   final FutureOr<void> Function(int oldIndex, int newIndex)? onReorderPlayers;
 
   static const initialsColWidth = 90.0;
@@ -601,8 +605,12 @@ class _RoundsPlayerRowTable extends StatelessWidget {
 
   final PlayerScore playerScore;
   final int roundCount;
-  final FutureOr<void> Function(int scoreEntryId, int currentPoints)?
-  onEditScore;
+  final FutureOr<void> Function(
+    int scoreEntryId,
+    int currentPoints,
+    String playerName,
+    int round,
+  )? onEditScore;
 
   final int? highlightRound;
   final double pulse01;
@@ -701,7 +709,12 @@ class _TableScoreCell extends StatelessWidget {
   final PlayerScore playerScore;
   final int round;
   final bool showDivider;
-  final FutureOr<void> Function(int scoreEntryId, int currentPoints)? onEdit;
+  final FutureOr<void> Function(
+    int scoreEntryId,
+    int currentPoints,
+    String playerName,
+    int round,
+  )? onEdit;
 
   final bool highlight;
   final double pulse01;
@@ -741,11 +754,17 @@ class _TableScoreCell extends StatelessWidget {
       ),
     );
 
+    final playerName = [
+      playerScore.player.firstName,
+      if ((playerScore.player.lastName ?? '').trim().isNotEmpty)
+        playerScore.player.lastName!.trim(),
+    ].join(' ');
+
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: entry == null || onEdit == null
           ? null
-          : () => onEdit!(entry.id, entry.points),
+          : () => onEdit!(entry.id, entry.points, playerName, round),
       child: child,
     );
   }
