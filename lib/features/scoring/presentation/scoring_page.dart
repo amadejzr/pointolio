@@ -9,6 +9,7 @@ import 'package:pointolio/features/scoring/data/scoring_repository.dart';
 import 'package:pointolio/features/scoring/domain/models.dart';
 import 'package:pointolio/features/scoring/presentation/cubit/scoring_cubit.dart';
 import 'package:pointolio/features/scoring/presentation/widgets/app_bar_title_widget.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/calculator_keyboard/calculator_keyboard_exports.dart';
 import 'package:pointolio/features/scoring/presentation/widgets/edit_party_bottom_sheet.dart';
 import 'package:pointolio/features/scoring/presentation/widgets/table_widget.dart';
 import 'package:pointolio/features/scoring/presentation/widgets/totals_bottom_sheet.dart';
@@ -136,8 +137,14 @@ class ScoringScreen extends StatelessWidget {
             isFinished: state.game?.finishedAt != null,
             onRetry: () => context.read<ScoringCubit>().loadData(),
             onDeleteRound: (round) => _onDeleteRoundPressed(context, round),
-            onEditScore: (entryId, current) =>
-                _onEditScorePressed(context, entryId, current),
+            onEditScore: (entryId, current, playerName, round) =>
+                _onEditScorePressed(
+                  context,
+                  entryId,
+                  current,
+                  playerName,
+                  round,
+                ),
             onReorderPlayers: (oldIndex, newIndex) =>
                 context.read<ScoringCubit>().reorderPlayers(oldIndex, newIndex),
           ),
@@ -190,6 +197,7 @@ class ScoringScreen extends StatelessWidget {
         context: context,
         isScrollControlled: true,
         showDragHandle: true,
+        useSafeArea: true,
         builder: (sheetContext) {
           // IMPORTANT: pass the same cubit to the sheet context
           return BlocProvider.value(
@@ -223,10 +231,17 @@ class ScoringScreen extends StatelessWidget {
     BuildContext context,
     int entryId,
     int current,
+    String playerName,
+    int round,
   ) async {
     final cubit = context.read<ScoringCubit>();
 
-    final newPoints = await editPointsDialog(context, current);
+    final newPoints = await editPointsDialog(
+      context,
+      current: current,
+      playerName: playerName,
+      round: round,
+    );
     if (newPoints == null) return;
     unawaited(cubit.updateScore(entryId, newPoints));
   }
@@ -261,7 +276,12 @@ class _ScoringBody extends StatelessWidget {
   final bool isFinished;
   final VoidCallback onRetry;
   final FutureOr<void> Function(int roundNumber) onDeleteRound;
-  final FutureOr<void> Function(int scoreEntryId, int currentPoints)
+  final FutureOr<void> Function(
+    int scoreEntryId,
+    int currentPoints,
+    String playerName,
+    int round,
+  )
   onEditScore;
   final FutureOr<void> Function(int oldIndex, int newIndex) onReorderPlayers;
 
@@ -496,14 +516,26 @@ class AddRoundSheet extends StatefulWidget {
 
 class _AddRoundSheetState extends State<AddRoundSheet> {
   late final Map<int, TextEditingController> _controllers;
+  late final Map<int, FocusNode> _focusNodes;
+  late final ScrollController _scrollController;
+  bool _isAnyFieldFocused = false;
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
     _controllers = {
       for (final ps in widget.state.playerScores)
         ps.gamePlayer.id: TextEditingController(),
     };
+    _focusNodes = {
+      for (final ps in widget.state.playerScores) ps.gamePlayer.id: FocusNode(),
+    };
+
+    // Listen to focus changes on each node
+    for (final entry in _focusNodes.entries) {
+      entry.value.addListener(() => _onFieldFocusChanged(entry.key));
+    }
   }
 
   @override
@@ -511,7 +543,61 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
     for (final c in _controllers.values) {
       c.dispose();
     }
+    for (final f in _focusNodes.values) {
+      f.dispose();
+    }
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onFieldFocusChanged(int playerId) {
+    final hasFocus = _focusNodes[playerId]?.hasFocus ?? false;
+
+    setState(() {
+      _isAnyFieldFocused = hasFocus;
+    });
+
+    if (hasFocus) {
+      // Scroll to show the focused field after a short delay
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToFocusedField(playerId);
+      });
+    }
+  }
+
+  void _scrollToFocusedField(int playerId) {
+    if (!_scrollController.hasClients) return;
+
+    final playerIndex = widget.state.playerScores.indexWhere(
+      (ps) => ps.gamePlayer.id == playerId,
+    );
+    if (playerIndex == -1) return;
+
+    // Calculate the approximate position of the field
+    // Header (title + reset button) ≈ 60px
+    // Each player row ≈ 60px (height + padding)
+    const headerHeight = 60.0;
+    const rowHeight = 60.0;
+    final fieldPosition = headerHeight + (playerIndex * rowHeight);
+
+    // Get keyboard height and available space
+    final keyboardHeight = getCalculatorKeyboardHeight(context);
+    final screenHeight = MediaQuery.of(context).size.height;
+    final availableHeight = screenHeight - keyboardHeight - 200;
+
+    // Scroll so the field is visible in the available space
+    final targetScroll = (fieldPosition - availableHeight / 2).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+
+    unawaited(
+      _scrollController.animateTo(
+        targetScroll,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      ),
+    );
   }
 
   Future<void> _saveRound() async {
@@ -525,15 +611,23 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
   @override
   Widget build(BuildContext context) {
     final roundNumber = widget.state.roundCount + 1;
+    final keyboardHeight = getCalculatorKeyboardHeight(context);
 
-    return Padding(
+    final bottomPadding = _isAnyFieldFocused
+        ? keyboardHeight + MediaQuery.of(context).padding.bottom
+        : MediaQuery.of(context).padding.bottom;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
         top: 4,
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+        bottom: bottomPadding,
       ),
       child: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -590,13 +684,12 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
                     const SizedBox(width: 12),
                     SizedBox(
                       width: 120,
-                      child: TextField(
+                      child: CalculatorTextField(
                         controller: ctrl,
+                        focusNode: _focusNodes[ps.gamePlayer.id],
+                        onFocusChanged: (_) =>
+                            _onFieldFocusChanged(ps.gamePlayer.id),
                         autofocus: isFirst,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          signed: true,
-                          decimal: true,
-                        ),
                         textInputAction: isLast
                             ? TextInputAction.done
                             : TextInputAction.next,
@@ -632,7 +725,7 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
                 ),
               ],
             ),
-            SizedBox(height: 16 + MediaQuery.of(context).padding.bottom),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -640,22 +733,75 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
   }
 }
 
-Future<int?> editPointsDialog(BuildContext context, int current) async {
-  final controller = TextEditingController(text: current.toString());
-  return showDialog<int>(
-    barrierDismissible: false,
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text('Edit points'),
-      content: TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(
-          signed: true,
-          decimal: true,
-        ),
+class _EditPointsDialog extends StatefulWidget {
+  const _EditPointsDialog({
+    required this.current,
+    required this.playerName,
+    required this.round,
+  });
+
+  final int current;
+  final String playerName;
+  final int round;
+
+  @override
+  State<_EditPointsDialog> createState() => _EditPointsDialogState();
+}
+
+class _EditPointsDialogState extends State<_EditPointsDialog> {
+  late final TextEditingController _controller;
+  bool _isFieldFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.current.toString());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final v = int.tryParse(_controller.text.trim());
+    if (v != null) {
+      Navigator.pop(context, v);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Edit points'),
+          const SizedBox(height: 4),
+          Text(
+            '${widget.playerName} • Round ${widget.round}',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+      content: CalculatorTextField(
+        controller: _controller,
         autofocus: true,
+        textInputAction: TextInputAction.done,
+        onFocusChanged: (hasFocus) {
+          setState(() {
+            _isFieldFocused = hasFocus;
+          });
+        },
+        onSubmitted: (_) => _save(),
         decoration: const InputDecoration(
           hintText: 'Enter points (e.g. 10, -2)',
+          labelText: 'Points',
         ),
       ),
       actions: [
@@ -664,14 +810,35 @@ Future<int?> editPointsDialog(BuildContext context, int current) async {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: () {
-            final v = int.tryParse(controller.text.trim());
-            if (v == null) return;
-            Navigator.pop(context, v);
-          },
+          onPressed: _save,
           child: const Text('Save'),
         ),
       ],
+      insetPadding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: _isFieldFocused
+            ? getCalculatorKeyboardHeight(context) + 16
+            : MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+    );
+  }
+}
+
+Future<int?> editPointsDialog(
+  BuildContext context, {
+  required int current,
+  required String playerName,
+  required int round,
+}) async {
+  return showDialog<int>(
+    barrierDismissible: false,
+    context: context,
+    builder: (_) => _EditPointsDialog(
+      current: current,
+      playerName: playerName,
+      round: round,
     ),
   );
 }

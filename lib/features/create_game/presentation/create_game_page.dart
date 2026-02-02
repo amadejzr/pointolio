@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/di/locator.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/ui/widgets/field_error.dart';
 import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
 import 'package:pointolio/common/ui/widgets/game_type_widgets.dart';
 import 'package:pointolio/common/ui/widgets/picker_sheet.dart';
@@ -14,6 +15,7 @@ import 'package:pointolio/common/ui/widgets/toast_message.dart';
 import 'package:pointolio/features/create_game/data/create_game_repository.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_state.dart';
+import 'package:pointolio/features/create_game/presentation/cubit/create_game_validation.dart';
 import 'package:pointolio/features/create_game/presentation/widgets/picker_field_widget.dart';
 
 class CreateGamePage extends StatelessWidget {
@@ -99,9 +101,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
                   child: Padding(
                     padding: Spacing.page,
                     child: ElevatedButton(
-                      onPressed:
-                          state.isValid &&
-                              state.status != CreateGameStatus.loading
+                      onPressed: state.status != CreateGameStatus.loading
                           ? cubit.createGame
                           : null,
                       child: state.status == CreateGameStatus.loading
@@ -165,11 +165,17 @@ class _CreateGameViewState extends State<_CreateGameView> {
           Spacing.gap8,
           TextField(
             controller: _gameNameController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'e.g. Friday Night #1',
+              error: state.hasError(CreateGameValidation.gameNameField)
+                  ? const SizedBox.shrink()
+                  : null,
             ),
             onChanged: cubit.setGameName,
             textCapitalization: TextCapitalization.words,
+          ),
+          FieldError(
+            error: state.getError(CreateGameValidation.gameNameField),
           ),
 
           Spacing.gap24,
@@ -187,10 +193,12 @@ class _CreateGameViewState extends State<_CreateGameView> {
           ),
           Spacing.gap8,
 
+          Spacing.gap8,
           if (state.selectedGameType == null)
             PickerFieldBase(
               text: 'Choose game',
               icon: Icons.category_outlined,
+              hasError: state.hasError(CreateGameValidation.gameTypeField),
               onTap: () async {
                 final selected = await PickerSheet.show<GameType>(
                   context: context,
@@ -223,6 +231,9 @@ class _CreateGameViewState extends State<_CreateGameView> {
                 if (selected != null) cubit.setGameType(selected);
               },
             ),
+          FieldError(
+            error: state.getError(CreateGameValidation.gameTypeField),
+          ),
 
           Spacing.gap24,
 
@@ -242,6 +253,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
           PickerFieldBase(
             text: 'Add player',
             icon: Icons.person_outline,
+            hasError: state.hasError(CreateGameValidation.playersField),
             onTap: () async {
               final remaining = state.availablePlayers
                   .where(
@@ -268,7 +280,9 @@ class _CreateGameViewState extends State<_CreateGameView> {
 
           // Players List
           if (state.selectedPlayers.isEmpty)
-            _EmptyPlayersCard()
+            _EmptyPlayersCard(
+              hasError: state.hasError(CreateGameValidation.playersField),
+            )
           else
             ReorderableListView.builder(
               shrinkWrap: true,
@@ -305,6 +319,10 @@ class _CreateGameViewState extends State<_CreateGameView> {
                   ),
                 );
               },
+            ),
+          if (state.selectedPlayers.isNotEmpty)
+            FieldError(
+              error: state.getError(CreateGameValidation.playersField),
             ),
         ],
       ),
@@ -371,6 +389,10 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _EmptyPlayersCard extends StatelessWidget {
+  const _EmptyPlayersCard({this.hasError = false});
+
+  final bool hasError;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -381,7 +403,9 @@ class _EmptyPlayersCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant),
+        border: Border.all(
+          color: hasError ? cs.error : cs.outlineVariant,
+        ),
       ),
       child: Column(
         children: [
