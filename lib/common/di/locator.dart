@@ -5,10 +5,12 @@ import 'package:pointolio/features/home/data/home_repository.dart';
 import 'package:pointolio/features/manage/data/game_types_management_repository.dart';
 import 'package:pointolio/features/manage/data/players_management_repository.dart';
 import 'package:pointolio/features/scoring/data/scoring_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final GetIt locator = GetIt.instance;
 
 Future<void> setupLocator() async {
+  final prefs = await SharedPreferences.getInstance();
   // Database
   locator
     ..registerLazySingleton<AppDatabase>(AppDatabase.new)
@@ -27,5 +29,8 @@ Future<void> setupLocator() async {
     )
     ..registerLazySingleton<GameTypesManagementRepository>(
       () => GameTypesManagementRepository(locator<AppDatabase>()),
+    )
+    ..registerLazySingleton<SharedPreferences>(
+      () => prefs,
     );
 }
