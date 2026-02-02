@@ -4,6 +4,7 @@ import 'package:pointolio/common/di/locator.dart';
 import 'package:pointolio/common/theme/app_theme.dart';
 import 'package:pointolio/features/manage/presentation/cubit/theme_cubit.dart';
 import 'package:pointolio/features/manage/presentation/cubit/theme_state.dart';
+import 'package:pointolio/features/onboarding/data/onboarding_repository.dart';
 import 'package:pointolio/router/app_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,6 +19,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isOnboardingCompleted =
+        locator<OnboardingRepository>().isOnboardingCompleted;
+
     return BlocProvider(
       create: (_) => ThemeCubit(prefs: locator<SharedPreferences>()),
       child: BlocBuilder<ThemeCubit, ThemeState>(
@@ -28,8 +32,15 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: state.themeMode.toThemeMode(),
-            initialRoute: AppRouter.home,
-            onGenerateRoute: AppRouter.onGenerateRoute,
+            initialRoute: isOnboardingCompleted
+                ? AppRouter.home
+                : AppRouter.onboarding,
+            onGenerateRoute: (settings) => AppRouter.onGenerateRoute(
+              settings,
+              onOnboardingComplete: () async {
+                await locator<OnboardingRepository>().completeOnboarding();
+              },
+            ),
           );
         },
       ),
