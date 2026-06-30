@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pointolio/features/manage/presentation/cubit/theme_cubit.dart';
 import 'package:pointolio/features/manage/presentation/cubit/theme_state.dart';
@@ -58,6 +59,12 @@ void main() {
       expect(AppThemeModeX.fromString('dark'), AppThemeMode.dark);
       expect(AppThemeModeX.fromString(null), AppThemeMode.system);
       expect(AppThemeModeX.fromString('whatever'), AppThemeMode.system);
+    });
+
+    test('toThemeMode maps each app mode to a Flutter ThemeMode', () {
+      expect(AppThemeMode.system.toThemeMode(), ThemeMode.system);
+      expect(AppThemeMode.light.toThemeMode(), ThemeMode.light);
+      expect(AppThemeMode.dark.toThemeMode(), ThemeMode.dark);
     });
   });
 }

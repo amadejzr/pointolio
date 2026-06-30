@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/exception/domain_exception.dart';
 import 'package:pointolio/features/scoring/data/scoring_repository.dart';
 import 'package:pointolio/features/scoring/domain/models.dart';
@@ -239,6 +240,72 @@ void main() {
   });
 
   group('loadData', () {
+    ScoreEntry entry(int round) => ScoreEntry(
+          id: round,
+          gamePlayerId: 1,
+          roundNumber: round,
+          points: 1,
+          createdAt: DateTime(2025),
+        );
+
+    PlayerScore scoresWithRounds() => PlayerScore(
+          player: playerRow(id: 1, firstName: 'Amy'),
+          gamePlayer: gamePlayerRow(id: 1),
+          roundScores: {1: entry(1), 2: entry(2)},
+          total: 2,
+        );
+
+    // Wires up getGame/getGameType and both watch streams for a happy path.
+    void stubHappyLoad() {
+      when(() => repo.getGame(gameId))
+          .thenAnswer((_) async => gameRow(id: gameId));
+      when(() => repo.getGameType(any()))
+          .thenAnswer((_) async => gameTypeRow(id: 1, lowestScoreWins: true));
+      when(() => repo.watchGamePlayers(gameId)).thenAnswer(
+        (_) => Stream.value([
+          (playerRow(id: 1, firstName: 'Amy'), gamePlayerRow(id: 1)),
+        ]),
+      );
+      when(() => repo.watchScoreEntries(gameId))
+          .thenAnswer((_) => Stream.value([entry(1), entry(2)]));
+      when(() => repo.getPlayerScores(gameId))
+          .thenAnswer((_) async => [scoresWithRounds()]);
+    }
+
+    test('loads the game, type, scores and derived round count', () async {
+      stubHappyLoad();
+      final cubit = build();
+
+      await cubit.loadData();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.status, ScoringStatus.loaded);
+      expect(cubit.state.game?.id, gameId);
+      expect(cubit.state.lowestScoreWins, isTrue);
+      expect(cubit.state.playerScores, isNotEmpty);
+      expect(cubit.state.roundCount, 2); // max round across player scores
+      await cubit.close();
+    });
+
+    test('surfaces an error when the players stream fails', () async {
+      when(() => repo.getGame(gameId))
+          .thenAnswer((_) async => gameRow(id: gameId));
+      when(() => repo.getGameType(any())).thenAnswer((_) async => null);
+      when(() => repo.watchGamePlayers(gameId)).thenAnswer(
+        (_) => Stream.error(const DomainException(DomainErrorCode.storage)),
+      );
+      when(() => repo.watchScoreEntries(gameId))
+          .thenAnswer((_) => const Stream.empty());
+      final cubit = build();
+
+      await cubit.loadData();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.status, ScoringStatus.error);
+      expect(cubit.state.errorMessage, isNotNull);
+      await cubit.close();
+    });
+
     blocTest<ScoringCubit, ScoringState>(
       'maps a DomainException while loading the game to an error state',
       build: () {
@@ -251,6 +318,38 @@ void main() {
         hasStatus(ScoringStatus.loading),
         hasStatus(ScoringStatus.error),
       ],
+    );
+  });
+
+  group('updateParty', () {
+    blocTest<ScoringCubit, ScoringState>(
+      'persists the party then reloads the game',
+      build: () {
+        when(
+          () => repo.updateGameParty(
+            gameId: any(named: 'gameId'),
+            name: any(named: 'name'),
+            playerIds: any(named: 'playerIds'),
+          ),
+        ).thenAnswer((_) async {});
+        when(() => repo.getGame(gameId))
+            .thenAnswer((_) async => gameRow(id: gameId, name: 'Renamed'));
+        return build();
+      },
+      act: (cubit) => cubit.updateParty(
+        name: 'Renamed',
+        players: [playerRow(id: 1, firstName: 'Amy')],
+      ),
+      expect: () => [
+        isA<ScoringState>().having((s) => s.game?.name, 'name', 'Renamed'),
+      ],
+      verify: (_) => verify(
+        () => repo.updateGameParty(
+          gameId: gameId,
+          name: 'Renamed',
+          playerIds: [1],
+        ),
+      ).called(1),
     );
   });
 }

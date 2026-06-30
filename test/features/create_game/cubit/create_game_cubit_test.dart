@@ -230,5 +230,80 @@ void main() {
             .having((s) => s.selectedGameType?.id, 'selected id', 7),
       ],
     );
+
+    blocTest<CreateGameCubit, CreateGameState>(
+      'maps a DomainException to a snackbar',
+      build: () {
+        when(() => repo.addGameType(name: 'Chess'))
+            .thenThrow(const DomainException(DomainErrorCode.conflict));
+        return build();
+      },
+      act: (cubit) => cubit.addNewGameType('Chess'),
+      expect: () => [
+        isA<CreateGameState>()
+            .having((s) => s.snackbarMessage, 'snackbarMessage', isNotNull),
+      ],
+    );
+  });
+
+  group('addNewPlayer', () {
+    blocTest<CreateGameCubit, CreateGameState>(
+      'ignores blank first names',
+      build: build,
+      act: (cubit) => cubit.addNewPlayer('   ', null, null),
+      expect: () => <CreateGameState>[],
+      verify: (_) => verifyNever(
+        () => repo.addPlayer(firstName: any(named: 'firstName')),
+      ),
+    );
+
+    blocTest<CreateGameCubit, CreateGameState>(
+      'adds the new player to both available and selected lists',
+      build: () {
+        when(
+          () => repo.addPlayer(
+            firstName: 'Cory',
+            lastName: any(named: 'lastName'),
+            color: any(named: 'color'),
+          ),
+        ).thenAnswer((_) async => 9);
+        when(() => repo.getPlayerById(9))
+            .thenAnswer((_) async => playerRow(id: 9, firstName: 'Cory'));
+        return build();
+      },
+      act: (cubit) => cubit.addNewPlayer('Cory', null, null),
+      expect: () => [
+        isA<CreateGameState>()
+            .having(
+              (s) => s.availablePlayers.map((p) => p.id),
+              'available',
+              contains(9),
+            )
+            .having(
+              (s) => s.selectedPlayers.map((p) => p.id),
+              'selected',
+              contains(9),
+            ),
+      ],
+    );
+
+    blocTest<CreateGameCubit, CreateGameState>(
+      'maps a DomainException to a snackbar',
+      build: () {
+        when(
+          () => repo.addPlayer(
+            firstName: any(named: 'firstName'),
+            lastName: any(named: 'lastName'),
+            color: any(named: 'color'),
+          ),
+        ).thenThrow(const DomainException(DomainErrorCode.storage));
+        return build();
+      },
+      act: (cubit) => cubit.addNewPlayer('Cory', null, null),
+      expect: () => [
+        isA<CreateGameState>()
+            .having((s) => s.snackbarMessage, 'snackbarMessage', isNotNull),
+      ],
+    );
   });
 }
