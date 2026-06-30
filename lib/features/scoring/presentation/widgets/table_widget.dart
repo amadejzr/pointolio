@@ -226,10 +226,11 @@ class _RoundsGridState extends State<RoundsGrid>
                               setState(() => _dragIndex = null),
                           onReorder: (oldIndex, newIndex) async {
                             if (widget.onReorderPlayers == null) return;
-                            if (newIndex > oldIndex) {
-                              newIndex--;
-                            }
-                            widget.onReorderPlayers!(oldIndex, newIndex);
+                            // newIndex assumes the dragged item is still in its
+                            // old slot; adjust it for downward moves.
+                            final targetIndex =
+                                newIndex > oldIndex ? newIndex - 1 : newIndex;
+                            widget.onReorderPlayers!(oldIndex, targetIndex);
                           },
                           proxyDecorator: (child, index, animation) {
                             final ps = widget.state.playerScores[index];
