@@ -19,9 +19,11 @@ dependencies:
   go_router: ^17.3.0
   google_fonts: ^8.1.0
   intl: ^0.20.2
+  package_info_plus: ^10.2.0
   path_provider: ^2.1.5
   share_plus: ^13.2.0
   shared_preferences: ^2.5.4
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   bloc_test: ^10.0.0
