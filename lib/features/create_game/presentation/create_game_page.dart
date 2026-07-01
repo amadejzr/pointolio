@@ -3,21 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/di/locator.dart';
-import 'package:pointolio/common/ui/tokens/spacing.dart';
-import 'package:pointolio/common/ui/widgets/field_error.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
+import 'package:pointolio/common/theme/pointolio_tokens.dart';
+import 'package:pointolio/common/ui/widgets/form/form.dart';
 import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
-import 'package:pointolio/common/ui/widgets/game_type_widgets.dart';
-import 'package:pointolio/common/ui/widgets/picker_sheet.dart';
+import 'package:pointolio/common/ui/widgets/motion.dart';
+import 'package:pointolio/common/ui/widgets/notebook_background.dart';
 import 'package:pointolio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
-import 'package:pointolio/common/ui/widgets/player_item_widget.dart';
 import 'package:pointolio/common/ui/widgets/toast_message.dart';
 import 'package:pointolio/features/create_game/data/create_game_repository.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_state.dart';
-import 'package:pointolio/features/create_game/presentation/cubit/create_game_validation.dart';
-import 'package:pointolio/features/create_game/presentation/widgets/picker_field_widget.dart';
 import 'package:pointolio/router/app_router.dart';
 
 class CreateGamePage extends StatelessWidget {
@@ -58,7 +55,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
 
     return BlocConsumer<CreateGameCubit, CreateGameState>(
       listenWhen: (prev, curr) =>
@@ -68,9 +65,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
       listener: (context, state) {
         if (state.status == CreateGameStatus.success &&
             state.createdGameId != null) {
-          context.pushReplacement(
-            AppRouter.scoringPath(state.createdGameId!),
-          );
+          context.pushReplacement(AppRouter.scoringPath(state.createdGameId!));
           return;
         }
 
@@ -84,34 +79,24 @@ class _CreateGameViewState extends State<_CreateGameView> {
         final cubit = context.read<CreateGameCubit>();
 
         return Scaffold(
-          backgroundColor: cs.surface,
-          appBar: AppBar(
-            title: const Text('New Party'),
-            leading: IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => context.pop(),
-            ),
-          ),
-          body: _buildBody(context, state, cubit, cs),
-          bottomNavigationBar: state.status == CreateGameStatus.error
-              ? null
-              : SafeArea(
-                  child: Padding(
-                    padding: Spacing.page,
-                    child: ElevatedButton(
-                      onPressed: state.status != CreateGameStatus.loading
-                          ? cubit.createGame
-                          : null,
-                      child: state.status == CreateGameStatus.loading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Start Party'),
-                    ),
+          backgroundColor: pt.bg,
+          body: Stack(
+            children: [
+              const Positioned.fill(child: NotebookBackground()),
+              Column(
+                children: [
+                  FormAppBar(
+                    title: 'New party',
+                    onCancel: context.pop,
+                    actionLabel: 'Start',
+                    actionEnabled: state.isValid,
+                    onAction: cubit.createGame,
                   ),
-                ),
+                  Expanded(child: _buildBody(context, state, cubit)),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -121,220 +106,116 @@ class _CreateGameViewState extends State<_CreateGameView> {
     BuildContext context,
     CreateGameState state,
     CreateGameCubit cubit,
-    ColorScheme cs,
   ) {
+    final pt = context.pt;
+
     if (state.status == CreateGameStatus.loading &&
         state.availableGameTypes.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (state.status == CreateGameStatus.error) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.error_outline, size: 48, color: cs.error),
-              Spacing.gap16,
-              Text(
-                state.errorMessage ?? 'Something went wrong',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: cs.error),
-              ),
-              Spacing.gap16,
-              FilledButton.tonal(
-                onPressed: cubit.loadData,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation(pt.accent),
         ),
       );
     }
 
-    return SingleChildScrollView(
-      padding: Spacing.page,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Game Name
-          const _SectionLabel(label: 'Party name'),
-          Spacing.gap8,
-          TextField(
-            controller: _gameNameController,
-            decoration: InputDecoration(
-              hintText: 'e.g. Friday Night #1',
-              error: state.hasError(CreateGameValidation.gameNameField)
-                  ? const SizedBox.shrink()
-                  : null,
-            ),
-            onChanged: cubit.setGameName,
-            textCapitalization: TextCapitalization.words,
-          ),
-          FieldError(
-            error: state.getError(CreateGameValidation.gameNameField),
-          ),
+    if (state.status == CreateGameStatus.error) {
+      return _ErrorState(
+        message: state.errorMessage ?? 'Something went wrong',
+        onRetry: cubit.loadData,
+      );
+    }
 
-          Spacing.gap24,
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
-          // Game Type (picker sheet) + "New" action
-          Row(
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(S.lg, S.sm, S.lg, S.lg),
             children: [
-              const _SectionLabel(label: 'Game'),
-              const Spacer(),
-              TextButton(
-                onPressed: () => _showAddGameTypeDialog(context, cubit),
-                child: const Text('New'),
-              ),
-            ],
-          ),
-          Spacing.gap8,
-
-          Spacing.gap8,
-          if (state.selectedGameType == null)
-            PickerFieldBase(
-              text: 'Choose game',
-              icon: Icons.category_outlined,
-              hasError: state.hasError(CreateGameValidation.gameTypeField),
-              onTap: () async {
-                final selected = await PickerSheet.show<GameType>(
-                  context: context,
-                  title: 'Games',
-                  items: state.availableGameTypes,
-                  itemLabel: (t) => t.name,
-                  itemKey: (t) => t.id,
-                  itemBuilder: (context, t) => GameTypeItem(gameType: t),
-                  emptyTitle: 'No game types found',
-                  emptySubtitle: 'Create one with New.',
-                );
-                if (selected != null) cubit.setGameType(selected);
-              },
-            )
-          else
-            GameTypeItem(
-              gameType: state.selectedGameType!,
-              showChevron: true,
-              onTap: () async {
-                final selected = await PickerSheet.show<GameType>(
-                  context: context,
-                  title: 'Games',
-                  items: state.availableGameTypes,
-                  itemLabel: (t) => t.name,
-                  itemKey: (t) => t.id,
-                  itemBuilder: (context, t) => GameTypeItem(gameType: t),
-                  emptyTitle: 'No game types found',
-                  emptySubtitle: 'Create one with New.',
-                );
-                if (selected != null) cubit.setGameType(selected);
-              },
-            ),
-          FieldError(
-            error: state.getError(CreateGameValidation.gameTypeField),
-          ),
-
-          Spacing.gap24,
-
-          // Players + "New" action (count moved out)
-          Row(
-            children: [
-              const _SectionLabel(label: 'Players'),
-              const Spacer(),
-              TextButton(
-                onPressed: () => _showAddPlayerDialog(context, cubit),
-                child: const Text('New'),
-              ),
-            ],
-          ),
-          Spacing.gap8,
-
-          PickerFieldBase(
-            text: 'Add player',
-            icon: Icons.person_outline,
-            hasError: state.hasError(CreateGameValidation.playersField),
-            onTap: () async {
-              final remaining = state.availablePlayers
-                  .where(
-                    (p) => !state.selectedPlayers.any(
-                      (sp) => sp.id == p.id,
-                    ),
-                  )
-                  .toList();
-
-              final selected = await PickerSheet.show<Player>(
-                context: context,
-                title: 'Players',
-                items: remaining,
-                itemLabel: _playerDisplayName,
-                itemBuilder: (context, player) => PlayerItem(
-                  player: player,
+              // Party name
+              FormSection(
+                label: 'Party name',
+                child: PtTextField(
+                  controller: _gameNameController,
+                  hint: 'e.g. Friday Night #1',
+                  semanticLabel: 'Party name',
+                  onChanged: cubit.setGameName,
                 ),
-              );
-              if (selected != null) cubit.addPlayer(selected);
-            },
+              ),
+              const SectionGap(),
+
+              // Game
+              FormSection(
+                label: 'Game',
+                trailing: _NewTextAction(
+                  onTap: () => _showAddGameType(context, cubit),
+                ),
+                child: GamePickerField(
+                  gameType: state.selectedGameType,
+                  onTap: () => _pickGame(context, cubit, state),
+                ),
+              ),
+              const SectionGap(),
+
+              // Players
+              FormSection(
+                label: 'Players',
+                trailing: Text(
+                  '${state.selectedPlayers.length} added',
+                  style: PT.caption(pt.textMuted),
+                ),
+                child: PlayerSelector(
+                  players: state.selectedPlayers,
+                  onRemove: (p) => cubit.removePlayer(p.id),
+                  onAddExisting: () => _addExisting(context, cubit, state),
+                  onNewPlayer: () => _showAddPlayer(context, cubit),
+                ),
+              ),
+            ],
           ),
-
-          Spacing.gap16,
-
-          // Players List
-          if (state.selectedPlayers.isEmpty)
-            _EmptyPlayersCard(
-              hasError: state.hasError(CreateGameValidation.playersField),
-            )
-          else
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: state.selectedPlayers.length,
-              onReorder: cubit.reorderPlayers,
-              proxyDecorator: (child, index, animation) {
-                return Material(
-                  color: Colors.transparent,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: const [
-                        BoxShadow(
-                          blurRadius: 16,
-                          offset: Offset(0, 10),
-                          color: Color(0x1F000000),
-                        ),
-                      ],
-                    ),
-                    child: child,
-                  ),
-                );
-              },
-              itemBuilder: (context, index) {
-                final player = state.selectedPlayers[index];
-                return Padding(
-                  key: ValueKey(player.id),
-                  padding: const EdgeInsets.only(bottom: Spacing.xs),
-                  child: PlayerItem(
-                    player: player,
-                    reorderIndex: index,
-                    onRemove: () => cubit.removePlayer(player.id),
-                  ),
-                );
-              },
-            ),
-          if (state.selectedPlayers.isNotEmpty)
-            FieldError(
-              error: state.getError(CreateGameValidation.playersField),
-            ),
-        ],
-      ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(S.lg, S.sm, S.lg, bottomInset + S.lg),
+          child: PrimaryButton(
+            label: 'Start party',
+            enabled: state.isValid,
+            loading: state.status == CreateGameStatus.loading,
+            onTap: cubit.createGame,
+          ),
+        ),
+      ],
     );
   }
 
-  String _playerDisplayName(Player player) {
-    if (player.lastName != null && player.lastName!.isNotEmpty) {
-      return '${player.firstName} ${player.lastName}';
-    }
-    return player.firstName;
+  Future<void> _pickGame(
+    BuildContext context,
+    CreateGameCubit cubit,
+    CreateGameState state,
+  ) async {
+    final picked = await GamePickerSheet.show(
+      context,
+      gameTypes: state.availableGameTypes,
+      selected: state.selectedGameType,
+    );
+    if (picked != null) cubit.setGameType(picked);
   }
 
-  Future<void> _showAddGameTypeDialog(
+  Future<void> _addExisting(
+    BuildContext context,
+    CreateGameCubit cubit,
+    CreateGameState state,
+  ) async {
+    final pool = state.availablePlayers
+        .where((p) => !state.selectedPlayers.any((sp) => sp.id == p.id))
+        .toList();
+
+    final toAdd = await ExistingPlayersSheet.show(context, available: pool);
+    if (toAdd == null) return;
+    toAdd.forEach(cubit.addPlayer);
+  }
+
+  Future<void> _showAddGameType(
     BuildContext context,
     CreateGameCubit cubit,
   ) async {
@@ -351,7 +232,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
     }
   }
 
-  Future<void> _showAddPlayerDialog(
+  Future<void> _showAddPlayer(
     BuildContext context,
     CreateGameCubit cubit,
   ) async {
@@ -359,63 +240,71 @@ class _CreateGameViewState extends State<_CreateGameView> {
 
     if (result != null) {
       unawaited(
-        cubit.addNewPlayer(
-          result.firstName,
-          result.lastName,
-          result.color,
-        ),
+        cubit.addNewPlayer(result.firstName, result.lastName, result.color),
       );
     }
   }
 }
 
-// ========================= UI BITS =========================
+/// Small "New" text action used next to the Game section label.
+class _NewTextAction extends StatelessWidget {
+  const _NewTextAction({required this.onTap});
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.label});
-  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w500,
+    final pt = context.pt;
+    return Pressable(
+      onTap: onTap,
+      scale: 0.92,
+      isButton: true,
+      semanticLabel: 'New game',
+      excludeChildSemantics: true,
+      child: Container(
+        // Right-aligned and flush with the content edge so it lines up under
+        // the app bar's Start action; the hit target extends to the left.
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 36),
+        alignment: Alignment.centerRight,
+        child: Text(
+          'New',
+          style: PT.bodyStrong(pt.accent).copyWith(fontSize: 13),
+        ),
       ),
     );
   }
 }
 
-class _EmptyPlayersCard extends StatelessWidget {
-  const _EmptyPlayersCard({this.hasError = false});
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
 
-  final bool hasError;
+  final String message;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(Spacing.lg),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: hasError ? cs.error : cs.outlineVariant,
+    final pt = context.pt;
+    final danger = pt.players[3];
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(S.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline_rounded, size: 44, color: danger),
+            const SizedBox(height: S.md),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: PT.body(pt.textMuted),
+            ),
+            const SizedBox(height: S.lg),
+            SizedBox(
+              width: 160,
+              child: PrimaryButton(label: 'Retry', onTap: onRetry),
+            ),
+          ],
         ),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.people_outline, size: 40, color: cs.onSurfaceVariant),
-          Spacing.gap8,
-          Text(
-            'Add at least 2 players',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-          ),
-        ],
       ),
     );
   }

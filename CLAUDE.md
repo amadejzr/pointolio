@@ -117,7 +117,7 @@ Use it as the visual/interaction spec when redesigning a screen; adapt it to the
 
 The Parties screen is the reference implementation for the pattern: Scaffold(`backgroundColor: pt.bg`) -> `Stack[ NotebookBackground, SafeArea(Column[header, Expanded(body)]) ]`, cards via `Pressable`, staggered `AnimatedEntrance`, type via `PT.*`, spacing/radius via `S`/`R`. Copy that structure for Players and Games.
 
-Row-level actions use a **per-item `⋯` menu** (no edit mode): tapping `⋯` opens a themed bottom sheet of actions. See `party_card.dart` + `party_actions_sheet.dart` (`showPartyActionsSheet` returning a `PartyAction`). Follow the same pattern for Players/Games instead of long-press edit mode. `HomeState` no longer has `isEditing` - that flow was removed.
+Row-level actions use a **per-item `⋯` menu** (no edit mode): tapping `⋯` opens a themed anchored dropdown of actions (custom, via `showGeneralDialog` - not a Material popup or bottom sheet). See `party_card.dart` + `party_menu.dart` (`showPartyMenu` returning a `PartyAction`) and the custom `delete_party_dialog.dart`. Follow the same pattern for Players/Games instead of long-press edit mode. `HomeState` no longer has `isEditing` - that flow was removed.
 
 Redesign one screen at a time, wiring the reference visuals to the existing cubit/repository. Keep the rest of the app on the legacy theme until its turn.
 
@@ -136,3 +136,21 @@ Redesign one screen at a time, wiring the reference visuals to the existing cubi
 - In long Markdown, put each sentence on its own line.
 - Match the surrounding code's style, naming, and comment density.
 - Multiple agents may run in parallel on independent tasks - keep changes scoped to your task and avoid touching shared files (`app_theme.dart`, `app_router.dart`, `locator.dart`, `home_shell.dart`) unless your task is about them.
+
+## Parallel worktrees
+
+Screen redesigns run in parallel via git worktrees (one agent per worktree), opened together in the `pointolio.code-workspace` multi-root workspace:
+
+- `pointolio/` -> branch `dev` (integration branch; Parties lives here)
+- `pointolio-player-redesign/` -> branch `feature/player-redesign`
+- `pointolio-games-redesign/` -> branch `feature/games-redesign`
+
+All worktrees share one `.git`, so a commit in one is instantly visible to the others as a ref.
+
+Conventions:
+
+- Do your work on your own `feature/*` branch. Do not commit to `dev` from a feature worktree.
+- Before starting and whenever you need the latest shared code (theme, `Pressable`, tokens, router), run `git merge dev` (or `git rebase dev`) to pull it in. `dev` is the source of truth for shared infrastructure.
+- Shared files (`pointolio_theme.dart`, `pointolio_tokens.dart`, `motion.dart`, `notebook_background.dart`, `player_avatar.dart`, `home_shell.dart`, `app_router.dart`, `CLAUDE.md`) are prime conflict spots - prefer adding new widgets over editing these, and coordinate through `dev`.
+- When a screen is done and green (`flutter analyze` + `flutter test`), merge its `feature/*` branch into `dev`; the other worktrees then `git merge dev` to stay current.
+- Only commit/push when the user asks.
