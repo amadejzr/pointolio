@@ -74,17 +74,19 @@ class HomeRepository {
 
   Stream<List<GameWithPlayerCount>> watchGamesWithMetadata() {
     return _db.gameDao
-        .watchGamesWithMetadata()
+        .watchGamesWithDetails()
         .map((rows) {
-          return rows
-              .map(
-                (r) => GameWithPlayerCount(
-                  game: r.$1,
-                  playerCount: r.$2,
-                  gameType: r.$3,
-                ),
-              )
-              .toList();
+          return rows.map((r) {
+            final (game, gameType, roster, roundCount) = r;
+            return GameWithPlayerCount(
+              game: game,
+              playerCount: roster.length,
+              gameType: gameType,
+              players: roster.map((e) => e.$1).toList(),
+              roundCount: roundCount,
+              winnerName: _winnerName(game, gameType, roster, roundCount),
+            );
+          }).toList();
         })
         .handleError(
           (Object e) {
@@ -98,6 +100,28 @@ class HomeRepository {
             );
           },
         );
+  }
+
+  /// The winning player's first name for a finished party, or null while it is
+  /// still active or has no scores yet. Uses the game type's win rule.
+  String? _winnerName(
+    Game game,
+    GameType? gameType,
+    List<(Player, int)> roster,
+    int roundCount,
+  ) {
+    if (game.finishedAt == null || roster.isEmpty || roundCount == 0) {
+      return null;
+    }
+    final lowestWins = gameType?.lowestScoreWins ?? false;
+    var best = roster.first;
+    for (final entry in roster.skip(1)) {
+      final betterScore = lowestWins
+          ? entry.$2 < best.$2
+          : entry.$2 > best.$2;
+      if (betterScore) best = entry;
+    }
+    return best.$1.firstName;
   }
 
   Future<void> setGameFinished(int id, {required bool finished}) async {

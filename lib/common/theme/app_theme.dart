@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
 
 class AppTheme {
   static const _fontFamily = 'Rubik';
@@ -75,6 +76,7 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
       fontFamily: _fontFamily,
+      extensions: const [PointolioTheme.light],
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -263,6 +265,7 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
       fontFamily: _fontFamily,
+      extensions: const [PointolioTheme.dark],
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

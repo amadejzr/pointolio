@@ -6,3 +6,6 @@ analyzer:
     # regenerated with `drift_dev schema generate` and must not be hand-edited,
     # so linting them only produces noise.
     - test/migration/generated/**
+    # Notebook/Slate design reference module. Not compiled into the app (lives
+    # outside lib/); kept as the visual spec while screens migrate one by one.
+    - homepage/**

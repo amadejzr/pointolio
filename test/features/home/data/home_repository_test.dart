@@ -82,6 +82,55 @@ void main() {
 
       expect(entry.playerCount, 2);
       expect(entry.gameType?.id, seeded.gameTypeId);
+      expect(entry.players.map((p) => p.firstName), ['Amy', 'Bob']);
+      expect(entry.roundCount, 0);
+      expect(entry.winnerName, isNull);
+    });
+
+    test('reports the highest round number', () async {
+      final seeded = await seedGame(db);
+      await db.scoringDao.addRound(
+        roundNumber: 1,
+        scores: {seeded.gamePlayerIds[0]: 5, seeded.gamePlayerIds[1]: 3},
+      );
+      await db.scoringDao.addRound(
+        roundNumber: 2,
+        scores: {seeded.gamePlayerIds[0]: 5, seeded.gamePlayerIds[1]: 3},
+      );
+
+      final entry = (await repo.watchGamesWithMetadata().first)
+          .firstWhere((g) => g.game.id == seeded.gameId);
+
+      expect(entry.roundCount, 2);
+      expect(entry.winnerName, isNull); // still active
+    });
+
+    test('names the winner once finished (highest score wins)', () async {
+      final seeded = await seedGame(db); // lowestScoreWins defaults to false
+      await db.scoringDao.addRound(
+        roundNumber: 1,
+        scores: {seeded.gamePlayerIds[0]: 10, seeded.gamePlayerIds[1]: 4},
+      );
+      await repo.setGameFinished(seeded.gameId, finished: true);
+
+      final entry = (await repo.watchGamesWithMetadata().first)
+          .firstWhere((g) => g.game.id == seeded.gameId);
+
+      expect(entry.winnerName, 'Amy');
+    });
+
+    test('respects lowest-score-wins when naming the winner', () async {
+      final seeded = await seedGame(db, lowestScoreWins: true);
+      await db.scoringDao.addRound(
+        roundNumber: 1,
+        scores: {seeded.gamePlayerIds[0]: 10, seeded.gamePlayerIds[1]: 4},
+      );
+      await repo.setGameFinished(seeded.gameId, finished: true);
+
+      final entry = (await repo.watchGamesWithMetadata().first)
+          .firstWhere((g) => g.game.id == seeded.gameId);
+
+      expect(entry.winnerName, 'Bob');
     });
   });
 

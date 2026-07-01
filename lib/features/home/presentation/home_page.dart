@@ -2,15 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pointolio/common/di/locator.dart';
-import 'package:pointolio/common/ui/tokens/spacing.dart';
-import 'package:pointolio/common/ui/widgets/confirm_dialog.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
+import 'package:pointolio/common/theme/pointolio_tokens.dart';
+import 'package:pointolio/common/ui/widgets/motion.dart';
 import 'package:pointolio/common/ui/widgets/toast_message.dart';
 import 'package:pointolio/features/home/data/home_repository.dart';
 import 'package:pointolio/features/home/presentation/cubit/home_cubit.dart';
 import 'package:pointolio/features/home/presentation/cubit/home_state.dart';
-import 'package:pointolio/features/home/presentation/widgets/game_card.dart';
-import 'package:pointolio/features/home/presentation/widgets/home_menu.dart';
+import 'package:pointolio/features/home/presentation/widgets/delete_party_dialog.dart';
+import 'package:pointolio/features/home/presentation/widgets/party_card.dart';
 import 'package:pointolio/router/app_router.dart';
 
 class HomePage extends StatelessWidget {
@@ -31,8 +33,6 @@ class _HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return BlocListener<HomeCubit, HomeState>(
       listenWhen: (prev, curr) => prev.snackbarMessage != curr.snackbarMessage,
       listener: (context, state) {
@@ -42,34 +42,78 @@ class _HomeView extends StatelessWidget {
           context.read<HomeCubit>().clearSnackbar();
         }
       },
-      child: BlocBuilder<HomeCubit, HomeState>(
-        builder: (context, state) {
-          final cubit = context.read<HomeCubit>();
+      // Background + floating bar are provided by HomeShell.
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          bottom: false,
+          child: BlocBuilder<HomeCubit, HomeState>(
+            builder: (context, state) {
+              return Column(
+                children: [
+                  _PartiesHeader(state: state),
+                  Expanded(child: _HomeBody(state: state)),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-          return Scaffold(
-            backgroundColor: cs.surface,
-            appBar: AppBar(
-              title: const Text('My Parties'),
-              actions: [
-                if (state.isEditing)
-                  TextButton(
-                    onPressed: cubit.exitEditMode,
-                    child: const Text('Done'),
-                  )
-                else
-                  const HomeOverflowMenu(),
+class _PartiesHeader extends StatelessWidget {
+  const _PartiesHeader({required this.state});
+
+  final HomeState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+
+    final active = state.games.where((g) => g.game.finishedAt == null).length;
+    final finished = state.games
+        .where((g) => g.game.finishedAt != null)
+        .length;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(S.lg, S.sm, S.lg, S.md),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Parties', style: PT.screenTitle(pt.text)),
+                const SizedBox(height: 2),
+                Text(
+                  '$active active · $finished finished',
+                  style: PT.caption(pt.textMuted),
+                ),
               ],
             ),
-            body: _HomeBody(state: state),
-            floatingActionButton: state.isEditing
-                ? null
-                : FloatingActionButton(
-                    onPressed: () =>
-                        Navigator.pushNamed(context, AppRouter.createGame),
-                    child: const Icon(Icons.add),
-                  ),
-          );
-        },
+          ),
+          Pressable(
+            onTap: () => unawaited(context.push(AppRouter.settings)),
+            scale: 0.9,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: pt.surface,
+                shape: BoxShape.circle,
+                border: Border.all(color: pt.border),
+              ),
+              child: Icon(
+                Icons.settings_outlined,
+                size: 19,
+                color: pt.textMuted,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -82,35 +126,22 @@ class _HomeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final pt = context.pt;
     final cubit = context.read<HomeCubit>();
 
     if (state.status == HomeStatus.loading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: pt.accent));
     }
 
     if (state.status == HomeStatus.error) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              state.errorMessage ?? 'Something went wrong',
-              style: TextStyle(color: cs.error),
-            ),
-            Spacing.gap16,
-            FilledButton.tonal(
-              onPressed: cubit.loadGames,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      return _ErrorState(
+        message: state.errorMessage,
+        onRetry: cubit.loadGames,
       );
     }
 
     if (state.games.isEmpty) {
-      return const _EmptyGamesState();
+      return const _EmptyState();
     }
 
     final activeGames = state.games
@@ -122,51 +153,22 @@ class _HomeBody extends StatelessWidget {
 
     return ListView(
       physics: const ClampingScrollPhysics(),
-      padding: Spacing.page,
+      padding: EdgeInsets.fromLTRB(
+        S.lg,
+        0,
+        S.lg,
+        MediaQuery.paddingOf(context).bottom + S.md,
+      ),
       children: [
-        // ===== Active =====
         if (activeGames.isNotEmpty)
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: activeGames.length,
-            separatorBuilder: (_, _) => Spacing.gap12,
-            itemBuilder: (context, index) {
-              final gameWithCount = activeGames[index];
-              final game = gameWithCount.game;
-
-              return GameCard(
-                gameWithPlayerCount: gameWithCount,
-                isEditing: state.isEditing,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppRouter.scoring,
-                  arguments: game.id,
-                ),
-                onLongPress: cubit.toggleEditMode,
-                isFinished: game.finishedAt != null,
-                onDelete: () async {
-                  final confirmed = await ConfirmDialog.showDelete(
-                    context,
-                    title: 'Delete Party',
-                    itemName: game.name,
-                  );
-                  if (confirmed && context.mounted) {
-                    unawaited(cubit.deleteGame(game.id));
-                  }
-                },
-                onToggleFinished: () {
-                  final isFinished = game.finishedAt != null;
-                  unawaited(
-                    cubit.setFinished(
-                      game.id,
-                      isFinished: !isFinished,
-                    ),
-                  );
-                },
-              );
-            },
-          )
+          for (var i = 0; i < activeGames.length; i++)
+            AnimatedEntrance(
+              delay: Duration(milliseconds: 60 * i),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: S.md),
+                child: _buildCard(context, activeGames[i]),
+              ),
+            )
         else
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
@@ -174,121 +176,187 @@ class _HomeBody extends StatelessWidget {
               completedGames.isNotEmpty
                   ? 'No active parties'
                   : 'No parties yet',
-              style: tt.titleSmall?.copyWith(
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
+              style: PT.bodyStrong(pt.textMuted),
             ),
           ),
-
-        // ===== Completed (collapsed by default) =====
         if (completedGames.isNotEmpty) ...[
-          if (activeGames.isNotEmpty) Spacing.gap24 else Spacing.gap12,
-          InkWell(
-            borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: S.sm),
+          _CompletedHeader(
+            count: completedGames.length,
+            expanded: state.showCompleted,
             onTap: cubit.toggleShowCompleted,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-              child: Row(
-                children: [
-                  Text(
-                    'Completed (${completedGames.length})',
-                    style: tt.titleSmall?.copyWith(
-                      color: cs.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  AnimatedRotation(
-                    duration: const Duration(milliseconds: 160),
-                    turns: state.showCompleted ? 0.5 : 0.0,
-                    child: Icon(
-                      Icons.expand_more,
-                      color: cs.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
           if (state.showCompleted) ...[
-            Spacing.gap12,
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: completedGames.length,
-              separatorBuilder: (_, _) => Spacing.gap12,
-              itemBuilder: (context, index) {
-                final gameWithCount = completedGames[index];
-                final game = gameWithCount.game;
-
-                return GameCard(
-                  gameWithPlayerCount: gameWithCount,
-                  isEditing: state.isEditing,
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    AppRouter.scoring,
-                    arguments: game.id,
-                  ),
-                  onLongPress: cubit.toggleEditMode,
-                  isFinished: game.finishedAt != null,
-                  onDelete: () async {
-                    final confirmed = await ConfirmDialog.showDelete(
-                      context,
-                      title: 'Delete Party',
-                      itemName: game.name,
-                    );
-                    if (confirmed && context.mounted) {
-                      unawaited(cubit.deleteGame(game.id));
-                    }
-                  },
-                  onToggleFinished: () {
-                    final isFinished = game.finishedAt != null;
-                    unawaited(
-                      cubit.setFinished(
-                        game.id,
-                        isFinished: !isFinished,
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+            const SizedBox(height: S.md),
+            for (var i = 0; i < completedGames.length; i++)
+              AnimatedEntrance(
+                delay: Duration(milliseconds: 40 * i),
+                offsetY: 8,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: S.md),
+                  child: _buildCard(context, completedGames[i]),
+                ),
+              ),
           ],
         ],
       ],
     );
   }
+
+  Widget _buildCard(BuildContext context, GameWithPlayerCount gameWithCount) {
+    final cubit = context.read<HomeCubit>();
+    final game = gameWithCount.game;
+    final isFinished = game.finishedAt != null;
+
+    return PartyCard(
+      gameWithPlayerCount: gameWithCount,
+      isFinished: isFinished,
+      onTap: () => unawaited(context.push(AppRouter.scoringPath(game.id))),
+      onToggleFinished: () => unawaited(
+        cubit.setFinished(game.id, isFinished: !isFinished),
+      ),
+      onDelete: () async {
+        final confirmed = await showDeletePartyDialog(
+          context,
+          partyName: game.name,
+        );
+        if (confirmed && context.mounted) {
+          unawaited(cubit.deleteGame(game.id));
+        }
+      },
+    );
+  }
 }
 
-class _EmptyGamesState extends StatelessWidget {
-  const _EmptyGamesState();
+class _CompletedHeader extends StatelessWidget {
+  const _CompletedHeader({
+    required this.count,
+    required this.expanded,
+    required this.onTap,
+  });
+
+  final int count;
+  final bool expanded;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final pt = context.pt;
+
+    return Pressable(
+      onTap: onTap,
+      scale: 0.98,
+      child: Column(
+        children: [
+          Divider(height: 1, thickness: 1, color: pt.border),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+            child: Row(
+              children: [
+                Text('COMPLETED', style: PT.label(pt.textMuted)),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: pt.surfaceMuted,
+                    borderRadius: BorderRadius.circular(R.pill),
+                  ),
+                  child: Text('$count', style: PT.chip(pt.textMuted)),
+                ),
+                const Spacer(),
+                AnimatedRotation(
+                  duration: Motion.base,
+                  turns: expanded ? 0.5 : 0,
+                  child: Icon(
+                    Icons.expand_more_rounded,
+                    size: 20,
+                    color: pt.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
 
     return Center(
       child: Padding(
-        padding: Spacing.page,
+        padding: const EdgeInsets.all(S.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.celebration_outlined, size: 56, color: pt.textFaint),
+            const SizedBox(height: S.lg),
+            Text('No parties yet', style: PT.sectionTitle(pt.text)),
+            const SizedBox(height: S.xs),
+            Text(
+              'Tap ＋ to start your first party',
+              style: PT.body(pt.textMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.onRetry, this.message});
+
+  final VoidCallback onRetry;
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(S.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.sports_esports_outlined,
-              size: 64,
-              color: cs.onSurfaceVariant,
+              Icons.error_outline_rounded,
+              size: 56,
+              color: pt.players[3],
             ),
-            Spacing.gap16,
+            const SizedBox(height: S.lg),
+            Text('Something went wrong', style: PT.sectionTitle(pt.text)),
+            const SizedBox(height: S.xs),
             Text(
-              'No parties yet',
-              style: tt.titleMedium?.copyWith(color: cs.onSurfaceVariant),
+              message ?? 'Unable to load parties',
+              style: PT.body(pt.textMuted),
+              textAlign: TextAlign.center,
             ),
-            Spacing.gap8,
-            Text(
-              'Tap + to create your first party',
-              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            const SizedBox(height: S.lg),
+            Pressable(
+              onTap: onRetry,
+              scale: 0.94,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: S.xl,
+                  vertical: S.md,
+                ),
+                decoration: BoxDecoration(
+                  color: pt.accentTint,
+                  borderRadius: BorderRadius.circular(R.md),
+                ),
+                child: Text('Retry', style: PT.bodyStrong(pt.accent)),
+              ),
             ),
           ],
         ),

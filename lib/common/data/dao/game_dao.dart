@@ -3,10 +3,11 @@ import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/data/tables/game_players_table.dart';
 import 'package:pointolio/common/data/tables/games_table.dart';
 import 'package:pointolio/common/data/tables/player_table.dart';
+import 'package:pointolio/common/data/tables/score_entries_table.dart';
 
 part 'game_dao.g.dart';
 
-@DriftAccessor(tables: [Games, GameTypes, Players, GamePlayers])
+@DriftAccessor(tables: [Games, GameTypes, Players, GamePlayers, ScoreEntries])
 class GameDao extends DatabaseAccessor<AppDatabase> with _$GameDaoMixin {
   GameDao(super.attachedDatabase);
 
@@ -141,13 +142,14 @@ class GameDao extends DatabaseAccessor<AppDatabase> with _$GameDaoMixin {
   Stream<List<(Game, int, GameType?)>> watchGamesWithMetadata() {
     final playerCount = gamePlayers.id.count();
 
-    final query = select(games).join([
-      leftOuterJoin(gameTypes, gameTypes.id.equalsExp(games.gameTypeId)),
-      leftOuterJoin(gamePlayers, gamePlayers.gameId.equalsExp(games.id)),
-    ])
-      ..groupBy([games.id])
-      ..orderBy([OrderingTerm.desc(games.gameDate)])
-      ..addColumns([playerCount]);
+    final query =
+        select(games).join([
+            leftOuterJoin(gameTypes, gameTypes.id.equalsExp(games.gameTypeId)),
+            leftOuterJoin(gamePlayers, gamePlayers.gameId.equalsExp(games.id)),
+          ])
+          ..groupBy([games.id])
+          ..orderBy([OrderingTerm.desc(games.gameDate)])
+          ..addColumns([playerCount]);
 
     return query.watch().map((rows) {
       return rows.map((row) {
@@ -156,6 +158,74 @@ class GameDao extends DatabaseAccessor<AppDatabase> with _$GameDaoMixin {
           row.read(playerCount) ?? 0,
           row.readTableOrNull(gameTypes),
         );
+      }).toList();
+    });
+  }
+
+  /// Watches every game with its type, ordered roster (each with its running
+  /// total) and the highest round number recorded. Reactive to games, the
+  /// roster and score changes so the Parties list stays live.
+  Stream<List<(Game, GameType?, List<(Player, int)>, int)>>
+  watchGamesWithDetails() {
+    final query =
+        select(games).join([
+          leftOuterJoin(gameTypes, gameTypes.id.equalsExp(games.gameTypeId)),
+          leftOuterJoin(gamePlayers, gamePlayers.gameId.equalsExp(games.id)),
+          leftOuterJoin(players, players.id.equalsExp(gamePlayers.playerId)),
+          leftOuterJoin(
+            scoreEntries,
+            scoreEntries.gamePlayerId.equalsExp(gamePlayers.id),
+          ),
+        ])..orderBy([
+          OrderingTerm.desc(games.gameDate),
+          OrderingTerm.asc(gamePlayers.orderIndex),
+        ]);
+
+    return query.watch().map((rows) {
+      final order = <int>[];
+      final gamesById = <int, Game>{};
+      final typeById = <int, GameType?>{};
+      // (gamePlayerId, player) preserving orderIndex.
+      final rosterByGame = <int, List<(int, Player)>>{};
+      final seenGamePlayers = <int, Set<int>>{};
+      final totalByGamePlayer = <int, int>{};
+      final roundByGame = <int, int>{};
+
+      for (final row in rows) {
+        final game = row.readTable(games);
+        if (!gamesById.containsKey(game.id)) {
+          gamesById[game.id] = game;
+          typeById[game.id] = row.readTableOrNull(gameTypes);
+          rosterByGame[game.id] = [];
+          seenGamePlayers[game.id] = <int>{};
+          roundByGame[game.id] = 0;
+          order.add(game.id);
+        }
+
+        final gamePlayer = row.readTableOrNull(gamePlayers);
+        final player = row.readTableOrNull(players);
+        if (gamePlayer != null &&
+            player != null &&
+            seenGamePlayers[game.id]!.add(gamePlayer.id)) {
+          rosterByGame[game.id]!.add((gamePlayer.id, player));
+          totalByGamePlayer.putIfAbsent(gamePlayer.id, () => 0);
+        }
+
+        final entry = row.readTableOrNull(scoreEntries);
+        if (entry != null) {
+          totalByGamePlayer[entry.gamePlayerId] =
+              (totalByGamePlayer[entry.gamePlayerId] ?? 0) + entry.points;
+          if (entry.roundNumber > roundByGame[game.id]!) {
+            roundByGame[game.id] = entry.roundNumber;
+          }
+        }
+      }
+
+      return order.map((id) {
+        final roster = rosterByGame[id]!
+            .map((e) => (e.$2, totalByGamePlayer[e.$1] ?? 0))
+            .toList();
+        return (gamesById[id]!, typeById[id], roster, roundByGame[id]!);
       }).toList();
     });
   }

@@ -59,14 +59,6 @@ class HomeCubit extends Cubit<HomeState> {
     emit(state.copyWith(clearSnackbar: true));
   }
 
-  void toggleEditMode() {
-    emit(state.copyWith(isEditing: !state.isEditing));
-  }
-
-  void exitEditMode() {
-    emit(state.copyWith(isEditing: false));
-  }
-
   void toggleShowCompleted() {
     emit(state.copyWith(showCompleted: !state.showCompleted));
   }

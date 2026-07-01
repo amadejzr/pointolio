@@ -247,28 +247,6 @@ void main() {
     );
 
     blocTest<HomeCubit, HomeState>(
-      'toggleEditMode toggles isEditing',
-      build: cubit0,
-      act: (cubit) {
-        cubit
-          ..toggleEditMode()
-          ..toggleEditMode();
-      },
-      expect: () => [
-        HomeState.initial().copyWith(isEditing: true),
-        HomeState.initial().copyWith(isEditing: false),
-      ],
-    );
-
-    blocTest<HomeCubit, HomeState>(
-      'exitEditMode sets isEditing=false',
-      build: cubit0,
-      seed: () => HomeState.initial().copyWith(isEditing: true),
-      act: (cubit) => cubit.exitEditMode(),
-      expect: () => [HomeState.initial().copyWith(isEditing: false)],
-    );
-
-    blocTest<HomeCubit, HomeState>(
       'toggleShowCompleted toggles showCompleted',
       build: cubit0,
       act: (cubit) {

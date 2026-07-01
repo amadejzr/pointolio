@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/di/locator.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
@@ -17,6 +18,7 @@ import 'package:pointolio/features/create_game/presentation/cubit/create_game_cu
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_state.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_validation.dart';
 import 'package:pointolio/features/create_game/presentation/widgets/picker_field_widget.dart';
+import 'package:pointolio/router/app_router.dart';
 
 class CreateGamePage extends StatelessWidget {
   const CreateGamePage({super.key});
@@ -66,12 +68,8 @@ class _CreateGameViewState extends State<_CreateGameView> {
       listener: (context, state) {
         if (state.status == CreateGameStatus.success &&
             state.createdGameId != null) {
-          unawaited(
-            Navigator.pushReplacementNamed(
-              context,
-              '/scoring',
-              arguments: state.createdGameId,
-            ),
+          context.pushReplacement(
+            AppRouter.scoringPath(state.createdGameId!),
           );
           return;
         }
@@ -91,7 +89,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
             title: const Text('New Party'),
             leading: IconButton(
               icon: const Icon(Icons.close),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.pop(),
             ),
           ),
           body: _buildBody(context, state, cubit, cs),

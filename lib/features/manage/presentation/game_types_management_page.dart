@@ -73,7 +73,9 @@ class _GameTypesManagementView extends StatelessWidget {
     }
 
     return ListView.separated(
-      padding: Spacing.page,
+      padding: Spacing.page.copyWith(
+        bottom: Spacing.page.bottom + MediaQuery.paddingOf(context).bottom,
+      ),
       itemCount: gameTypes.length,
       separatorBuilder: (_, _) => Spacing.gap12,
       itemBuilder: (context, index) {

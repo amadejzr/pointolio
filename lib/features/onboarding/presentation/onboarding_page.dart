@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
 import 'package:pointolio/features/onboarding/presentation/widgets/calculator_preview.dart';
 import 'package:pointolio/features/onboarding/presentation/widgets/feature_page_content.dart';
@@ -8,6 +9,7 @@ import 'package:pointolio/features/onboarding/presentation/widgets/page_indicato
 import 'package:pointolio/features/onboarding/presentation/widgets/quick_actions_preview.dart';
 import 'package:pointolio/features/onboarding/presentation/widgets/reorder_preview.dart';
 import 'package:pointolio/features/onboarding/presentation/widgets/welcome_page_content.dart';
+import 'package:pointolio/router/app_router.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({
@@ -36,9 +38,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Future<void> _complete() async {
     await widget.onComplete();
     if (mounted) {
-      await Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil('/', (_) => false);
+      context.go(AppRouter.parties);
     }
   }
 

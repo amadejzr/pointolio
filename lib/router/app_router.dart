@@ -1,52 +1,117 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pointolio/common/di/locator.dart';
 import 'package:pointolio/features/create_game/presentation/create_game_page.dart';
 import 'package:pointolio/features/home/presentation/home_page.dart';
-import 'package:pointolio/features/manage/presentation/manage_page.dart';
+import 'package:pointolio/features/manage/presentation/game_types_management_page.dart';
+import 'package:pointolio/features/manage/presentation/players_management_page.dart';
+import 'package:pointolio/features/onboarding/data/onboarding_repository.dart';
 import 'package:pointolio/features/onboarding/presentation/onboarding_page.dart';
 import 'package:pointolio/features/scoring/presentation/scoring_page.dart';
+import 'package:pointolio/features/settings/presentation/settings_page.dart';
+import 'package:pointolio/router/home_shell.dart';
 
+/// Route path constants for the app.
 class AppRouter {
+  const AppRouter._();
+
   static const String onboarding = '/onboarding';
-  static const String home = '/';
+
+  // Shell branches (floating bottom navbar).
+  static const String parties = '/';
+  static const String players = '/players';
+  static const String games = '/games';
+
+  // Full-screen routes (no navbar).
   static const String createGame = '/create-game';
   static const String scoring = '/scoring';
-  static const String manage = '/manage';
+  static const String settings = '/settings';
 
-  static Route<dynamic> onGenerateRoute(
-    RouteSettings settings, {
-    Future<void> Function()? onOnboardingComplete,
-  }) {
-    switch (settings.name) {
-      case onboarding:
-        return MaterialPageRoute(
-          builder: (_) => OnboardingPage(
-            onComplete: onOnboardingComplete ?? () async {},
-          ),
-        );
-      case home:
-        return MaterialPageRoute(builder: (_) => const HomePage());
-      case createGame:
-        return MaterialPageRoute(builder: (_) => const CreateGamePage());
-      case manage:
-        return MaterialPageRoute(builder: (_) => const ManagePage());
-      case scoring:
-        final arg = settings.arguments;
-        final gameId = arg is int ? arg : null;
+  /// Builds the scoring path for a given game id.
+  static String scoringPath(int gameId) => '$scoring/$gameId';
+}
 
-        if (gameId == null) {
-          return MaterialPageRoute(
-            builder: (_) => const Scaffold(
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _partiesNavigatorKey = GlobalKey<NavigatorState>();
+final _playersNavigatorKey = GlobalKey<NavigatorState>();
+final _gamesNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Creates the app [GoRouter] with the onboarding redirect wired in.
+GoRouter createAppRouter() {
+  return GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    initialLocation: AppRouter.parties,
+    redirect: (context, state) {
+      final completed =
+          locator<OnboardingRepository>().isOnboardingCompleted;
+      final goingToOnboarding = state.matchedLocation == AppRouter.onboarding;
+
+      if (!completed && !goingToOnboarding) return AppRouter.onboarding;
+      if (completed && goingToOnboarding) return AppRouter.parties;
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: AppRouter.onboarding,
+        builder: (context, state) => OnboardingPage(
+          onComplete: () async {
+            await locator<OnboardingRepository>().completeOnboarding();
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRouter.createGame,
+        builder: (context, state) => const CreateGamePage(),
+      ),
+      GoRoute(
+        path: AppRouter.settings,
+        builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: '${AppRouter.scoring}/:gameId',
+        builder: (context, state) {
+          final gameId = int.tryParse(state.pathParameters['gameId'] ?? '');
+          if (gameId == null) {
+            return const Scaffold(
               body: Center(child: Text('Missing gameId for scoring route')),
-            ),
-          );
-        }
-
-        return MaterialPageRoute(builder: (_) => ScoringPage(gameId: gameId));
-      default:
-        return MaterialPageRoute(
-          builder: (_) =>
-              const Scaffold(body: Center(child: Text('Route not found'))),
-        );
-    }
-  }
+            );
+          }
+          return ScoringPage(gameId: gameId);
+        },
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            HomeShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            navigatorKey: _partiesNavigatorKey,
+            routes: [
+              GoRoute(
+                path: AppRouter.parties,
+                builder: (context, state) => const HomePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _playersNavigatorKey,
+            routes: [
+              GoRoute(
+                path: AppRouter.players,
+                builder: (context, state) => const PlayersManagementPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _gamesNavigatorKey,
+            routes: [
+              GoRoute(
+                path: AppRouter.games,
+                builder: (context, state) => const GameTypesManagementPage(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
 }

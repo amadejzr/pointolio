@@ -73,7 +73,9 @@ class _PlayersManagementView extends StatelessWidget {
     }
 
     return ListView.separated(
-      padding: Spacing.page,
+      padding: Spacing.page.copyWith(
+        bottom: Spacing.page.bottom + MediaQuery.paddingOf(context).bottom,
+      ),
       itemCount: players.length,
       separatorBuilder: (_, _) => Spacing.gap12,
       itemBuilder: (context, index) {
