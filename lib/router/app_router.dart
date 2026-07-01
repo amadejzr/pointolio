@@ -4,6 +4,7 @@ import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/di/locator.dart';
 import 'package:pointolio/features/create_game/presentation/create_game_page.dart';
 import 'package:pointolio/features/home/presentation/home_page.dart';
+import 'package:pointolio/features/manage/presentation/game_type_form_page.dart';
 import 'package:pointolio/features/manage/presentation/game_types_management_page.dart';
 import 'package:pointolio/features/manage/presentation/player_form_page.dart';
 import 'package:pointolio/features/manage/presentation/players_management_page.dart';
@@ -26,6 +27,7 @@ class AppRouter {
 
   // Full-screen routes (no navbar).
   static const String createGame = '/create-game';
+  static const String gameTypeForm = '/game-form';
   static const String playerForm = '/player-form';
   static const String scoring = '/scoring';
   static const String settings = '/settings';
@@ -65,6 +67,14 @@ GoRouter createAppRouter() {
       GoRoute(
         path: AppRouter.createGame,
         builder: (context, state) => const CreateGamePage(),
+      ),
+      GoRoute(
+        path: AppRouter.gameTypeForm,
+        builder: (context, state) {
+          // A GameType in `extra` puts the form in edit mode; null creates one.
+          final initial = state.extra as GameType?;
+          return GameTypeFormPage(initial: initial);
+        },
       ),
       GoRoute(
         path: AppRouter.playerForm,
