@@ -72,6 +72,13 @@ class _AnimatedEntranceState extends State<AnimatedEntrance>
 
 /// Tap feedback: gently scales down while pressed. Use everywhere instead
 /// of Material ink for the calm, tactile feel of the Notebook/Slate theme.
+///
+/// Accessibility: pass [semanticLabel] (and [isButton]/[selected]) to expose a
+/// single, correctly-labelled semantics node. When labelled, the internal
+/// gesture is excluded from semantics and the tap action is advertised on the
+/// [Semantics] node itself. Set [excludeChildSemantics] to drop decorative
+/// descendant labels (e.g. an icon-only button, or a tab whose label you set
+/// explicitly).
 class Pressable extends StatefulWidget {
   const Pressable({
     required this.child,
@@ -79,12 +86,22 @@ class Pressable extends StatefulWidget {
     this.onTap,
     this.onLongPress,
     this.scale = 0.96,
+    this.semanticLabel,
+    this.semanticHint,
+    this.isButton = false,
+    this.selected,
+    this.excludeChildSemantics = false,
   });
 
   final Widget child;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final double scale;
+  final String? semanticLabel;
+  final String? semanticHint;
+  final bool isButton;
+  final bool? selected;
+  final bool excludeChildSemantics;
 
   @override
   State<Pressable> createState() => _PressableState();
@@ -99,8 +116,19 @@ class _PressableState extends State<Pressable> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final hasSemantics =
+        widget.isButton ||
+        widget.semanticLabel != null ||
+        widget.selected != null;
+
+    var content = widget.child;
+    if (widget.excludeChildSemantics) {
+      content = ExcludeSemantics(child: content);
+    }
+
+    final gesture = GestureDetector(
       behavior: HitTestBehavior.opaque,
+      excludeFromSemantics: hasSemantics,
       onTapDown: (_) => _set(true),
       onTapUp: (_) => _set(false),
       onTapCancel: () => _set(false),
@@ -110,8 +138,19 @@ class _PressableState extends State<Pressable> {
         scale: _down ? widget.scale : 1,
         duration: Motion.fast,
         curve: Motion.ease,
-        child: widget.child,
+        child: content,
       ),
+    );
+
+    if (!hasSemantics) return gesture;
+
+    return Semantics(
+      button: widget.isButton,
+      selected: widget.selected,
+      label: widget.semanticLabel,
+      hint: widget.semanticHint,
+      onTap: widget.onTap,
+      child: gesture,
     );
   }
 }

@@ -67,8 +67,22 @@ class PartyCard extends StatelessWidget {
         ),
     ];
 
+    final count = gameWithPlayerCount.playerCount;
+    final status = isFinished
+        ? (winnerName != null ? 'Finished, $winnerName won' : 'Finished')
+        : (roundCount > 0 ? 'Round $roundCount' : 'Not started');
+    final summary = [
+      game.name,
+      if (meta.isNotEmpty) meta,
+      '$count ${count == 1 ? 'player' : 'players'}',
+      status,
+    ].join(', ');
+
     return Pressable(
       onTap: onTap,
+      isButton: true,
+      semanticLabel: summary,
+      semanticHint: isFinished ? 'Opens the score sheet' : 'Opens the scores',
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
@@ -84,35 +98,37 @@ class PartyCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: dotColor,
-                              shape: BoxShape.circle,
+                  child: ExcludeSemantics(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: dotColor,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 7),
-                          Flexible(
-                            child: Text(
-                              game.name,
-                              style: PT.cardTitle(pt.text),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 7),
+                            Flexible(
+                              child: Text(
+                                game.name,
+                                style: PT.cardTitle(pt.text),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
+                          ],
+                        ),
+                        if (meta.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(meta, style: PT.caption(pt.textMuted)),
                         ],
-                      ),
-                      if (meta.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Text(meta, style: PT.caption(pt.textMuted)),
                       ],
-                    ],
+                    ),
                   ),
                 ),
                 _MenuButton(
@@ -124,29 +140,34 @@ class PartyCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 13),
-            if (isFinished)
-              _Chip(
-                label: winnerName != null ? '🏆 $winnerName won' : 'Finished',
-                color: pt.textMuted,
-                bg: pt.surface,
-              )
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: AvatarStack(avatars: roster),
+            ExcludeSemantics(
+              child: isFinished
+                  ? _Chip(
+                      label: winnerName != null
+                          ? '🏆 $winnerName won'
+                          : 'Finished',
+                      color: pt.textMuted,
+                      bg: pt.surface,
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: AvatarStack(avatars: roster),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _Chip(
+                          label: roundCount > 0
+                              ? 'Round $roundCount'
+                              : 'Not started',
+                          color: pt.accent,
+                          bg: pt.accentTint,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  _Chip(
-                    label: roundCount > 0 ? 'Round $roundCount' : 'Not started',
-                    color: pt.accent,
-                    bg: pt.accentTint,
-                  ),
-                ],
-              ),
+            ),
           ],
         ),
       ),
@@ -187,6 +208,9 @@ class _MenuButton extends StatelessWidget {
     return Pressable(
       onTap: () => _open(context),
       scale: 0.88,
+      isButton: true,
+      semanticLabel: 'Party options',
+      excludeChildSemantics: true,
       child: SizedBox(
         width: 44,
         height: 44,

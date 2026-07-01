@@ -86,7 +86,10 @@ class _PartiesHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Parties', style: PT.screenTitle(pt.text)),
+                Semantics(
+                  header: true,
+                  child: Text('Parties', style: PT.screenTitle(pt.text)),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   '$active active · $finished finished',
@@ -98,6 +101,9 @@ class _PartiesHeader extends StatelessWidget {
           Pressable(
             onTap: () => unawaited(context.push(AppRouter.settings)),
             scale: 0.9,
+            isButton: true,
+            semanticLabel: 'Settings',
+            excludeChildSemantics: true,
             child: Container(
               width: 36,
               height: 36,
@@ -246,6 +252,10 @@ class _CompletedHeader extends StatelessWidget {
     return Pressable(
       onTap: onTap,
       scale: 0.98,
+      isButton: true,
+      semanticLabel: '$count completed ${count == 1 ? 'party' : 'parties'}',
+      semanticHint: expanded ? 'Collapse' : 'Expand',
+      excludeChildSemantics: true,
       child: Column(
         children: [
           Divider(height: 1, thickness: 1, color: pt.border),
@@ -298,9 +308,17 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.celebration_outlined, size: 56, color: pt.textFaint),
+            Icon(
+              Icons.celebration_outlined,
+              size: 56,
+              color: pt.textFaint,
+              semanticLabel: 'No parties',
+            ),
             const SizedBox(height: S.lg),
-            Text('No parties yet', style: PT.sectionTitle(pt.text)),
+            Semantics(
+              header: true,
+              child: Text('No parties yet', style: PT.sectionTitle(pt.text)),
+            ),
             const SizedBox(height: S.xs),
             Text(
               'Tap ＋ to start your first party',
@@ -333,9 +351,16 @@ class _ErrorState extends StatelessWidget {
               Icons.error_outline_rounded,
               size: 56,
               color: pt.players[3],
+              semanticLabel: 'Error',
             ),
             const SizedBox(height: S.lg),
-            Text('Something went wrong', style: PT.sectionTitle(pt.text)),
+            Semantics(
+              header: true,
+              child: Text(
+                'Something went wrong',
+                style: PT.sectionTitle(pt.text),
+              ),
+            ),
             const SizedBox(height: S.xs),
             Text(
               message ?? 'Unable to load parties',
@@ -346,6 +371,9 @@ class _ErrorState extends StatelessWidget {
             Pressable(
               onTap: onRetry,
               scale: 0.94,
+              isButton: true,
+              semanticLabel: 'Retry',
+              excludeChildSemantics: true,
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: S.xl,

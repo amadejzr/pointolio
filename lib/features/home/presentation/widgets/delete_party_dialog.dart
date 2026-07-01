@@ -60,10 +60,13 @@ class _DeletePartyDialog extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: S.md),
-                Text(
-                  'Cross this off?',
-                  style: PT.sectionTitle(pt.text),
-                  textAlign: TextAlign.center,
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'Cross this off?',
+                    style: PT.sectionTitle(pt.text),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: S.sm),
                 // The party name, struck through like a deleted notebook entry.
@@ -132,6 +135,9 @@ class _DialogButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Pressable(
       onTap: onTap,
+      isButton: true,
+      semanticLabel: label,
+      excludeChildSemantics: true,
       child: Container(
         height: 48,
         alignment: Alignment.center,

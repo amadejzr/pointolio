@@ -133,6 +133,9 @@ class _MenuRow extends StatelessWidget {
     return Pressable(
       onTap: onTap,
       scale: 0.97,
+      isButton: true,
+      semanticLabel: label,
+      excludeChildSemantics: true,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: S.sm, vertical: 9),
         child: Row(

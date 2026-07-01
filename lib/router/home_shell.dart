@@ -152,6 +152,10 @@ class _Tab extends StatelessWidget {
     return Pressable(
       onTap: onTap,
       scale: 0.88,
+      isButton: true,
+      selected: selected,
+      semanticLabel: label,
+      excludeChildSemantics: true,
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: selected ? 1 : 0),
         duration: duration,
@@ -201,6 +205,9 @@ class _AddButton extends StatelessWidget {
         onTap();
       },
       scale: 0.9,
+      isButton: true,
+      semanticLabel: 'Create game',
+      excludeChildSemantics: true,
       child: Container(
         width: 46,
         height: 46,
