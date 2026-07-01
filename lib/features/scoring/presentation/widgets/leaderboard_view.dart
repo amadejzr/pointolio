@@ -132,55 +132,118 @@ class _LeaderCard extends StatelessWidget {
         border: Border.all(color: isLeader ? pt.accentBorder : pt.border),
         boxShadow: isLeader ? pt.shadowCard : null,
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _RankGlyph(rank: rank),
-          const SizedBox(width: S.md),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            alignment: Alignment.center,
-            child: Text(
-              ScoreTable.initials(playerScore.player),
-              style: PT.number(pt.onPlayer, size: 14),
-            ),
-          ),
-          const SizedBox(width: S.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  ScoreTable.fullName(playerScore.player),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: PT.bodyStrong(pt.text).copyWith(fontSize: 14.5),
+          Row(
+            children: [
+              _RankGlyph(rank: rank),
+              const SizedBox(width: S.md),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: Text(
+                  ScoreTable.initials(playerScore.player),
+                  style: PT.number(pt.onPlayer, size: 14),
                 ),
-                const SizedBox(height: 1),
-                Text(
-                  roundsWon == 0
-                      ? (isLeader ? 'Leader' : '-')
-                      : '$roundsWon ${roundsWon == 1 ? 'round' : 'rounds'} won',
-                  style: PT.caption(
-                    isLeader ? pt.accentDeep : pt.textMuted,
-                  ),
+              ),
+              const SizedBox(width: S.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      ScoreTable.fullName(playerScore.player),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: PT.bodyStrong(pt.text).copyWith(fontSize: 14.5),
+                    ),
+                    const SizedBox(height: 4),
+                    _WinsStat(roundsWon: roundsWon, emphasised: isLeader),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: S.sm),
-          Text(
-            playerScore.total.toString(),
-            style: PT.number(
-              isLeader ? pt.accentDeep : pt.text,
-              size: 22,
-              weight: FontWeight.w800,
-            ),
+          const SizedBox(height: S.sm),
+          // Total on its own line so large point totals always have room and
+          // can never crowd the name or overflow the card.
+          Align(
+            alignment: Alignment.centerRight,
+            child: _TotalPts(total: playerScore.total, emphasised: isLeader),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The point total, on its own line so it always has room. Labelled "pts" to
+/// keep it distinct from the rounds-won stat.
+class _TotalPts extends StatelessWidget {
+  const _TotalPts({required this.total, required this.emphasised});
+
+  final int total;
+  final bool emphasised;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          '$total',
+          style: PT.number(
+            emphasised ? pt.accentDeep : pt.text,
+            size: 22,
+            weight: FontWeight.w800,
+          ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+        ),
+        const SizedBox(width: 3),
+        Text('pts', style: PT.label(pt.textMuted)),
+      ],
+    );
+  }
+}
+
+/// Rounds-won stat, shown for every player (trophy + count).
+class _WinsStat extends StatelessWidget {
+  const _WinsStat({required this.roundsWon, required this.emphasised});
+
+  final int roundsWon;
+  final bool emphasised;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+    final hasWins = roundsWon > 0;
+    final color = hasWins
+        ? (emphasised ? pt.accentDeep : pt.accent)
+        : pt.textMuted;
+
+    return Row(
+      children: [
+        Icon(
+          hasWins ? Icons.emoji_events_rounded : Icons.emoji_events_outlined,
+          size: 13,
+          color: color,
+        ),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            roundsWon == 1 ? '1 round won' : '$roundsWon rounds won',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: PT.caption(color),
+          ),
+        ),
+      ],
     );
   }
 }
