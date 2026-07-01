@@ -90,7 +90,12 @@ class _SharePageView extends StatelessWidget {
     if (cubit.state.busy) return;
 
     final size = MediaQuery.sizeOf(context);
-    final bytes = await captureBoundary(cardKey);
+    Uint8List? bytes;
+    try {
+      bytes = await captureBoundary(cardKey);
+    } on Object {
+      bytes = null;
+    }
     if (!context.mounted) return;
 
     if (bytes == null) {

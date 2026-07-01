@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/features/scoring/domain/models.dart';
 import 'package:pointolio/features/sharing/domain/share_result.dart';
+import 'package:pointolio/features/sharing/presentation/widgets/share_bits.dart';
 import 'package:pointolio/features/sharing/presentation/widgets/share_card.dart';
 
 import '../../../utils/fixtures.dart';
@@ -56,8 +57,8 @@ void main() {
       await tester.pump();
 
       expect(tester.takeException(), isNull);
-      // The Pointolio watermark is on every card.
-      expect(find.text('Pointolio'), findsOneWidget);
+      // The Pointolio watermark (wordmark image) is on every card.
+      expect(find.byType(ShareWatermark), findsOneWidget);
     });
   }
 
