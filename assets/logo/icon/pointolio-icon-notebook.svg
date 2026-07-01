@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" role="img" aria-label="Pointolio app icon (notebook)">
+  <title>Pointolio app icon — notebook (light)</title>
+  <rect width="1024" height="1024" rx="230" fill="#F7F8FB"></rect>
+  <line x1="0" y1="404" x2="1024" y2="404" stroke="#E3E9F4" stroke-width="20"></line>
+  <line x1="0" y1="620" x2="1024" y2="620" stroke="#E3E9F4" stroke-width="20"></line>
+  <line x1="232" y1="0" x2="232" y2="1024" stroke="#E7C3C3" stroke-width="16" opacity="0.55"></line>
+  <circle cx="512" cy="512" r="290" stroke="#2F6BF6" stroke-width="66"></circle>
+  <circle cx="512" cy="512" r="104" fill="#2F6BF6"></circle>
+</svg>

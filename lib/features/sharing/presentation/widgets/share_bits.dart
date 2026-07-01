@@ -41,26 +41,16 @@ class ShareAvatar extends StatelessWidget {
   }
 }
 
-/// The Pointolio wordmark lockup for the card footer - the real app logo next
-/// to the wordmark.
+/// The Pointolio wordmark for the card footer - the light logo lockup, sized
+/// for the dark share card.
 class ShareWatermark extends StatelessWidget {
-  const ShareWatermark({required this.color, super.key});
-
-  final Color color;
+  const ShareWatermark({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Image.asset('assets/logo/logo_transparent.png', height: 18),
-        const SizedBox(width: 6),
-        Text(
-          'Pointolio',
-          style: PT.number(color, size: 11, weight: FontWeight.w600),
-        ),
-      ],
+    return Image.asset(
+      'assets/logo/wordmark/pointolio-wordmark-light-transparent.png',
+      height: 16,
     );
   }
 }

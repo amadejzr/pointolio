@@ -161,7 +161,7 @@ class _Spotlight extends StatelessWidget {
           const SizedBox(height: 16),
           const _Hairline(),
           const SizedBox(height: 12),
-          const ShareWatermark(color: _dim),
+          const ShareWatermark(),
         ],
       ),
     );
@@ -227,7 +227,7 @@ class _Podium extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const ShareWatermark(color: _dim),
+          const ShareWatermark(),
         ],
       ),
     );
@@ -380,7 +380,7 @@ class _Ticket extends StatelessWidget {
           const SizedBox(height: 4),
           const _Dashed(),
           const SizedBox(height: 12),
-          const ShareWatermark(color: _dim),
+          const ShareWatermark(),
         ],
       ),
     );
@@ -446,7 +446,7 @@ class _Minimal extends StatelessWidget {
             for (final s in others) _StandingRow(s: s),
           ],
           const SizedBox(height: 18),
-          const ShareWatermark(color: _dim),
+          const ShareWatermark(),
         ],
       ),
     );
