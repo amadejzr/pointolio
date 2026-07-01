@@ -18,8 +18,31 @@ const _gameTypeColorByName = <String, int>{
   'Hearts': 0xFFFF7043, // Deep Orange
 };
 
+/// Game ids produced by the seed, so the harness can navigate straight to a
+/// specific party without guessing auto-increment values.
+class ScreenshotSeed {
+  const ScreenshotSeed({
+    required this.rummyGameId,
+    required this.spadesGameId,
+    required this.pokerGameId,
+    required this.heartsGameId,
+  });
+
+  /// In-progress, highest-wins - the main scoring/standings screenshot.
+  final int rummyGameId;
+
+  /// In-progress, highest-wins - a second active party on the home screen.
+  final int spadesGameId;
+
+  /// Finished, highest-wins - used for the "share result" screenshot.
+  final int pokerGameId;
+
+  /// Finished, lowest-wins.
+  final int heartsGameId;
+}
+
 /// Entry point used by screenshot_test.dart
-Future<void> seedScreenshotData(AppDatabase db) async {
+Future<ScreenshotSeed> seedScreenshotData(AppDatabase db) async {
   print('🎲 Seeding screenshot data (deterministic)...');
 
   print('Creating players...');
@@ -29,9 +52,10 @@ Future<void> seedScreenshotData(AppDatabase db) async {
   final gameTypes = await _createGameTypes(db);
 
   print('Creating games with scores...');
-  await _createGames(db, players, gameTypes);
+  final seed = await _createGames(db, players, gameTypes);
 
   print('✅ Screenshot data seeded successfully!');
+  return seed;
 }
 
 // -----------------------------------------------------------------------------
@@ -96,22 +120,41 @@ Future<Map<String, int>> _createGameTypes(AppDatabase db) async {
 // GAMES
 // -----------------------------------------------------------------------------
 
-Future<void> _createGames(
+Future<ScreenshotSeed> _createGames(
   AppDatabase db,
   Map<String, int> players,
   Map<String, int> gameTypes,
 ) async {
-  await _createRummyGame(db, players, gameTypes['Rummy']!);
-  await _createPokerGame(db, players.values.toList(), gameTypes['Poker']!);
-  await _createSpadesGame(db, players.values.toList(), gameTypes['Spades']!);
-  await _createHeartsGame(db, players.values.toList(), gameTypes['Hearts']!);
+  final rummyId = await _createRummyGame(db, players, gameTypes['Rummy']!);
+  final pokerId = await _createPokerGame(
+    db,
+    players.values.toList(),
+    gameTypes['Poker']!,
+  );
+  final spadesId = await _createSpadesGame(
+    db,
+    players.values.toList(),
+    gameTypes['Spades']!,
+  );
+  final heartsId = await _createHeartsGame(
+    db,
+    players.values.toList(),
+    gameTypes['Hearts']!,
+  );
+
+  return ScreenshotSeed(
+    rummyGameId: rummyId,
+    spadesGameId: spadesId,
+    pokerGameId: pokerId,
+    heartsGameId: heartsId,
+  );
 }
 
 // -----------------------------------------------------------------------------
 // RUMMY (main screenshot game)
 // -----------------------------------------------------------------------------
 
-Future<void> _createRummyGame(
+Future<int> _createRummyGame(
   AppDatabase db,
   Map<String, int> players,
   int gameTypeId,
@@ -151,13 +194,14 @@ Future<void> _createRummyGame(
   }
 
   print('    Rummy game ready (7 rounds)');
+  return gameId;
 }
 
 // -----------------------------------------------------------------------------
 // POKER (finished)
 // -----------------------------------------------------------------------------
 
-Future<void> _createPokerGame(
+Future<int> _createPokerGame(
   AppDatabase db,
   List<int> playerIds,
   int gameTypeId,
@@ -176,12 +220,15 @@ Future<void> _createPokerGame(
     gameId,
   )).map((e) => e.$2.id).toList();
 
+  // Columns: Emma, James, Sofia, Lucas. Tuned so the finished standings read
+  // cleanly for the share screenshot: Sofia 700 (winner), Emma 630, Lucas 560,
+  // James 495 - four distinct ranks, no ties.
   const pokerScores = [
-    [150, 50, 100, 200],
-    [75, 225, 50, 150],
-    [200, 100, 175, 25],
-    [50, 150, 250, 50],
-    [125, 75, 125, 175],
+    [130, 90, 150, 110],
+    [120, 110, 130, 105],
+    [140, 85, 150, 120],
+    [110, 105, 120, 115],
+    [130, 105, 150, 110],
   ];
 
   for (var r = 0; r < pokerScores.length; r++) {
@@ -194,13 +241,14 @@ Future<void> _createPokerGame(
   }
 
   await db.gameDao.setGameFinished(gameId, finished: true);
+  return gameId;
 }
 
 // -----------------------------------------------------------------------------
 // SPADES (in progress)
 // -----------------------------------------------------------------------------
 
-Future<void> _createSpadesGame(
+Future<int> _createSpadesGame(
   AppDatabase db,
   List<int> playerIds,
   int gameTypeId,
@@ -234,13 +282,15 @@ Future<void> _createSpadesGame(
       },
     );
   }
+
+  return gameId;
 }
 
 // -----------------------------------------------------------------------------
 // HEARTS (finished)
 // -----------------------------------------------------------------------------
 
-Future<void> _createHeartsGame(
+Future<int> _createHeartsGame(
   AppDatabase db,
   List<int> playerIds,
   int gameTypeId,
@@ -278,4 +328,5 @@ Future<void> _createHeartsGame(
   }
 
   await db.gameDao.setGameFinished(gameId, finished: true);
+  return gameId;
 }
