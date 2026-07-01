@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pointolio · App Store screenshot posters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; }
+
+  /* Each frame is 621x1344 = exactly half of the 1242x2688 (6.5") App Store
+     slot, so rendering at a 2x device scale exports pixel-perfect uploads.
+     The phone screen aspect matches the iPhone capture ratio, so the
+     screenshots fill with object-fit:cover and no bars. */
+  .shot { width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* Export mode: open ?frame=N to isolate one frame at 0,0 with square
+     corners so a 621x1344 @2x headless capture is a clean 1242x2688 upload. */
+  body.export { background:#fff; }
+  body.export .page { padding:0 !important; }
+  body.export .intro { display:none; }
+  body.export .row { gap:0 !important; }
+  body.export .poster-label { display:none; }
+  body.export .frame { border-radius:0 !important; }
+</style>
+</head>
+<body>
+
+<div class="page" style="font-family:'Hanken Grotesk',sans-serif; background:#dfe2e9; padding:56px; color:#1b1e26;">
+
+  <div class="intro" style="max-width:900px; margin-bottom:40px;">
+    <div style="font-size:12.5px; color:#7b8090; letter-spacing:.04em; text-transform:uppercase; margin-bottom:10px;">Pointolio · App Store</div>
+    <h1 style="font-family:'Space Grotesk'; font-weight:700; font-size:30px; letter-spacing:-.02em; margin:0 0 10px;">Screenshot posters</h1>
+    <p style="margin:0; font-size:15px; line-height:1.55; color:#5b5f6c; max-width:660px;">Review layout — each frame is the 6.5" App Store slot (1242×2688) with a real screenshot wired from <code>screenshots/output/output-ios/</code>. Export upload-ready images with <code>bash export_posters.sh</code> (writes <code>output/posters/poster-N.png</code> at exactly 1242×2688).</p>
+  </div>
+
+  <div class="row" style="display:flex; gap:44px; flex-wrap:wrap; align-items:flex-start;">
+
+    <!-- ============ FRAME 1 · azure ============ -->
+    <div class="poster" style="text-align:center;">
+      <div class="frame" id="as1" style="position:relative; width:621px; height:1344px; border-radius:30px; overflow:hidden; background:#eaf0ff;">
+        <div style="position:absolute; inset:0; background-image:repeating-linear-gradient(#d8e3fb 0 2px, transparent 2px 46px); background-position:0 60px;"></div>
+        <div style="position:absolute; top:-140px; right:-120px; width:520px; height:520px; border-radius:50%; border:2px solid #ccdcff;"></div>
+        <div style="position:absolute; top:-70px; right:-40px; width:360px; height:360px; border-radius:50%; border:2px solid #d6e2ff;"></div>
+        <div style="position:relative; padding:74px 60px 0; height:100%; display:flex; flex-direction:column; align-items:center;">
+          <img src="../assets/logo/wordmark/pointolio-wordmark-transparent.png" alt="Pointolio" style="height:38px; margin-bottom:36px;">
+          <h2 style="font-family:'Space Grotesk'; font-weight:700; font-size:52px; line-height:1.06; letter-spacing:-.03em; margin:0 0 14px; color:#1b1e26;">Keep score.<br>Beautifully.</h2>
+          <p style="font-size:22px; color:#4b5670; margin:0 0 40px; max-width:420px;">Every card &amp; board game night, in one tidy book.</p>
+          <!-- phone -->
+          <div style="width:414px; height:872px; border-radius:54px; padding:11px; background:#c9cfda; box-shadow:0 50px 90px -34px rgba(20,30,60,.5);">
+            <div style="position:relative; overflow:hidden; width:100%; height:100%; border-radius:44px; background:#f4f6fa;">
+              <img class="shot" src="output/output-ios/01_parties.png" alt="Parties screen">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="poster-label" style="font-size:12px; color:#74778d; margin-top:12px; font-weight:600;">1 · Hero — Parties</div>
+    </div>
+
+    <!-- ============ FRAME 2 · paper ============ -->
+    <div class="poster" style="text-align:center;">
+      <div class="frame" id="as2" style="position:relative; width:621px; height:1344px; border-radius:30px; overflow:hidden; background:#f7f8fb;">
+        <div style="position:absolute; inset:0; background-image:repeating-linear-gradient(#e6ebf5 0 2px, transparent 2px 46px); background-position:0 60px;"></div>
+        <div style="position:absolute; top:0; bottom:0; left:88px; width:2px; background:rgba(212,120,120,.28);"></div>
+        <div style="position:relative; padding:74px 60px 0; height:100%; display:flex; flex-direction:column; align-items:center;">
+          <div style="display:inline-flex; align-items:center; gap:9px; background:#e4f4ec; color:#0d7a4c; font-weight:600; font-size:17px; padding:8px 17px; border-radius:24px; margin-bottom:24px;"><span style="width:9px;height:9px;border-radius:50%;background:#2f9e8f;"></span> Scoring</div>
+          <h2 style="font-family:'Space Grotesk'; font-weight:700; font-size:48px; line-height:1.08; letter-spacing:-.03em; margin:0 0 14px; color:#1b1e26;">No more math<br>in your head.</h2>
+          <p style="font-size:22px; color:#5b5f6c; margin:0 0 40px; max-width:430px;">Log each round and totals add up on their own.</p>
+          <div style="width:414px; height:872px; border-radius:54px; padding:11px; background:#c9cfda; box-shadow:0 50px 90px -34px rgba(20,30,60,.5);">
+            <div style="position:relative; overflow:hidden; width:100%; height:100%; border-radius:44px; background:#f4f6fa;">
+              <img class="shot" src="output/output-ios/02_scoring_table.png" alt="Scoring table screen">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="poster-label" style="font-size:12px; color:#74778d; margin-top:12px; font-weight:600;">2 · Scoring — Table</div>
+    </div>
+
+    <!-- ============ FRAME 3 · ink (dark) ============ -->
+    <div class="poster" style="text-align:center;">
+      <div class="frame" id="as3" style="position:relative; width:621px; height:1344px; border-radius:30px; overflow:hidden; background:#0e1016;">
+        <div style="position:absolute; inset:0; background-image:repeating-linear-gradient(#1a1f2b 0 2px, transparent 2px 46px); background-position:0 60px;"></div>
+        <div style="position:absolute; bottom:-160px; left:50%; transform:translateX(-50%); width:520px; height:520px; border-radius:50%; border:2px solid rgba(79,134,255,.22);"></div>
+        <div style="position:absolute; bottom:-90px; left:50%; transform:translateX(-50%); width:360px; height:360px; border-radius:50%; border:2px solid rgba(79,134,255,.16);"></div>
+        <div style="position:relative; padding:74px 60px 0; height:100%; display:flex; flex-direction:column; align-items:center;">
+          <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(79,134,255,.14); color:#7fa8ff; font-weight:600; font-size:17px; padding:8px 17px; border-radius:24px; margin-bottom:24px;"><span style="width:9px;height:9px;border-radius:50%;background:#4f86ff;"></span> Leaderboard</div>
+          <h2 style="font-family:'Space Grotesk'; font-weight:700; font-size:50px; line-height:1.06; letter-spacing:-.03em; margin:0 0 14px; color:#eef0f4;">Always know<br>who's winning.</h2>
+          <p style="font-size:22px; color:#a6adbd; margin:0 0 40px; max-width:420px;">Live standings that scale from 2 to 20 players.</p>
+          <div style="width:414px; height:872px; border-radius:54px; padding:11px; background:#23262e; box-shadow:0 50px 90px -30px rgba(0,0,0,.6);">
+            <div style="position:relative; overflow:hidden; width:100%; height:100%; border-radius:44px; background:#f4f6fa;">
+              <img class="shot" src="output/output-ios/03_standings.png" alt="Standings screen">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="poster-label" style="font-size:12px; color:#74778d; margin-top:12px; font-weight:600;">3 · Leaderboard — Standings</div>
+    </div>
+
+    <!-- ============ FRAME 4 · sage ============ -->
+    <div class="poster" style="text-align:center;">
+      <div class="frame" id="as4" style="position:relative; width:621px; height:1344px; border-radius:30px; overflow:hidden; background:#eef3ff;">
+        <div style="position:absolute; inset:0; background-image:radial-gradient(#d8e3fb 2px, transparent 2px); background-size:40px 40px;"></div>
+        <div style="position:absolute; top:-120px; left:-120px; width:420px; height:420px; border-radius:50%; border:2px solid #d3e0ff;"></div>
+        <div style="position:relative; padding:74px 60px 0; height:100%; display:flex; flex-direction:column; align-items:center;">
+          <div style="display:inline-flex; align-items:center; gap:9px; background:#fff; border:1px solid #d8e0ee; color:#2f6bf6; font-weight:600; font-size:17px; padding:8px 17px; border-radius:24px; margin-bottom:24px;"><span style="width:9px;height:9px;border-radius:50%;background:#2f6bf6;"></span> Setup</div>
+          <h2 style="font-family:'Space Grotesk'; font-weight:700; font-size:48px; line-height:1.08; letter-spacing:-.03em; margin:0 0 14px; color:#1b1e26;">Any game.<br>Any players.</h2>
+          <p style="font-size:22px; color:#5b5f6c; margin:0 0 40px; max-width:430px;">Save your games and people once — reuse them forever.</p>
+          <div style="width:414px; height:872px; border-radius:54px; padding:11px; background:#c9cfda; box-shadow:0 50px 90px -34px rgba(20,30,60,.5);">
+            <div style="position:relative; overflow:hidden; width:100%; height:100%; border-radius:44px; background:#f4f6fa;">
+              <img class="shot" src="output/output-ios/05_new_party.png" alt="New party screen">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="poster-label" style="font-size:12px; color:#74778d; margin-top:12px; font-weight:600;">4 · Setup — New party</div>
+    </div>
+
+    <!-- ============ FRAME 5 · azure share ============ -->
+    <div class="poster" style="text-align:center;">
+      <div class="frame" id="as5" style="position:relative; width:621px; height:1344px; border-radius:30px; overflow:hidden; background:#2f6bf6;">
+        <div style="position:absolute; inset:0; background-image:repeating-linear-gradient(rgba(255,255,255,.08) 0 2px, transparent 2px 46px); background-position:0 60px;"></div>
+        <div style="position:absolute; top:-140px; right:-120px; width:520px; height:520px; border-radius:50%; border:2px solid rgba(255,255,255,.18);"></div>
+        <div style="position:absolute; top:-70px; right:-40px; width:360px; height:360px; border-radius:50%; border:2px solid rgba(255,255,255,.14);"></div>
+        <div style="position:relative; padding:74px 60px 0; height:100%; display:flex; flex-direction:column; align-items:center;">
+          <div style="display:inline-flex; align-items:center; gap:9px; background:rgba(255,255,255,.18); color:#fff; font-weight:600; font-size:17px; padding:8px 17px; border-radius:24px; margin-bottom:24px;"><span style="width:9px;height:9px;border-radius:50%;background:#fff;"></span> Share</div>
+          <h2 style="font-family:'Space Grotesk'; font-weight:700; font-size:50px; line-height:1.06; letter-spacing:-.03em; margin:0 0 14px; color:#fff;">Brag a little.<br>You earned it.</h2>
+          <p style="font-size:22px; color:#dbe6ff; margin:0 0 40px; max-width:420px;">Post a clean winner card straight to your story.</p>
+          <div style="width:414px; height:872px; border-radius:54px; padding:11px; background:#1f4bb5; box-shadow:0 50px 90px -30px rgba(10,20,60,.6);">
+            <div style="position:relative; overflow:hidden; width:100%; height:100%; border-radius:44px; background:#f4f6fa;">
+              <img class="shot" src="output/output-ios/04_share.png" alt="Share winner card screen">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="poster-label" style="font-size:12px; color:#74778d; margin-top:12px; font-weight:600;">5 · Share — Winner card</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Export mode (?frame=N): show only the Nth frame at the top-left so a
+  // headless 621x1344 @2x capture yields a clean 1242x2688 upload image.
+  (function () {
+    var m = location.search.match(/[?&]frame=(\d+)/);
+    if (!m) return;
+    var n = parseInt(m[1], 10);
+    document.body.classList.add('export');
+    var posters = document.querySelectorAll('.poster');
+    posters.forEach(function (p, i) {
+      if (i !== n - 1) p.style.display = 'none';
+    });
+  })();
+</script>
+</body>
+</html>

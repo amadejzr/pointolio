@@ -4,16 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/di/locator.dart';
-import 'package:pointolio/common/ui/tokens/spacing.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
+import 'package:pointolio/common/theme/pointolio_tokens.dart';
+import 'package:pointolio/common/ui/widgets/motion.dart';
+import 'package:pointolio/common/ui/widgets/notebook_background.dart';
+import 'package:pointolio/common/ui/widgets/page_app_bar.dart';
 import 'package:pointolio/features/scoring/data/scoring_repository.dart';
 import 'package:pointolio/features/scoring/domain/models.dart';
 import 'package:pointolio/features/scoring/presentation/cubit/scoring_cubit.dart';
-import 'package:pointolio/features/scoring/presentation/widgets/app_bar_title_widget.dart';
-import 'package:pointolio/features/scoring/presentation/widgets/calculator_keyboard/calculator_keyboard_exports.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/add_round_sheet.dart';
 import 'package:pointolio/features/scoring/presentation/widgets/edit_party_bottom_sheet.dart';
-import 'package:pointolio/features/scoring/presentation/widgets/table_widget.dart';
-import 'package:pointolio/features/scoring/presentation/widgets/totals_bottom_sheet.dart';
-import 'package:pointolio/features/sharing/presentation/share_sheet.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/leaderboard_view.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/score_table.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/scoring_dialogs.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/scoring_hint_banner.dart';
+import 'package:pointolio/features/scoring/presentation/widgets/scoring_menu.dart';
+import 'package:pointolio/features/sharing/presentation/share_page.dart';
 
 class ScoringPage extends StatelessWidget {
   const ScoringPage({required this.gameId, super.key});
@@ -36,144 +42,144 @@ class ScoringPage extends StatelessWidget {
   }
 }
 
-class ScoringScreen extends StatelessWidget {
+enum ScoringView { table, standings }
+
+class ScoringScreen extends StatefulWidget {
   const ScoringScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ScoringCubit, ScoringState>(
-      builder: (context, state) {
-        final title = state.game?.name ?? 'Scoring';
-        final isLandscape =
-            MediaQuery.orientationOf(context) == Orientation.landscape;
+  State<ScoringScreen> createState() => _ScoringScreenState();
+}
 
-        return Scaffold(
-          appBar: AppBar(
-            title: AppBarTitleMenu(
-              key: const Key('appbar_title_menu'),
-              title: title,
-              gameTypeColor: state.gameTypeColor,
-              lowestScoreWins: state.lowestScoreWins,
-              isFinished: state.game?.finishedAt != null,
-              gameTypeName: state.gameType?.name,
-              onEdit: () => _onEditPartyPressed(context, state),
-              onToggleFinished: () {
-                if (state.game?.finishedAt != null) {
-                  unawaited(context.read<ScoringCubit>().restoreGame());
-                } else {
-                  unawaited(context.read<ScoringCubit>().finishGame());
-                }
-              },
-              onShare: () {
-                unawaited(
-                  ShareSheet.show(
-                    context,
-                    scoringData: ScoringData(
-                      game: state.game,
-                      gameType: state.gameType,
-                      playerScores: state.playerScores,
-                      roundCount: state.roundCount,
+class _ScoringScreenState extends State<ScoringScreen> {
+  ScoringView _view = ScoringView.table;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+
+    return Scaffold(
+      backgroundColor: pt.bg,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: NotebookBackground()),
+          SafeArea(
+            bottom: false,
+            child: BlocBuilder<ScoringCubit, ScoringState>(
+              builder: (context, state) {
+                final isFinished = state.game?.finishedAt != null;
+                final isLoaded = state.status == ScoringStatus.loaded;
+
+                return Column(
+                  children: [
+                    PageAppBar(
+                      title: state.game?.name ?? 'Scoring',
+                      action: _MoreButton(
+                        isFinished: isFinished,
+                        onEdit: () => _onEditParty(context, state),
+                        onToggleFinished: () =>
+                            _onToggleFinished(context, state),
+                        onShare: () => _onShare(context, state),
+                      ),
                     ),
-                    lowestScoreWins: state.lowestScoreWins,
-                    primaryColor: state.gameType?.color == null
-                        ? null
-                        : Color(state.gameType!.color!),
-                  ),
+                    if (isLoaded) _MetaStrip(state: state),
+                    if (isLoaded && state.playerScores.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          S.lg,
+                          S.xs,
+                          S.lg,
+                          S.sm,
+                        ),
+                        child: _ViewToggle(
+                          view: _view,
+                          onChanged: (v) => setState(() => _view = v),
+                        ),
+                      ),
+                    if (isLoaded &&
+                        !isFinished &&
+                        _view == ScoringView.table &&
+                        state.playerScores.isNotEmpty)
+                      ScoringHintBanner(
+                        canReorder: state.playerScores.length >= 2,
+                      ),
+                    Expanded(child: _body(context, state, isFinished)),
+                    if (isLoaded)
+                      _BottomBar(
+                        state: state,
+                        isFinished: isFinished,
+                        onAddRound: () => _onAddRound(context, state),
+                        onShare: () => _onShare(context, state),
+                      ),
+                  ],
                 );
               },
             ),
-            actionsPadding: isLandscape ? null : Spacing.horizontalPage,
-            actions: [
-              if (isLandscape && state.status == ScoringStatus.loaded)
-                _AppBarStats(
-                  state: state,
-                  onOpenTotals: () => _showTotalsSheet(context, state),
-                ),
-              if (state.game?.finishedAt == null)
-                IconButton.filled(
-                  key: const Key('add_round_button'),
-                  tooltip: 'Add round',
-                  icon: const Icon(
-                    Icons.add,
-                    color: Colors.white,
-                  ),
-                  onPressed:
-                      state.status == ScoringStatus.loaded &&
-                          state.playerScores.isNotEmpty
-                      ? () => _onAddRoundPressed(context, state)
-                      : null,
-                )
-              else
-                IconButton.filled(
-                  tooltip: 'Share result',
-                  icon: const Icon(
-                    Icons.ios_share,
-                    color: Colors.white,
-                  ),
-                  onPressed: state.status == ScoringStatus.loaded
-                      ? () {
-                          unawaited(
-                            ShareSheet.show(
-                              context,
-                              scoringData: ScoringData(
-                                game: state.game,
-                                gameType: state.gameType,
-                                playerScores: state.playerScores,
-                                roundCount: state.roundCount,
-                              ),
-                              lowestScoreWins: state.lowestScoreWins,
-                              primaryColor: state.gameType?.color == null
-                                  ? null
-                                  : Color(state.gameType!.color!),
-                            ),
-                          );
-                        }
-                      : null,
-                ),
-            ],
           ),
-          body: _ScoringBody(
-            state: state,
-            isFinished: state.game?.finishedAt != null,
-            onRetry: () => context.read<ScoringCubit>().loadData(),
-            onDeleteRound: (round) => _onDeleteRoundPressed(context, round),
-            onEditScore: (entryId, current, playerName, round) =>
-                _onEditScorePressed(
-                  context,
-                  entryId,
-                  current,
-                  playerName,
-                  round,
-                ),
-            onReorderPlayers: (oldIndex, newIndex) =>
-                context.read<ScoringCubit>().reorderPlayers(oldIndex, newIndex),
-          ),
-
-          // Portrait: keep the totals bar
-          // Landscape: remove it so the table gets the full page
-          bottomNavigationBar:
-              (!isLandscape && state.status == ScoringStatus.loaded)
-              ? TotalsBar(
-                  state: state,
-                  onShowTotals: () => _showTotalsSheet(context, state),
-                )
-              : null,
-        );
-      },
+        ],
+      ),
     );
   }
 
-  // --- Screen actions (only here touches cubit) ---
+  Widget _body(BuildContext context, ScoringState state, bool isFinished) {
+    final pt = context.pt;
 
-  Future<void> _onEditPartyPressed(
-    BuildContext context,
-    ScoringState state,
-  ) async {
+    switch (state.status) {
+      case ScoringStatus.initial:
+      case ScoringStatus.loading:
+        return Center(child: CircularProgressIndicator(color: pt.accent));
+
+      case ScoringStatus.error:
+        return _ErrorState(
+          message: state.errorMessage ?? 'Unknown error',
+          onRetry: () => context.read<ScoringCubit>().loadData(),
+        );
+
+      case ScoringStatus.loaded:
+        if (state.playerScores.isEmpty) {
+          return const _MessageState(
+            icon: Icons.groups_outlined,
+            title: 'No players',
+            message: 'Edit the party to add players.',
+          );
+        }
+
+        return AnimatedSwitcher(
+          duration: Motion.base,
+          switchInCurve: Motion.ease,
+          switchOutCurve: Motion.ease,
+          child: _view == ScoringView.table
+              ? KeyedSubtree(
+                  key: const ValueKey('table'),
+                  child: ScoreTable(
+                    state: state,
+                    onEditScore: isFinished
+                        ? null
+                        : (id, current, name, round) =>
+                              _onEditScore(context, id, current, name, round),
+                    onDeleteRound: isFinished
+                        ? null
+                        : (round) => _onDeleteRound(context, round),
+                    onReorderPlayers: isFinished
+                        ? null
+                        : (o, n) =>
+                              context.read<ScoringCubit>().reorderPlayers(o, n),
+                  ),
+                )
+              : KeyedSubtree(
+                  key: const ValueKey('standings'),
+                  child: LeaderboardView(state: state),
+                ),
+        );
+    }
+  }
+
+  // --- Screen actions (only here touches the cubit) ---
+
+  Future<void> _onEditParty(BuildContext context, ScoringState state) async {
     final cubit = context.read<ScoringCubit>();
-
     final initialPlayers = state.playerScores.map((ps) => ps.player).toList();
     final allPlayers = await cubit.getAllPlayers();
-
     if (!context.mounted) return;
 
     final result = await EditPartyBottomSheet.show(
@@ -188,18 +194,34 @@ class ScoringScreen extends StatelessWidget {
     }
   }
 
-  void _onAddRoundPressed(BuildContext context, ScoringState state) {
+  void _onToggleFinished(BuildContext context, ScoringState state) {
     final cubit = context.read<ScoringCubit>();
+    if (state.game?.finishedAt != null) {
+      unawaited(cubit.restoreGame());
+    } else {
+      unawaited(cubit.finishGame());
+    }
+  }
+
+  void _onAddRound(BuildContext context, ScoringState state) {
+    final cubit = context.read<ScoringCubit>();
+    final pt = context.pt;
 
     unawaited(
       showModalBottomSheet(
         isDismissible: false,
         context: context,
         isScrollControlled: true,
-        showDragHandle: true,
+        // No drag handle / drag-to-dismiss - the sheet is committed with the
+        // Save/Cancel buttons, so the drag affordance is just noise.
+        showDragHandle: false,
+        enableDrag: false,
         useSafeArea: true,
+        backgroundColor: pt.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(R.xl)),
+        ),
         builder: (sheetContext) {
-          // IMPORTANT: pass the same cubit to the sheet context
           return BlocProvider.value(
             value: cubit,
             child: AddRoundSheet(
@@ -215,19 +237,13 @@ class ScoringScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _onDeleteRoundPressed(BuildContext context, int round) async {
+  Future<void> _onDeleteRound(BuildContext context, int round) async {
     final cubit = context.read<ScoringCubit>();
-
-    final ok = await confirmDialog(
-      context,
-      title: 'Delete round R$round?',
-      message: 'This will delete scores for round $round for all players.',
-      confirmText: 'Delete',
-    );
+    final ok = await confirmDeleteRound(context, round: round);
     if (ok) unawaited(cubit.deleteRound(round));
   }
 
-  Future<void> _onEditScorePressed(
+  Future<void> _onEditScore(
     BuildContext context,
     int entryId,
     int current,
@@ -235,7 +251,6 @@ class ScoringScreen extends StatelessWidget {
     int round,
   ) async {
     final cubit = context.read<ScoringCubit>();
-
     final newPoints = await editPointsDialog(
       context,
       current: current,
@@ -246,625 +261,458 @@ class ScoringScreen extends StatelessWidget {
     unawaited(cubit.updateScore(entryId, newPoints));
   }
 
-  void _showTotalsSheet(BuildContext context, ScoringState state) {
+  void _onShare(BuildContext context, ScoringState state) {
     unawaited(
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        showDragHandle: true,
-        builder: (_) => FractionallySizedBox(
-          heightFactor: 0.80,
-          child: TotalsSheet(state: state),
+      SharePage.show(
+        context,
+        scoringData: ScoringData(
+          game: state.game,
+          gameType: state.gameType,
+          playerScores: state.playerScores,
+          roundCount: state.roundCount,
+        ),
+        lowestScoreWins: state.lowestScoreWins,
+        accent: state.gameType?.color == null
+            ? null
+            : Color(state.gameType!.color!),
+      ),
+    );
+  }
+}
+
+// =================== Header pieces ===================
+
+class _MoreButton extends StatelessWidget {
+  const _MoreButton({
+    required this.isFinished,
+    required this.onEdit,
+    required this.onToggleFinished,
+    required this.onShare,
+  });
+
+  final bool isFinished;
+  final VoidCallback onEdit;
+  final VoidCallback onToggleFinished;
+  final VoidCallback onShare;
+
+  Future<void> _open(BuildContext context) async {
+    final action = await showScoringMenu(context, isFinished: isFinished);
+    switch (action) {
+      case ScoringMenuAction.toggleFinished:
+        onToggleFinished();
+      case ScoringMenuAction.edit:
+        onEdit();
+      case ScoringMenuAction.share:
+        onShare();
+      case null:
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+    return Pressable(
+      onTap: () => unawaited(_open(context)),
+      scale: 0.9,
+      isButton: true,
+      semanticLabel: 'Game menu',
+      excludeChildSemantics: true,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: pt.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: pt.border),
+        ),
+        child: Icon(Icons.more_horiz_rounded, size: 20, color: pt.textMuted),
+      ),
+    );
+  }
+}
+
+/// Compact strip under the header: win rule + game type + player/round counts.
+class _MetaStrip extends StatelessWidget {
+  const _MetaStrip({required this.state});
+
+  final ScoringState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+    final lowest = state.lowestScoreWins;
+    final typeName = state.gameType?.name;
+    final typeColor = state.gameType?.color;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(S.lg, 0, S.lg, S.xs),
+      child: Row(
+        children: [
+          _MetaPill(
+            icon: lowest
+                ? Icons.south_rounded
+                : Icons.north_rounded,
+            label: lowest ? 'Lowest wins' : 'Highest wins',
+            color: pt.accent,
+            tint: pt.accentTint,
+          ),
+          if (typeName != null) ...[
+            const SizedBox(width: S.sm),
+            _MetaPill(
+              dotColor: typeColor != null ? Color(typeColor) : pt.textMuted,
+              label: typeName,
+              color: pt.text2,
+              tint: pt.surfaceMuted,
+            ),
+          ],
+          const Spacer(),
+          Text(
+            '${state.playerScores.length} · ${state.roundCount} '
+            '${state.roundCount == 1 ? 'round' : 'rounds'}',
+            style: PT.caption(pt.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaPill extends StatelessWidget {
+  const _MetaPill({
+    required this.label,
+    required this.color,
+    required this.tint,
+    this.icon,
+    this.dotColor,
+  });
+
+  final String label;
+  final Color color;
+  final Color tint;
+  final IconData? icon;
+  final Color? dotColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: S.sm, vertical: 5),
+      decoration: BoxDecoration(
+        color: tint,
+        borderRadius: BorderRadius.circular(R.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null)
+            Icon(icon, size: 13, color: color)
+          else if (dotColor != null)
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+          const SizedBox(width: 5),
+          Text(label, style: PT.chip(color)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ViewToggle extends StatelessWidget {
+  const _ViewToggle({required this.view, required this.onChanged});
+
+  final ScoringView view;
+  final ValueChanged<ScoringView> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+    final isTable = view == ScoringView.table;
+
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: pt.surfaceMuted,
+        borderRadius: BorderRadius.circular(R.md),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final segW = constraints.maxWidth / 2;
+          return Stack(
+            children: [
+              AnimatedAlign(
+                duration: Motion.base,
+                curve: Motion.ease,
+                alignment: isTable
+                    ? Alignment.centerLeft
+                    : Alignment.centerRight,
+                child: Container(
+                  width: segW,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: pt.surface,
+                    borderRadius: BorderRadius.circular(R.sm),
+                    boxShadow: pt.shadowCard,
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  _ToggleSegment(
+                    label: 'Table',
+                    selected: isTable,
+                    onTap: () => onChanged(ScoringView.table),
+                  ),
+                  _ToggleSegment(
+                    label: 'Standings',
+                    selected: !isTable,
+                    onTap: () => onChanged(ScoringView.standings),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ToggleSegment extends StatelessWidget {
+  const _ToggleSegment({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+    return Expanded(
+      child: Pressable(
+        onTap: onTap,
+        scale: 0.97,
+        isButton: true,
+        selected: selected,
+        semanticLabel: label,
+        excludeChildSemantics: true,
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: Motion.fast,
+            style: PT.bodyStrong(
+              selected ? pt.text : pt.textMuted,
+            ).copyWith(fontSize: 13.5),
+            child: Text(label),
+          ),
         ),
       ),
     );
   }
 }
 
-class _ScoringBody extends StatelessWidget {
-  const _ScoringBody({
+// =================== Bottom bar ===================
+
+class _BottomBar extends StatelessWidget {
+  const _BottomBar({
     required this.state,
     required this.isFinished,
-    required this.onRetry,
-    required this.onDeleteRound,
-    required this.onEditScore,
-    required this.onReorderPlayers,
+    required this.onAddRound,
+    required this.onShare,
   });
 
   final ScoringState state;
   final bool isFinished;
-  final VoidCallback onRetry;
-  final FutureOr<void> Function(int roundNumber) onDeleteRound;
-  final FutureOr<void> Function(
-    int scoreEntryId,
-    int currentPoints,
-    String playerName,
-    int round,
-  )
-  onEditScore;
-  final FutureOr<void> Function(int oldIndex, int newIndex) onReorderPlayers;
+  final VoidCallback onAddRound;
+  final VoidCallback onShare;
 
   @override
   Widget build(BuildContext context) {
-    switch (state.status) {
-      case ScoringStatus.initial:
-      case ScoringStatus.loading:
-        return const Center(child: CircularProgressIndicator());
+    final canAdd = state.playerScores.isNotEmpty;
 
-      case ScoringStatus.error:
-        return ErrorView(
-          message: state.errorMessage ?? 'Unknown error',
-          onRetry: onRetry,
-        );
-
-      case ScoringStatus.loaded:
-        if (state.playerScores.isEmpty) {
-          return const Center(child: Text('No players in this game.'));
-        }
-
-        return SafeArea(
-          child: RoundsGrid(
-            state: state,
-            onDeleteRound: isFinished ? null : onDeleteRound,
-            onEditScore: isFinished ? null : onEditScore,
-            onReorderPlayers: isFinished ? null : onReorderPlayers,
-          ),
-        );
-    }
-  }
-}
-
-// =================== AppBar UI ===================
-
-/// Landscape-only: compact stats in AppBar with tooltips on long-press/hover
-class _AppBarStats extends StatelessWidget {
-  const _AppBarStats({
-    required this.state,
-    required this.onOpenTotals,
-  });
-
-  final ScoringState state;
-  final VoidCallback onOpenTotals;
-
-  @override
-  Widget build(BuildContext context) {
-    final playersCount = state.playerScores.length;
-    final roundsCount = state.roundCount;
-
-    final leader = _leaderLabel(state);
-    final leaderTooltip = state.lowestScoreWins
-        ? 'Leader (lowest total)'
-        : 'Leader (highest total)';
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Tooltip(
-            message: 'Players',
-            waitDuration: const Duration(milliseconds: 350),
-            child: _MiniChip(
-              icon: Icons.people_outline,
-              label: '$playersCount',
-              onTap: null,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Tooltip(
-            message: 'Rounds',
-            waitDuration: const Duration(milliseconds: 350),
-            child: _MiniChip(
-              icon: Icons.grid_view_rounded,
-              label: '$roundsCount',
-              onTap: null,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Tooltip(
-            message: leaderTooltip,
-            waitDuration: const Duration(milliseconds: 350),
-            child: _MiniChip(
-              icon: Icons.emoji_events_outlined,
-              label: leader,
-              onTap: onOpenTotals, // nice: tap leader => totals
-            ),
-          ),
-          const SizedBox(width: 6),
-          IconButton(
-            tooltip: 'Totals',
-            onPressed: onOpenTotals,
-            icon: const Icon(Icons.summarize_outlined),
-          ),
-        ],
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        S.lg,
+        S.sm,
+        S.lg,
+        MediaQuery.paddingOf(context).bottom + S.sm,
       ),
+      child: isFinished
+          ? _PrimaryButton(
+              icon: Icons.ios_share_rounded,
+              label: 'Share result',
+              onTap: onShare,
+              filled: false,
+            )
+          : _PrimaryButton(
+              icon: Icons.add_rounded,
+              label: 'Add round',
+              onTap: canAdd ? onAddRound : null,
+              filled: true,
+            ),
     );
   }
-
-  String _leaderLabel(ScoringState state) {
-    if (state.playerScores.isEmpty) return '-';
-
-    // Determine best total based on scoring mode
-    var best = state.playerScores.first;
-
-    for (final ps in state.playerScores.skip(1)) {
-      final isBetter = state.lowestScoreWins
-          ? ps.total < best.total
-          : ps.total > best.total;
-      if (isBetter) best = ps;
-    }
-
-    // Handle ties (optional but nice)
-    final bestTotal = best.total;
-    final tied = state.playerScores
-        .where((ps) => ps.total == bestTotal)
-        .toList();
-    if (tied.length > 1) {
-      return 'Tie';
-    }
-
-    // Keep it short for appbar: "Maj J."
-    final full = _playerDisplayName(best.player);
-    final parts = full.split(' ').where((e) => e.trim().isNotEmpty).toList();
-    if (parts.length == 1) return parts.first;
-    return '${parts.first} ${parts[1][0].toUpperCase()}.';
-  }
-
-  String _playerDisplayName(Player player) {
-    if ((player.lastName ?? '').trim().isNotEmpty) {
-      return '${player.firstName} ${player.lastName!.trim()}';
-    }
-    return player.firstName;
-  }
 }
 
-class _MiniChip extends StatelessWidget {
-  const _MiniChip({
+class _PrimaryButton extends StatelessWidget {
+  const _PrimaryButton({
     required this.icon,
     required this.label,
     required this.onTap,
+    required this.filled,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
+  final bool filled;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final pt = context.pt;
+    final enabled = onTap != null;
 
-    final child = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: cs.onSurfaceVariant),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: tt.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: cs.onSurfaceVariant,
-            ),
+    return Pressable(
+      onTap: onTap,
+      scale: 0.97,
+      isButton: true,
+      semanticLabel: label,
+      excludeChildSemantics: true,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.45,
+        child: Container(
+          height: 54,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: filled ? pt.accent : pt.surface,
+            borderRadius: BorderRadius.circular(R.lg),
+            border: Border.all(color: filled ? pt.accent : pt.border),
+            boxShadow: filled && enabled ? pt.shadowAccent : null,
           ),
-        ],
-      ),
-    );
-
-    if (onTap == null) return child;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: child,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: filled ? pt.accentText : pt.text,
+              ),
+              const SizedBox(width: S.sm),
+              Text(
+                label,
+                style: PT.bodyStrong(filled ? pt.accentText : pt.text)
+                    .copyWith(fontSize: 15),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-// =================== Dumb widgets ===================
+// =================== States ===================
 
-class ErrorView extends StatelessWidget {
-  const ErrorView({required this.message, required this.onRetry, super.key});
+class _MessageState extends StatelessWidget {
+  const _MessageState({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(S.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 52, color: pt.textFaint),
+            const SizedBox(height: S.lg),
+            Semantics(
+              header: true,
+              child: Text(title, style: PT.sectionTitle(pt.text)),
+            ),
+            const SizedBox(height: S.xs),
+            Text(
+              message,
+              style: PT.body(pt.textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(S.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 36, color: cs.error),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// =================== AddRoundSheet + dialogs (unchanged) ===================
-
-class AddRoundSheet extends StatefulWidget {
-  const AddRoundSheet({required this.state, required this.onSave, super.key});
-
-  final ScoringState state;
-  final FutureOr<void> Function(Map<int, int> scores) onSave;
-
-  @override
-  State<AddRoundSheet> createState() => _AddRoundSheetState();
-}
-
-class _AddRoundSheetState extends State<AddRoundSheet> {
-  late final Map<int, TextEditingController> _controllers;
-  late final Map<int, FocusNode> _focusNodes;
-  late final ScrollController _scrollController;
-  bool _isAnyFieldFocused = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-    _controllers = {
-      for (final ps in widget.state.playerScores)
-        ps.gamePlayer.id: TextEditingController(),
-    };
-    _focusNodes = {
-      for (final ps in widget.state.playerScores) ps.gamePlayer.id: FocusNode(),
-    };
-
-    // Listen to focus changes on each node
-    for (final entry in _focusNodes.entries) {
-      entry.value.addListener(() => _onFieldFocusChanged(entry.key));
-    }
-  }
-
-  @override
-  void dispose() {
-    for (final c in _controllers.values) {
-      c.dispose();
-    }
-    for (final f in _focusNodes.values) {
-      f.dispose();
-    }
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _onFieldFocusChanged(int playerId) {
-    final hasFocus = _focusNodes[playerId]?.hasFocus ?? false;
-
-    setState(() {
-      _isAnyFieldFocused = hasFocus;
-    });
-
-    if (hasFocus) {
-      // Scroll to show the focused field after a short delay
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToFocusedField(playerId);
-      });
-    }
-  }
-
-  void _scrollToFocusedField(int playerId) {
-    if (!_scrollController.hasClients) return;
-
-    final playerIndex = widget.state.playerScores.indexWhere(
-      (ps) => ps.gamePlayer.id == playerId,
-    );
-    if (playerIndex == -1) return;
-
-    // Calculate the approximate position of the field
-    // Header (title + reset button) ≈ 60px
-    // Each player row ≈ 60px (height + padding)
-    const headerHeight = 60.0;
-    const rowHeight = 60.0;
-    final fieldPosition = headerHeight + (playerIndex * rowHeight);
-
-    // Get keyboard height and available space
-    final keyboardHeight = getCalculatorKeyboardHeight(context);
-    final screenHeight = MediaQuery.of(context).size.height;
-    final availableHeight = screenHeight - keyboardHeight - 200;
-
-    // Scroll so the field is visible in the available space
-    final targetScroll = (fieldPosition - availableHeight / 2).clamp(
-      0.0,
-      _scrollController.position.maxScrollExtent,
-    );
-
-    unawaited(
-      _scrollController.animateTo(
-        targetScroll,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-      ),
-    );
-  }
-
-  Future<void> _saveRound() async {
-    final scores = <int, int>{};
-    for (final e in _controllers.entries) {
-      scores[e.key] = int.tryParse(e.value.text.trim()) ?? 0;
-    }
-    await widget.onSave(scores);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final roundNumber = widget.state.roundCount + 1;
-    final keyboardHeight = getCalculatorKeyboardHeight(context);
-
-    final bottomPadding = _isAnyFieldFocused
-        ? keyboardHeight + MediaQuery.of(context).padding.bottom
-        : MediaQuery.of(context).padding.bottom;
-
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 4,
-        bottom: bottomPadding,
-      ),
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'Add Round R$roundNumber',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    for (final c in _controllers.values) {
-                      c.clear();
-                    }
-                    setState(() {});
-                  },
-                  child: const Text('Reset'),
-                ),
-              ],
+            Icon(Icons.error_outline_rounded, size: 52, color: pt.players[3]),
+            const SizedBox(height: S.lg),
+            Semantics(
+              header: true,
+              child: Text(
+                'Something went wrong',
+                style: PT.sectionTitle(pt.text),
+              ),
             ),
-            const SizedBox(height: 12),
-            ...widget.state.playerScores.asMap().entries.map((entry) {
-              final index = entry.key;
-              final ps = entry.value;
-
-              final isFirst = index == 0;
-              final isLast = index == widget.state.playerScores.length - 1;
-
-              final name = [
-                ps.player.firstName,
-                if ((ps.player.lastName ?? '').trim().isNotEmpty)
-                  ps.player.lastName!.trim(),
-              ].join(' ');
-
-              final ctrl = _controllers[ps.gamePlayer.id]!;
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 120,
-                      child: CalculatorTextField(
-                        controller: ctrl,
-                        focusNode: _focusNodes[ps.gamePlayer.id],
-                        onFocusChanged: (_) =>
-                            _onFieldFocusChanged(ps.gamePlayer.id),
-                        autofocus: isFirst,
-                        textInputAction: isLast
-                            ? TextInputAction.done
-                            : TextInputAction.next,
-                        onSubmitted: isLast ? (_) => _saveRound() : null,
-                        decoration: const InputDecoration(labelText: 'Points'),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final scores = <int, int>{};
-                      for (final e in _controllers.entries) {
-                        scores[e.key] = int.tryParse(e.value.text.trim()) ?? 0;
-                      }
-                      await widget.onSave(scores);
-                    },
-                    child: const Text('Save round'),
-                  ),
-                ),
-              ],
+            const SizedBox(height: S.xs),
+            Text(
+              message,
+              style: PT.body(pt.textMuted),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EditPointsDialog extends StatefulWidget {
-  const _EditPointsDialog({
-    required this.current,
-    required this.playerName,
-    required this.round,
-  });
-
-  final int current;
-  final String playerName;
-  final int round;
-
-  @override
-  State<_EditPointsDialog> createState() => _EditPointsDialogState();
-}
-
-class _EditPointsDialogState extends State<_EditPointsDialog> {
-  late final TextEditingController _controller;
-  bool _isFieldFocused = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.current.toString());
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    final v = int.tryParse(_controller.text.trim());
-    if (v != null) {
-      Navigator.pop(context, v);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Edit points'),
-          const SizedBox(height: 4),
-          Text(
-            '${widget.playerName} • Round ${widget.round}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-      content: CalculatorTextField(
-        controller: _controller,
-        autofocus: true,
-        textInputAction: TextInputAction.done,
-        onFocusChanged: (hasFocus) {
-          setState(() {
-            _isFieldFocused = hasFocus;
-          });
-        },
-        onSubmitted: (_) => _save(),
-        decoration: const InputDecoration(
-          hintText: 'Enter points (e.g. 10, -2)',
-          labelText: 'Points',
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _save,
-          child: const Text('Save'),
-        ),
-      ],
-      insetPadding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: _isFieldFocused
-            ? getCalculatorKeyboardHeight(context) + 16
-            : MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-    );
-  }
-}
-
-Future<int?> editPointsDialog(
-  BuildContext context, {
-  required int current,
-  required String playerName,
-  required int round,
-}) async {
-  return showDialog<int>(
-    barrierDismissible: false,
-    context: context,
-    builder: (_) => _EditPointsDialog(
-      current: current,
-      playerName: playerName,
-      round: round,
-    ),
-  );
-}
-
-Future<bool> confirmDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-  required String confirmText,
-}) async {
-  return (await showDialog<bool>(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(confirmText),
+            const SizedBox(height: S.lg),
+            Pressable(
+              onTap: onRetry,
+              scale: 0.94,
+              isButton: true,
+              semanticLabel: 'Retry',
+              excludeChildSemantics: true,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: S.xl,
+                  vertical: S.md,
+                ),
+                decoration: BoxDecoration(
+                  color: pt.accentTint,
+                  borderRadius: BorderRadius.circular(R.md),
+                ),
+                child: Text('Retry', style: PT.bodyStrong(pt.accent)),
+              ),
             ),
           ],
         ),
-      )) ??
-      false;
+      ),
+    );
+  }
 }

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="130" viewBox="0 0 560 130" fill="none" role="img" aria-label="Pointolio">
+  <title>Pointolio wordmark — light (for dark surfaces)</title>
+  
+  <text x="0" y="94" class="pt-word" fill="#EEF0F4">Point</text>
+  <circle cx="367" cy="66" r="35" stroke="#4F86FF" stroke-width="11"></circle>
+  <circle cx="367" cy="66" r="12" fill="#4F86FF"></circle>
+  <text x="404" y="94" class="pt-word" fill="#EEF0F4">lio</text>
+</svg>

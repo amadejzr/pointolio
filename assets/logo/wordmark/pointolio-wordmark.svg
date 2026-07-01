@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="130" viewBox="0 0 560 130" fill="none" role="img" aria-label="Pointolio">
+  <title>Pointolio wordmark — the second “o” is the scoring point</title>
+  
+  
+  <text x="0" y="94" class="pt-word" fill="#1B1E26">Point</text>
+  
+  <circle cx="367" cy="66" r="35" stroke="#2F6BF6" stroke-width="11"></circle>
+  <circle cx="367" cy="66" r="12" fill="#2F6BF6"></circle>
+  <text x="404" y="94" class="pt-word" fill="#1B1E26">lio</text>
+</svg>

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
 import 'package:pointolio/features/scoring/presentation/widgets/calculator_keyboard/calculator_logic.dart';
 
@@ -212,7 +213,10 @@ class NumericKeyboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isTablet = constraints.maxWidth >= 600;
+        // Detect a real tablet by the shortest side, not raw width - otherwise
+        // a landscape phone reads as a "tablet" and gets an oversized keyboard
+        // that is taller than the screen.
+        final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
         return _KeyboardContainer(
           isTablet: isTablet,
           child: _KeyboardContent(
@@ -241,16 +245,16 @@ class _KeyboardContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
 
     return Material(
-      color: cs.surface,
+      color: pt.surface,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: cs.outlineVariant)),
+          border: Border(top: BorderSide(color: pt.border)),
           boxShadow: [
             BoxShadow(
-              color: cs.shadow.withValues(alpha: 0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -297,7 +301,7 @@ class _KeyboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonHeight = isTablet ? 64.0 : 52.0;
+    final buttonHeight = calculatorKeyButtonHeight(context, isTablet: isTablet);
     final gap = isTablet ? Spacing.sm : Spacing.xs;
 
     return Column(
@@ -342,7 +346,7 @@ class _ExpressionToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
     final tt = Theme.of(context).textTheme;
     final buttonSize = isTablet ? 52.0 : 44.0;
 
@@ -354,9 +358,9 @@ class _ExpressionToolbar extends StatelessWidget {
             height: buttonSize,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: cs.surface,
+              color: pt.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: cs.outlineVariant),
+              border: Border.all(color: pt.border),
             ),
             alignment: Alignment.centerRight,
             child: SingleChildScrollView(
@@ -500,10 +504,10 @@ class _OperatorButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
 
     return Material(
-      color: cs.primary.withValues(alpha: 0.12),
+      color: pt.accent.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -517,7 +521,7 @@ class _OperatorButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
-                color: cs.primary,
+                color: pt.accent,
               ),
             ),
           ),
@@ -542,11 +546,12 @@ class _IconActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
+    final danger = pt.players[3];
     final bgColor = isDestructive
-        ? cs.error.withValues(alpha: 0.12)
-        : cs.primary.withValues(alpha: 0.12);
-    final iconColor = isDestructive ? cs.error : cs.primary;
+        ? danger.withValues(alpha: 0.12)
+        : pt.accent.withValues(alpha: 0.12);
+    final iconColor = isDestructive ? danger : pt.accent;
 
     return Material(
       color: bgColor,
@@ -583,11 +588,11 @@ class _KeyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
     final tt = Theme.of(context).textTheme;
 
-    final bgColor = isAction ? cs.primary : cs.surface;
-    final fgColor = isAction ? cs.onPrimary : cs.onSurface;
+    final bgColor = isAction ? pt.accent : pt.surface;
+    final fgColor = isAction ? pt.accentText : pt.text;
     final fontSize = isTablet ? 22.0 : 20.0;
 
     return Material(
@@ -603,7 +608,7 @@ class _KeyButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             border: isAction
                 ? null
-                : Border.all(color: cs.outlineVariant, width: 0.5),
+                : Border.all(color: pt.border, width: 0.5),
           ),
           alignment: Alignment.center,
           child: Text(
@@ -622,10 +627,24 @@ class _KeyButton extends StatelessWidget {
 
 // =================== Keyboard Height Helper ===================
 
+/// Height of a single number-key button. Shrinks on short viewports (landscape
+/// phones) so the whole keyboard still fits above the fold. Shared by the
+/// keyboard layout and [getCalculatorKeyboardHeight] so they stay in sync.
+double calculatorKeyButtonHeight(
+  BuildContext context, {
+  required bool isTablet,
+}) {
+  if (isTablet) return 64;
+  // Landscape phones are short - use a compact key so the keyboard does not
+  // eat the whole screen and hide the inputs.
+  final isShort = MediaQuery.sizeOf(context).height < 500;
+  return isShort ? 40 : 52;
+}
+
 /// Returns the total height of the calculator keyboard for layout calculations.
 double getCalculatorKeyboardHeight(BuildContext context) {
-  final isTablet = MediaQuery.sizeOf(context).width >= 600;
-  final buttonHeight = isTablet ? 64.0 : 52.0;
+  final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
+  final buttonHeight = calculatorKeyButtonHeight(context, isTablet: isTablet);
   final gap = isTablet ? Spacing.sm : Spacing.xs;
 
   // toolbar (buttonHeight) + 4 rows + gaps + padding

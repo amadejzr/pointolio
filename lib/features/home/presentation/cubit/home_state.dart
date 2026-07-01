@@ -8,14 +8,33 @@ class GameWithPlayerCount extends Equatable {
     required this.game,
     required this.playerCount,
     this.gameType,
+    this.players = const [],
+    this.roundCount = 0,
+    this.winnerName,
   });
 
   final Game game;
   final int playerCount;
   final GameType? gameType;
 
+  /// Roster, ordered as it appears in the game.
+  final List<Player> players;
+
+  /// Highest round number recorded (0 if the party has not started).
+  final int roundCount;
+
+  /// First name of the winner, only set once the party is finished.
+  final String? winnerName;
+
   @override
-  List<Object?> get props => [game, playerCount, gameType];
+  List<Object?> get props => [
+    game,
+    playerCount,
+    gameType,
+    players,
+    roundCount,
+    winnerName,
+  ];
 }
 
 class HomeState extends Equatable {
@@ -24,7 +43,6 @@ class HomeState extends Equatable {
     this.status = HomeStatus.initial,
     this.errorMessage,
     this.snackbarMessage,
-    this.isEditing = false,
     this.showCompleted = false,
   });
 
@@ -34,7 +52,6 @@ class HomeState extends Equatable {
   final HomeStatus status;
   final String? errorMessage;
   final String? snackbarMessage;
-  final bool isEditing;
   final bool showCompleted;
 
   HomeState copyWith({
@@ -42,7 +59,6 @@ class HomeState extends Equatable {
     HomeStatus? status,
     String? errorMessage,
     String? snackbarMessage,
-    bool? isEditing,
     bool? showCompleted,
     bool clearSnackbar = false,
   }) {
@@ -52,18 +68,16 @@ class HomeState extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
       snackbarMessage:
           clearSnackbar ? null : snackbarMessage ?? this.snackbarMessage,
-      isEditing: isEditing ?? this.isEditing,
       showCompleted: showCompleted ?? this.showCompleted,
     );
   }
 
   @override
   List<Object?> get props => [
-        games,
-        status,
-        errorMessage,
-        snackbarMessage,
-        isEditing,
-        showCompleted,
-      ];
+    games,
+    status,
+    errorMessage,
+    snackbarMessage,
+    showCompleted,
+  ];
 }
