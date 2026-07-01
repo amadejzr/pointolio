@@ -38,6 +38,7 @@ class _PlayersManagementView extends StatelessWidget {
           title: const Text('Players'),
           body: _buildBody(context, state),
           floatingActionButton: FloatingActionButton(
+            heroTag: 'players_fab',
             onPressed: () => _showAddPlayerDialog(context),
             child: const Icon(Icons.add),
           ),
