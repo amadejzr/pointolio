@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/common/theme/pointolio_tokens.dart';
+import 'package:pointolio/common/ui/widgets/form/primary_button.dart';
 import 'package:pointolio/common/ui/widgets/motion.dart';
 
 String _ruleLabel(GameType g) =>
@@ -124,34 +125,49 @@ class GamePickerField extends StatelessWidget {
 ///
 ///   final game = await GamePickerSheet.show(context,
 ///       gameTypes: state.availableGameTypes,
-///       selected: state.selectedGameType);
+///       selected: state.selectedGameType,
+///       onCreateNew: () => _openNewGameForm());
+///
+/// When there are no saved games the sheet shows a guiding empty state whose
+/// button closes the sheet and calls `onCreateNew` so the caller can open its
+/// New Game flow.
 class GamePickerSheet {
   const GamePickerSheet._();
 
   static Future<GameType?> show(
     BuildContext context, {
     required List<GameType> gameTypes,
+    required VoidCallback onCreateNew,
     GameType? selected,
   }) {
     return showModalBottomSheet<GameType>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) =>
-          _GamePickerSheet(gameTypes: gameTypes, selected: selected),
+      builder: (_) => _GamePickerSheet(
+        gameTypes: gameTypes,
+        selected: selected,
+        onCreateNew: onCreateNew,
+      ),
     );
   }
 }
 
 class _GamePickerSheet extends StatelessWidget {
-  const _GamePickerSheet({required this.gameTypes, this.selected});
+  const _GamePickerSheet({
+    required this.gameTypes,
+    required this.onCreateNew,
+    this.selected,
+  });
 
   final List<GameType> gameTypes;
   final GameType? selected;
+  final VoidCallback onCreateNew;
 
   @override
   Widget build(BuildContext context) {
     final pt = context.pt;
+    final isEmpty = gameTypes.isEmpty;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.75,
@@ -186,69 +202,113 @@ class _GamePickerSheet extends StatelessWidget {
             child: Text('Choose a game', style: PT.sectionTitle(pt.text)),
           ),
           const SizedBox(height: 14),
-          Flexible(
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: gameTypes.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, i) {
-                final g = gameTypes[i];
-                final isSel = g.id == selected?.id;
-                return Pressable(
-                  onTap: () => Navigator.of(context).pop(g),
-                  isButton: true,
-                  selected: isSel,
-                  semanticLabel: '${g.name}, ${_ruleLabel(g)}',
-                  excludeChildSemantics: true,
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 56),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: isSel ? pt.accentTint : pt.surface,
-                      borderRadius: BorderRadius.circular(R.md),
-                      border: Border.all(
-                        color: isSel ? pt.accentBorder : pt.border,
+          if (isEmpty)
+            _NoGamesEmptyState(
+              onCreateNew: () {
+                Navigator.of(context).pop();
+                onCreateNew();
+              },
+            )
+          else
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: gameTypes.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, i) {
+                  final g = gameTypes[i];
+                  final isSel = g.id == selected?.id;
+                  return Pressable(
+                    onTap: () => Navigator.of(context).pop(g),
+                    isButton: true,
+                    selected: isSel,
+                    semanticLabel: '${g.name}, ${_ruleLabel(g)}',
+                    excludeChildSemantics: true,
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 56),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isSel ? pt.accentTint : pt.surface,
+                        borderRadius: BorderRadius.circular(R.md),
+                        border: Border.all(
+                          color: isSel ? pt.accentBorder : pt.border,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: g.color != null
+                                  ? Color(g.color!)
+                                  : pt.accent,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                          const SizedBox(width: 13),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(g.name, style: PT.cardTitle(pt.text)),
+                                Text(
+                                  _ruleLabel(g),
+                                  style: PT.caption(pt.textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (isSel)
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: pt.accent,
+                              size: 22,
+                            ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: g.color != null
-                                ? Color(g.color!)
-                                : pt.accent,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                        ),
-                        const SizedBox(width: 13),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(g.name, style: PT.cardTitle(pt.text)),
-                              Text(
-                                _ruleLabel(g),
-                                style: PT.caption(pt.textMuted),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (isSel)
-                          Icon(
-                            Icons.check_circle_rounded,
-                            color: pt.accent,
-                            size: 22,
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Empty state shown inside [GamePickerSheet] when no game types exist yet.
+/// Points the user straight at creating their first game.
+class _NoGamesEmptyState extends StatelessWidget {
+  const _NoGamesEmptyState({required this.onCreateNew});
+
+  final VoidCallback onCreateNew;
+
+  @override
+  Widget build(BuildContext context) {
+    final pt = context.pt;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: S.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Icon(Icons.category_outlined, size: 44, color: pt.textFaint),
+          const SizedBox(height: 12),
+          Text(
+            'No games yet',
+            textAlign: TextAlign.center,
+            style: PT.cardTitle(pt.text),
           ),
+          const SizedBox(height: 6),
+          Text(
+            'Create a game first, then pick it for this party.',
+            textAlign: TextAlign.center,
+            style: PT.body(pt.textMuted),
+          ),
+          const SizedBox(height: 18),
+          PrimaryButton(label: 'Create a game', onTap: onCreateNew),
         ],
       ),
     );

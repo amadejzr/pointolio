@@ -172,27 +172,38 @@ class PlayerSelector extends StatelessWidget {
 /// be filtered to players not yet in the party. Returns the list the user
 /// chose to add (empty/null if they cancel).
 ///
-///   final toAdd = await ExistingPlayersSheet.show(context, available: pool);
+/// When everyone is already in the party (`available` is empty) the sheet
+/// shows a guiding empty state whose button closes the sheet and calls
+/// `onNewPlayer` so the caller can open its New Player flow.
+///
+///   final toAdd = await ExistingPlayersSheet.show(context,
+///       available: pool, onNewPlayer: () => _openNewPlayerForm());
 class ExistingPlayersSheet {
   const ExistingPlayersSheet._();
 
   static Future<List<Player>?> show(
     BuildContext context, {
     required List<Player> available,
+    required VoidCallback onNewPlayer,
   }) {
     return showModalBottomSheet<List<Player>>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _ExistingPlayersSheet(available: available),
+      builder: (_) =>
+          _ExistingPlayersSheet(available: available, onNewPlayer: onNewPlayer),
     );
   }
 }
 
 class _ExistingPlayersSheet extends StatefulWidget {
-  const _ExistingPlayersSheet({required this.available});
+  const _ExistingPlayersSheet({
+    required this.available,
+    required this.onNewPlayer,
+  });
 
   final List<Player> available;
+  final VoidCallback onNewPlayer;
 
   @override
   State<_ExistingPlayersSheet> createState() => _ExistingPlayersSheetState();
@@ -248,12 +259,28 @@ class _ExistingPlayersSheetState extends State<_ExistingPlayersSheet> {
           const SizedBox(height: 12),
           if (empty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Text(
-                'Everyone is already in the party. Use "New player" to add '
-                'someone new.',
-                textAlign: TextAlign.center,
-                style: PT.body(pt.textMuted),
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.groups_outlined,
+                    size: 44,
+                    color: pt.textFaint,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No one to add',
+                    textAlign: TextAlign.center,
+                    style: PT.cardTitle(pt.text),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Create a new player to bring someone new into '
+                    'this party.',
+                    textAlign: TextAlign.center,
+                    style: PT.body(pt.textMuted),
+                  ),
+                ],
               ),
             )
           else
@@ -315,16 +342,24 @@ class _ExistingPlayersSheetState extends State<_ExistingPlayersSheet> {
               ),
             ),
           const SizedBox(height: 14),
-          PrimaryButton(
-            label: 'Done',
-            enabled: !empty,
-            onTap: () {
-              final chosen = widget.available
-                  .where((p) => _picked.contains(p.id))
-                  .toList();
-              Navigator.of(context).pop(chosen);
-            },
-          ),
+          if (empty)
+            PrimaryButton(
+              label: 'New player',
+              onTap: () {
+                Navigator.of(context).pop();
+                widget.onNewPlayer();
+              },
+            )
+          else
+            PrimaryButton(
+              label: 'Done',
+              onTap: () {
+                final chosen = widget.available
+                    .where((p) => _picked.contains(p.id))
+                    .toList();
+                Navigator.of(context).pop(chosen);
+              },
+            ),
         ],
       ),
     );

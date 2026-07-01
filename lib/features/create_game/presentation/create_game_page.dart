@@ -197,6 +197,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
       context,
       gameTypes: state.availableGameTypes,
       selected: state.selectedGameType,
+      onCreateNew: () => _showAddGameType(context, cubit),
     );
     if (picked != null) cubit.setGameType(picked);
   }
@@ -210,7 +211,11 @@ class _CreateGameViewState extends State<_CreateGameView> {
         .where((p) => !state.selectedPlayers.any((sp) => sp.id == p.id))
         .toList();
 
-    final toAdd = await ExistingPlayersSheet.show(context, available: pool);
+    final toAdd = await ExistingPlayersSheet.show(
+      context,
+      available: pool,
+      onNewPlayer: () => _showAddPlayer(context, cubit),
+    );
     if (toAdd == null) return;
     toAdd.forEach(cubit.addPlayer);
   }
