@@ -7,14 +7,14 @@ import 'package:pointolio/common/di/locator.dart';
 import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/common/theme/pointolio_tokens.dart';
 import 'package:pointolio/common/ui/widgets/form/form.dart';
-import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
 import 'package:pointolio/common/ui/widgets/motion.dart';
 import 'package:pointolio/common/ui/widgets/notebook_background.dart';
-import 'package:pointolio/common/ui/widgets/player_bottom_sheet/player_bottom_sheet_exports.dart';
 import 'package:pointolio/common/ui/widgets/toast_message.dart';
 import 'package:pointolio/features/create_game/data/create_game_repository.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_cubit.dart';
 import 'package:pointolio/features/create_game/presentation/cubit/create_game_state.dart';
+import 'package:pointolio/features/manage/presentation/game_type_form_page.dart';
+import 'package:pointolio/features/manage/presentation/player_form_page.dart';
 import 'package:pointolio/router/app_router.dart';
 
 class CreateGamePage extends StatelessWidget {
@@ -219,7 +219,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
     BuildContext context,
     CreateGameCubit cubit,
   ) async {
-    final result = await GameTypeBottomSheet.show(context);
+    final result = await context.push<GameTypeResult>(AppRouter.gameTypeForm);
 
     if (result != null && result.name.trim().isNotEmpty) {
       unawaited(
@@ -236,7 +236,7 @@ class _CreateGameViewState extends State<_CreateGameView> {
     BuildContext context,
     CreateGameCubit cubit,
   ) async {
-    final result = await PlayerBottomSheet.show(context);
+    final result = await context.push<PlayerFormResult>(AppRouter.playerForm);
 
     if (result != null) {
       unawaited(

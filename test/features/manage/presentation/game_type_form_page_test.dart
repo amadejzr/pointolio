@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/theme/pointolio_theme.dart';
-import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_result.dart';
 import 'package:pointolio/features/manage/presentation/game_type_form_page.dart';
 
 import '../../../utils/fixtures.dart';

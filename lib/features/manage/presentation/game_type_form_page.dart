@@ -4,9 +4,41 @@ import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/common/theme/pointolio_tokens.dart';
 import 'package:pointolio/common/ui/widgets/form/form.dart';
-import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet_exports.dart';
 import 'package:pointolio/common/ui/widgets/motion.dart';
 import 'package:pointolio/common/ui/widgets/notebook_background.dart';
+
+/// Available colours for game types.
+const gameTypeColors = [
+  0xFFEF5350,
+  0xFFEC407A,
+  0xFFAB47BC,
+  0xFF7E57C2,
+  0xFF5C6BC0,
+  0xFF42A5F5,
+  0xFF29B6F6,
+  0xFF26C6DA,
+  0xFF26A69A,
+  0xFF66BB6A,
+  0xFF9CCC65,
+  0xFFD4E157,
+  0xFFFFEE58,
+  0xFFFFCA28,
+  0xFFFFA726,
+  0xFFFF7043,
+];
+
+/// The values captured by [GameTypeFormPage], returned via `Navigator.pop`.
+class GameTypeResult {
+  GameTypeResult({
+    required this.name,
+    required this.lowestScoreWins,
+    this.color,
+  });
+
+  final String name;
+  final bool lowestScoreWins;
+  final int? color;
+}
 
 /// Full-screen create / edit form for a game type, in the Notebook/Slate style.
 ///
