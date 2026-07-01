@@ -30,6 +30,7 @@ dev_dependencies:
   drift_dev: ^2.30.1
   flutter_launcher_icons: "^0.14.4"
   flutter_lints: ^6.0.0
+  flutter_native_splash: ^2.4.7
   flutter_test:
     sdk: flutter
   fm_lints:
@@ -98,3 +99,16 @@ flutter_launcher_icons:
   ios: true
   remove_alpha_ios: true
   image_path: "assets/logo/icon/pointolio-icon-notebook-1024.png"
+
+flutter_native_splash:
+  # Centered Pointolio wordmark on the Notebook paper / Slate backgrounds,
+  # matching the app's light and dark themes (PointolioTheme.bg).
+  color: "#F7F8FB"
+  color_dark: "#0E1016"
+  image: assets/logo/wordmark/pointolio-wordmark-transparent.png
+  image_dark: assets/logo/wordmark/pointolio-wordmark-light-transparent.png
+  ios_content_mode: center
+  # iOS-only project - keep other platforms off so generation stays scoped.
+  ios: true
+  android: false
+  web: false
