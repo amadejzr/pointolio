@@ -181,8 +181,11 @@ class ScoringCubit extends Cubit<ScoringState> {
   Future<void> reorderPlayers(int oldIndex, int newIndex) async {
     if (oldIndex == newIndex) return;
 
+    // Capture the pre-reorder order so we can roll back if persistence fails.
+    final originalScores = state.playerScores;
+
     // Optimistic UI update - reorder immediately to prevent flicker
-    final reorderedScores = List<PlayerScore>.from(state.playerScores);
+    final reorderedScores = List<PlayerScore>.from(originalScores);
     final moved = reorderedScores.removeAt(oldIndex);
     reorderedScores.insert(newIndex, moved);
     emit(state.copyWith(playerScores: reorderedScores));
@@ -193,10 +196,11 @@ class ScoringCubit extends Cubit<ScoringState> {
           .toList();
       await _repository.reorderPlayers(gamePlayerIds);
     } on DomainException catch (e) {
-      // Revert on error
+      // Revert to the original order on error (state.playerScores already holds
+      // the optimistic order at this point, so revert to the captured copy).
       emit(
         state.copyWith(
-          playerScores: state.playerScores,
+          playerScores: originalScores,
           status: ScoringStatus.error,
           errorMessage: _mapDomainError(e, 'reorder players'),
         ),
