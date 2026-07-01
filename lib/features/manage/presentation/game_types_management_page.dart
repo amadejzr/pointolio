@@ -2,16 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pointolio/common/data/database/database.dart';
 import 'package:pointolio/common/di/locator.dart';
 import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/common/theme/pointolio_tokens.dart';
-import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_bottom_sheet.dart';
+import 'package:pointolio/common/ui/widgets/game_type_bottom_sheet/game_type_result.dart';
 import 'package:pointolio/common/ui/widgets/motion.dart';
 import 'package:pointolio/features/manage/data/game_types_management_repository.dart';
 import 'package:pointolio/features/manage/presentation/cubit/game_types_management_cubit.dart';
 import 'package:pointolio/features/manage/presentation/widgets/delete_game_dialog.dart';
 import 'package:pointolio/features/manage/presentation/widgets/game_tile.dart';
+import 'package:pointolio/router/app_router.dart';
 
 class GameTypesManagementPage extends StatelessWidget {
   const GameTypesManagementPage({super.key});
@@ -181,7 +183,7 @@ class _GamesBody extends StatelessWidget {
 Future<void> _showAddGameTypeDialog(BuildContext context) async {
   final cubit = context.read<GameTypesManagementCubit>();
 
-  final input = await GameTypeBottomSheet.show(context);
+  final input = await context.push<GameTypeResult>(AppRouter.gameTypeForm);
 
   if (input != null && context.mounted) {
     final result = await cubit.addGameType(
@@ -199,11 +201,9 @@ Future<void> _showEditGameTypeDialog(
 ) async {
   final cubit = context.read<GameTypesManagementCubit>();
 
-  final input = await GameTypeBottomSheet.showForEdit(
-    context,
-    name: gameType.name,
-    lowestScoreWins: gameType.lowestScoreWins,
-    color: gameType.color,
+  final input = await context.push<GameTypeResult>(
+    AppRouter.gameTypeForm,
+    extra: gameType,
   );
 
   if (input != null && context.mounted) {
