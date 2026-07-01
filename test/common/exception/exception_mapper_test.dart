@@ -9,7 +9,8 @@ import '../../utils/fixtures.dart';
 void main() {
   // `resultCode` is `extendedResultCode & 0xFF`, so each extended code below
   // also encodes the SQLITE_CONSTRAINT (19) / SQLITE_AUTH (23) primary code.
-  SqliteException ex(int extendedCode) => SqliteException(extendedCode, 'boom');
+  SqliteException ex(int extendedCode) =>
+      SqliteException(extendedResultCode: extendedCode, message: 'boom');
 
   group('toDomainException code mapping', () {
     test('UNIQUE / PRIMARY KEY constraint -> conflict', () {

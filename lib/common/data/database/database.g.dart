@@ -2100,7 +2100,7 @@ final class $$GameTypesTableReferences
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
     db.games,
-    aliasName: $_aliasNameGenerator(db.gameTypes.id, db.games.gameTypeId),
+    aliasName: 'game_types__id__games__game_type_id',
   );
 
   $$GamesTableProcessedTableManager get gamesRefs {
@@ -2392,8 +2392,8 @@ final class $$GamesTableReferences
     extends BaseReferences<_$AppDatabase, $GamesTable, Game> {
   $$GamesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $GameTypesTable _gameTypeIdTable(_$AppDatabase db) => db.gameTypes
-      .createAlias($_aliasNameGenerator(db.games.gameTypeId, db.gameTypes.id));
+  static $GameTypesTable _gameTypeIdTable(_$AppDatabase db) =>
+      db.gameTypes.createAlias('games__game_type_id__game_types__id');
 
   $$GameTypesTableProcessedTableManager? get gameTypeId {
     final $_column = $_itemColumn<int>('game_type_id');
@@ -2412,7 +2412,7 @@ final class $$GamesTableReferences
   static MultiTypedResultKey<$GamePlayersTable, List<GamePlayer>>
   _gamePlayersRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.gamePlayers,
-    aliasName: $_aliasNameGenerator(db.games.id, db.gamePlayers.gameId),
+    aliasName: 'games__id__game_players__game_id',
   );
 
   $$GamePlayersTableProcessedTableManager get gamePlayersRefs {
@@ -2853,7 +2853,7 @@ final class $$PlayersTableReferences
   static MultiTypedResultKey<$GamePlayersTable, List<GamePlayer>>
   _gamePlayersRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.gamePlayers,
-    aliasName: $_aliasNameGenerator(db.players.id, db.gamePlayers.playerId),
+    aliasName: 'players__id__game_players__player_id',
   );
 
   $$GamePlayersTableProcessedTableManager get gamePlayersRefs {
@@ -3163,9 +3163,8 @@ final class $$GamePlayersTableReferences
     extends BaseReferences<_$AppDatabase, $GamePlayersTable, GamePlayer> {
   $$GamePlayersTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $GamesTable _gameIdTable(_$AppDatabase db) => db.games.createAlias(
-    $_aliasNameGenerator(db.gamePlayers.gameId, db.games.id),
-  );
+  static $GamesTable _gameIdTable(_$AppDatabase db) =>
+      db.games.createAlias('game_players__game_id__games__id');
 
   $$GamesTableProcessedTableManager get gameId {
     final $_column = $_itemColumn<int>('game_id')!;
@@ -3182,9 +3181,7 @@ final class $$GamePlayersTableReferences
   }
 
   static $PlayersTable _playerIdTable(_$AppDatabase db) =>
-      db.players.createAlias(
-        $_aliasNameGenerator(db.gamePlayers.playerId, db.players.id),
-      );
+      db.players.createAlias('game_players__player_id__players__id');
 
   $$PlayersTableProcessedTableManager get playerId {
     final $_column = $_itemColumn<int>('player_id')!;
@@ -3203,10 +3200,7 @@ final class $$GamePlayersTableReferences
   static MultiTypedResultKey<$ScoreEntriesTable, List<ScoreEntry>>
   _scoreEntriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.scoreEntries,
-    aliasName: $_aliasNameGenerator(
-      db.gamePlayers.id,
-      db.scoreEntries.gamePlayerId,
-    ),
+    aliasName: 'game_players__id__score_entries__game_player_id',
   );
 
   $$ScoreEntriesTableProcessedTableManager get scoreEntriesRefs {
@@ -3673,10 +3667,9 @@ final class $$ScoreEntriesTableReferences
     extends BaseReferences<_$AppDatabase, $ScoreEntriesTable, ScoreEntry> {
   $$ScoreEntriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $GamePlayersTable _gamePlayerIdTable(_$AppDatabase db) =>
-      db.gamePlayers.createAlias(
-        $_aliasNameGenerator(db.scoreEntries.gamePlayerId, db.gamePlayers.id),
-      );
+  static $GamePlayersTable _gamePlayerIdTable(_$AppDatabase db) => db
+      .gamePlayers
+      .createAlias('score_entries__game_player_id__game_players__id');
 
   $$GamePlayersTableProcessedTableManager get gamePlayerId {
     final $_column = $_itemColumn<int>('game_player_id')!;
