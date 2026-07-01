@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
 
 enum SmallActionVariant {
   primary,
@@ -39,13 +40,13 @@ class SmallActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
 
     final baseColor =
         colorOverride ??
         switch (variant) {
-          SmallActionVariant.primary => cs.primary,
-          SmallActionVariant.destructive => cs.error,
+          SmallActionVariant.primary => pt.accent,
+          SmallActionVariant.destructive => pt.players[3],
         };
 
     return Tooltip(

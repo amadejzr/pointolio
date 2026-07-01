@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Non-colour design tokens: radius, spacing, motion.
 /// (Colours live in PointolioTheme; nothing here is a colour.)
@@ -30,51 +29,69 @@ class Motion {
 
 /// Type ramp. Colour is always passed in from the theme - never baked here.
 /// Rule of thumb: numbers => Space Grotesk, sentences => Hanken Grotesk.
+///
+/// Both are variable fonts bundled as app assets (see pubspec `fonts:`), so
+/// `fontWeight` maps straight onto each family's `wght` axis.
 class PT {
-  static TextStyle screenTitle(Color c) => GoogleFonts.spaceGrotesk(
+  /// Numbers/titles. Bundled variable font (assets/font/SpaceGrotesk).
+  static const String spaceGrotesk = 'Space Grotesk';
+
+  /// Body/UI. Bundled variable font (assets/font/HankenGrotesk).
+  static const String hankenGrotesk = 'Hanken Grotesk';
+
+  static TextStyle screenTitle(Color c) => TextStyle(
+    fontFamily: spaceGrotesk,
     fontSize: 25,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.5,
     color: c,
   );
-  static TextStyle sectionTitle(Color c) => GoogleFonts.spaceGrotesk(
+  static TextStyle sectionTitle(Color c) => TextStyle(
+    fontFamily: spaceGrotesk,
     fontSize: 17,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.2,
     color: c,
   );
-  static TextStyle cardTitle(Color c) => GoogleFonts.hankenGrotesk(
+  static TextStyle cardTitle(Color c) => TextStyle(
+    fontFamily: hankenGrotesk,
     fontSize: 15,
     fontWeight: FontWeight.w700,
     color: c,
   );
-  static TextStyle body(Color c) => GoogleFonts.hankenGrotesk(
+  static TextStyle body(Color c) => TextStyle(
+    fontFamily: hankenGrotesk,
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: c,
   );
-  static TextStyle bodyStrong(Color c) => GoogleFonts.hankenGrotesk(
+  static TextStyle bodyStrong(Color c) => TextStyle(
+    fontFamily: hankenGrotesk,
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: c,
   );
-  static TextStyle label(Color c) => GoogleFonts.hankenGrotesk(
+  static TextStyle label(Color c) => TextStyle(
+    fontFamily: hankenGrotesk,
     fontSize: 11,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.5,
     color: c,
   );
-  static TextStyle caption(Color c) => GoogleFonts.hankenGrotesk(
+  static TextStyle caption(Color c) => TextStyle(
+    fontFamily: hankenGrotesk,
     fontSize: 12.5,
     fontWeight: FontWeight.w400,
     color: c,
   );
-  static TextStyle tab(Color c) => GoogleFonts.hankenGrotesk(
+  static TextStyle tab(Color c) => TextStyle(
+    fontFamily: hankenGrotesk,
     fontSize: 10,
     fontWeight: FontWeight.w600,
     color: c,
   );
-  static TextStyle chip(Color c) => GoogleFonts.hankenGrotesk(
+  static TextStyle chip(Color c) => TextStyle(
+    fontFamily: hankenGrotesk,
     fontSize: 10.5,
     fontWeight: FontWeight.w600,
     color: c,
@@ -83,7 +100,8 @@ class PT {
     Color c, {
     double size = 17,
     FontWeight weight = FontWeight.w700,
-  }) => GoogleFonts.spaceGrotesk(
+  }) => TextStyle(
+    fontFamily: spaceGrotesk,
     fontSize: size,
     fontWeight: weight,
     letterSpacing: -0.3,

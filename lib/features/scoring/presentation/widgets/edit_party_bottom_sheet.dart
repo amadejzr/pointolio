@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
 import 'package:pointolio/common/ui/widgets/picker_sheet.dart';
 import 'package:pointolio/common/ui/widgets/player_item_widget.dart';
@@ -50,12 +51,11 @@ class EditPartyBottomSheet extends StatelessWidget {
     required List<Player> initialPlayers,
     required List<Player> availablePlayers,
   }) {
-    final cs = Theme.of(context).colorScheme;
     return showModalBottomSheet<EditPartyResult>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: cs.surface,
+      backgroundColor: context.pt.bg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -183,7 +183,7 @@ class _EditPartyContentState extends State<_EditPartyContent> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
     final tt = Theme.of(context).textTheme;
 
     final maxHeight = MediaQuery.sizeOf(context).height * 0.90;
@@ -208,7 +208,7 @@ class _EditPartyContentState extends State<_EditPartyContent> {
                   width: 38,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: cs.outlineVariant,
+                    color: pt.border,
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
@@ -273,7 +273,7 @@ class _EditPartyContentState extends State<_EditPartyContent> {
                               '(${_selectedPlayers.length})',
                               style: tt.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w500,
-                                color: cs.onSurfaceVariant,
+                                color: pt.textMuted,
                               ),
                             ),
                             const Spacer(),
@@ -345,13 +345,13 @@ class _EditPartyContentState extends State<_EditPartyContent> {
                                 Icon(
                                   Icons.info_outline,
                                   size: 16,
-                                  color: cs.error,
+                                  color: pt.players[3],
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   'At least 2 players required',
                                   style: tt.bodySmall?.copyWith(
-                                    color: cs.error,
+                                    color: pt.players[3],
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -416,7 +416,7 @@ class _SectionTitle extends StatelessWidget {
 class _EmptyPlayersCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
 
     return Padding(
       padding: Spacing.sheetHorizontal,
@@ -424,18 +424,18 @@ class _EmptyPlayersCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(Spacing.lg),
         decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest,
+          color: pt.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cs.outlineVariant),
+          border: Border.all(color: pt.border),
         ),
         child: Column(
           children: [
-            Icon(Icons.people_outline, size: 40, color: cs.onSurfaceVariant),
+            Icon(Icons.people_outline, size: 40, color: pt.textMuted),
             Spacing.gap8,
             Text(
               'No players added',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: cs.onSurfaceVariant,
+                color: pt.textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -443,7 +443,7 @@ class _EmptyPlayersCard extends StatelessWidget {
             Text(
               'Tap "Add" to add players',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
+                color: pt.textMuted,
               ),
             ),
           ],

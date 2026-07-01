@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pointolio/common/data/database/database.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/common/ui/widgets/small_action_buttons.dart';
 
 class PlayerItem extends StatelessWidget {
@@ -43,15 +44,15 @@ class PlayerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
     final tt = Theme.of(context).textTheme;
 
     final hasColor = player.color != null;
-    final avatarColor = hasColor ? Color(player.color!) : cs.primaryContainer;
-    final textColor = hasColor ? Colors.white : cs.onPrimaryContainer;
+    final avatarColor = hasColor ? Color(player.color!) : pt.accentTint;
+    final textColor = hasColor ? Colors.white : pt.accent;
 
     return Material(
-      color: cs.surfaceContainerHighest,
+      color: pt.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -59,7 +60,7 @@ class PlayerItem extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cs.outlineVariant),
+            border: Border.all(color: pt.border),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -98,7 +99,7 @@ class PlayerItem extends StatelessWidget {
                 SmallActionButton(
                   tooltip: 'Remove player',
                   icon: Icons.close,
-                  colorOverride: cs.error,
+                  colorOverride: pt.players[3],
                   onPressed: onRemove,
                 ),
               ],
@@ -110,7 +111,7 @@ class PlayerItem extends StatelessWidget {
                   child: SmallActionButton(
                     tooltip: 'Reorder players',
                     icon: Icons.drag_indicator_outlined,
-                    colorOverride: cs.onSurfaceVariant,
+                    colorOverride: pt.textMuted,
                     onPressed: () {},
                   ),
                 ),
@@ -122,7 +123,7 @@ class PlayerItem extends StatelessWidget {
                 const SizedBox(width: 8),
                 Icon(
                   Icons.chevron_right,
-                  color: cs.onSurfaceVariant,
+                  color: pt.textMuted,
                 ),
               ],
             ],

@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointolio/common/data/database/database.dart';
-import 'package:pointolio/common/di/locator.dart';
 import 'package:pointolio/features/create_game/presentation/create_game_page.dart';
 import 'package:pointolio/features/home/presentation/home_page.dart';
 import 'package:pointolio/features/manage/presentation/game_type_form_page.dart';
 import 'package:pointolio/features/manage/presentation/game_types_management_page.dart';
 import 'package:pointolio/features/manage/presentation/player_form_page.dart';
 import 'package:pointolio/features/manage/presentation/players_management_page.dart';
-import 'package:pointolio/features/onboarding/data/onboarding_repository.dart';
-import 'package:pointolio/features/onboarding/presentation/onboarding_page.dart';
 import 'package:pointolio/features/scoring/presentation/scoring_page.dart';
 import 'package:pointolio/features/settings/presentation/settings_page.dart';
 import 'package:pointolio/router/home_shell.dart';
@@ -17,8 +14,6 @@ import 'package:pointolio/router/home_shell.dart';
 /// Route path constants for the app.
 class AppRouter {
   const AppRouter._();
-
-  static const String onboarding = '/onboarding';
 
   // Shell branches (floating bottom navbar).
   static const String parties = '/';
@@ -41,29 +36,12 @@ final _partiesNavigatorKey = GlobalKey<NavigatorState>();
 final _playersNavigatorKey = GlobalKey<NavigatorState>();
 final _gamesNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Creates the app [GoRouter] with the onboarding redirect wired in.
+/// Creates the app [GoRouter].
 GoRouter createAppRouter() {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: AppRouter.parties,
-    redirect: (context, state) {
-      final completed =
-          locator<OnboardingRepository>().isOnboardingCompleted;
-      final goingToOnboarding = state.matchedLocation == AppRouter.onboarding;
-
-      if (!completed && !goingToOnboarding) return AppRouter.onboarding;
-      if (completed && goingToOnboarding) return AppRouter.parties;
-      return null;
-    },
     routes: [
-      GoRoute(
-        path: AppRouter.onboarding,
-        builder: (context, state) => OnboardingPage(
-          onComplete: () async {
-            await locator<OnboardingRepository>().completeOnboarding();
-          },
-        ),
-      ),
       GoRoute(
         path: AppRouter.createGame,
         builder: (context, state) => const CreateGamePage(),

@@ -66,29 +66,16 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
   }
 
   void _scrollToFocusedField(int playerId) {
-    if (!_scrollController.hasClients) return;
-
-    final playerIndex = widget.state.playerScores.indexWhere(
-      (ps) => ps.gamePlayer.id == playerId,
-    );
-    if (playerIndex == -1) return;
-
-    const headerHeight = 60.0;
-    const rowHeight = 64.0;
-    final fieldPosition = headerHeight + (playerIndex * rowHeight);
-
-    final keyboardHeight = getCalculatorKeyboardHeight(context);
-    final screenHeight = MediaQuery.of(context).size.height;
-    final availableHeight = screenHeight - keyboardHeight - 200;
-
-    final targetScroll = (fieldPosition - availableHeight / 2).clamp(
-      0.0,
-      _scrollController.position.maxScrollExtent,
-    );
+    // Layout-agnostic: scroll the focused field into the viewport (which the
+    // AnimatedPadding already shrinks to sit above the keyboard). Works for the
+    // single-column portrait layout and the two-column landscape grid alike.
+    final fieldContext = _focusNodes[playerId]?.context;
+    if (fieldContext == null) return;
 
     unawaited(
-      _scrollController.animateTo(
-        targetScroll,
+      Scrollable.ensureVisible(
+        fieldContext,
+        alignment: 0.5,
         duration: Motion.slow,
         curve: Motion.ease,
       ),
@@ -110,12 +97,35 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
     setState(() {});
   }
 
+  Widget _buildInputRow(PointolioTheme pt, int index) {
+    final players = widget.state.playerScores;
+    final ps = players[index];
+    return _PlayerInputRow(
+      key: ValueKey(ps.gamePlayer.id),
+      controller: _controllers[ps.gamePlayer.id]!,
+      focusNode: _focusNodes[ps.gamePlayer.id],
+      name: ScoreTable.fullName(ps.player),
+      initials: ScoreTable.initials(ps.player),
+      color: ps.player.color != null
+          ? Color(ps.player.color!)
+          : pt.playerColor(index),
+      autofocus: index == 0,
+      isLast: index == players.length - 1,
+      onFocusChanged: () => _onFieldFocusChanged(ps.gamePlayer.id),
+      onSubmittedLast: _saveRound,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pt = context.pt;
     final roundNumber = widget.state.roundCount + 1;
     final keyboardHeight = getCalculatorKeyboardHeight(context);
     final players = widget.state.playerScores;
+    // Landscape phones are short and wide: use two columns so the inputs stay
+    // compact above the keyboard instead of a tall single-column list.
+    final columns =
+        MediaQuery.orientationOf(context) == Orientation.landscape ? 2 : 1;
 
     final bottomPadding = _isAnyFieldFocused
         ? keyboardHeight + MediaQuery.of(context).padding.bottom
@@ -171,21 +181,19 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
               ],
             ),
             const SizedBox(height: S.md),
-            for (var index = 0; index < players.length; index++)
-              _PlayerInputRow(
-                key: ValueKey(players[index].gamePlayer.id),
-                controller: _controllers[players[index].gamePlayer.id]!,
-                focusNode: _focusNodes[players[index].gamePlayer.id],
-                name: ScoreTable.fullName(players[index].player),
-                initials: ScoreTable.initials(players[index].player),
-                color: players[index].player.color != null
-                    ? Color(players[index].player.color!)
-                    : pt.playerColor(index),
-                autofocus: index == 0,
-                isLast: index == players.length - 1,
-                onFocusChanged: () =>
-                    _onFieldFocusChanged(players[index].gamePlayer.id),
-                onSubmittedLast: _saveRound,
+            for (var row = 0; row < players.length; row += columns)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var col = 0; col < columns; col++) ...[
+                    if (col > 0) const SizedBox(width: S.md),
+                    Expanded(
+                      child: (row + col) < players.length
+                          ? _buildInputRow(pt, row + col)
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ],
               ),
             const SizedBox(height: S.md),
             Row(

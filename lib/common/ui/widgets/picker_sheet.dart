@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/common/ui/tokens/spacing.dart';
 
 typedef PickerItemLabel<T> = String Function(T item);
@@ -62,13 +63,11 @@ class PickerSheet<T> extends StatefulWidget {
     String? initialQuery,
     double maxHeightFactor = 0.82,
   }) {
-    final cs = Theme.of(context).colorScheme;
-
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: cs.surface,
+      backgroundColor: context.pt.bg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -121,7 +120,7 @@ class _PickerSheetState<T> extends State<PickerSheet<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
     final tt = Theme.of(context).textTheme;
 
     final maxHeight =
@@ -137,7 +136,7 @@ class _PickerSheetState<T> extends State<PickerSheet<T>> {
             width: 38,
             height: 4,
             decoration: BoxDecoration(
-              color: cs.outlineVariant,
+              color: pt.border,
               borderRadius: BorderRadius.circular(99),
             ),
           ),
@@ -230,12 +229,12 @@ class _DefaultPickerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
     final tt = Theme.of(context).textTheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
+        color: pt.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -249,7 +248,7 @@ class _DefaultPickerTile extends StatelessWidget {
               style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
             ),
           ),
-          Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+          Icon(Icons.chevron_right, color: pt.textMuted),
         ],
       ),
     );
@@ -264,7 +263,7 @@ class _EmptySheetState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final pt = context.pt;
     final tt = Theme.of(context).textTheme;
 
     return Center(
@@ -273,7 +272,7 @@ class _EmptySheetState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.inbox_outlined, size: 44, color: cs.onSurfaceVariant),
+            Icon(Icons.inbox_outlined, size: 44, color: pt.textMuted),
             const SizedBox(height: 10),
             Text(
               title,
@@ -284,7 +283,7 @@ class _EmptySheetState extends StatelessWidget {
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              style: tt.bodyMedium?.copyWith(color: pt.textMuted),
             ),
           ],
         ),

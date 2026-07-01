@@ -132,48 +132,48 @@ class _LeaderCard extends StatelessWidget {
         border: Border.all(color: isLeader ? pt.accentBorder : pt.border),
         boxShadow: isLeader ? pt.shadowCard : null,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      // Compact single row: rank, avatar, name + wins, and the total on the
+      // right. The name flexes (ellipsis) and the total is width-capped and
+      // scales down, so big point totals can never grow or overflow the card.
+      child: Row(
         children: [
-          Row(
-            children: [
-              _RankGlyph(rank: rank),
-              const SizedBox(width: S.md),
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                alignment: Alignment.center,
-                child: Text(
-                  ScoreTable.initials(playerScore.player),
-                  style: PT.number(pt.onPlayer, size: 14),
-                ),
-              ),
-              const SizedBox(width: S.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      ScoreTable.fullName(playerScore.player),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: PT.bodyStrong(pt.text).copyWith(fontSize: 14.5),
-                    ),
-                    const SizedBox(height: 4),
-                    _WinsStat(roundsWon: roundsWon, emphasised: isLeader),
-                  ],
-                ),
-              ),
-            ],
+          _RankGlyph(rank: rank),
+          const SizedBox(width: S.sm),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Text(
+              ScoreTable.initials(playerScore.player),
+              style: PT.number(pt.onPlayer, size: 13),
+            ),
           ),
-          const SizedBox(height: S.sm),
-          // Total on its own line so large point totals always have room and
-          // can never crowd the name or overflow the card.
-          Align(
-            alignment: Alignment.centerRight,
-            child: _TotalPts(total: playerScore.total, emphasised: isLeader),
+          const SizedBox(width: S.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  ScoreTable.fullName(playerScore.player),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PT.bodyStrong(pt.text).copyWith(fontSize: 14.5),
+                ),
+                const SizedBox(height: 1),
+                _WinsStat(roundsWon: roundsWon, emphasised: isLeader),
+              ],
+            ),
+          ),
+          const SizedBox(width: S.sm),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 96),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: _TotalPts(total: playerScore.total, emphasised: isLeader),
+            ),
           ),
         ],
       ),
@@ -181,8 +181,9 @@ class _LeaderCard extends StatelessWidget {
   }
 }
 
-/// The point total, on its own line so it always has room. Labelled "pts" to
-/// keep it distinct from the rounds-won stat.
+/// The point total, labelled "pts" to keep it distinct from the rounds-won
+/// stat. Rendered inside a width-capped [FittedBox] by the caller so large
+/// totals scale down instead of overflowing.
 class _TotalPts extends StatelessWidget {
   const _TotalPts({required this.total, required this.emphasised});
 
@@ -199,11 +200,13 @@ class _TotalPts extends StatelessWidget {
       children: [
         Text(
           '$total',
-          style: PT.number(
-            emphasised ? pt.accentDeep : pt.text,
-            size: 22,
-            weight: FontWeight.w800,
-          ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+          style: PT
+              .number(
+                emphasised ? pt.accentDeep : pt.text,
+                size: 22,
+                weight: FontWeight.w800,
+              )
+              .copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
         ),
         const SizedBox(width: 3),
         Text('pts', style: PT.label(pt.textMuted)),

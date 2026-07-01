@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointolio/common/di/locator.dart';
-import 'package:pointolio/common/theme/app_theme.dart';
+import 'package:pointolio/common/theme/pointolio_theme.dart';
 import 'package:pointolio/features/manage/presentation/cubit/theme_cubit.dart';
 import 'package:pointolio/features/manage/presentation/cubit/theme_state.dart';
 import 'package:pointolio/router/app_router.dart';
@@ -28,8 +28,8 @@ class MyApp extends StatelessWidget {
           return MaterialApp.router(
             debugShowCheckedModeBanner: false,
             title: 'Pointolio',
-            theme: AppTheme.light,
-            darkTheme: AppTheme.dark,
+            theme: PointolioTheme.themeData(Brightness.light),
+            darkTheme: PointolioTheme.themeData(Brightness.dark),
             themeMode: state.themeMode.toThemeMode(),
             routerConfig: _router,
           );

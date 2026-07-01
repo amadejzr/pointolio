@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
+import 'package:pointolio/common/theme/pointolio_tokens.dart';
 
 /// ============================================================
 /// Pointolio - Notebook / Slate theme
@@ -270,19 +271,151 @@ class PointolioTheme extends ThemeExtension<PointolioTheme> {
     );
   }
 
-  /// Build a ready-to-use ThemeData for MaterialApp.
+  /// Build a ready-to-use [ThemeData] for MaterialApp.
+  ///
+  /// Everything is derived from the Notebook palette above, so bare Material
+  /// widgets (TextField, buttons, AppBar, bottom sheets, ...) render on-theme
+  /// without each screen having to restyle them.
   static ThemeData themeData(Brightness brightness) {
-    final ext = brightness == Brightness.dark ? dark : light;
+    final pt = brightness == Brightness.dark ? dark : light;
     final base = ThemeData(brightness: brightness, useMaterial3: true);
+
+    // A ColorScheme mirrored from the Notebook palette. Destructive/error uses
+    // the rose player hue, matching the delete dialogs.
+    final danger = pt.players[3];
+    final colorScheme = ColorScheme(
+      brightness: brightness,
+      primary: pt.accent,
+      onPrimary: pt.accentText,
+      secondary: pt.accentDeep,
+      onSecondary: pt.accentText,
+      error: danger,
+      onError: pt.onPlayer,
+      surface: pt.surface,
+      onSurface: pt.text,
+      surfaceContainerHighest: pt.surfaceMuted,
+      outline: pt.border,
+      outlineVariant: pt.border,
+      shadow: Colors.black,
+      scrim: Colors.black,
+    );
+
     return base.copyWith(
-      scaffoldBackgroundColor: ext.bg,
-      textTheme: GoogleFonts.hankenGroteskTextTheme(base.textTheme).apply(
-        bodyColor: ext.text,
-        displayColor: ext.text,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: pt.bg,
+      canvasColor: pt.surface,
+      dividerColor: pt.border,
+      textTheme: base.textTheme.apply(
+        fontFamily: PT.hankenGrotesk,
+        bodyColor: pt.text,
+        displayColor: pt.text,
       ),
-      extensions: [ext],
+      extensions: [pt],
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        systemOverlayStyle: brightness == Brightness.dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
+        titleTextStyle: PT.sectionTitle(pt.text),
+        iconTheme: IconThemeData(color: pt.text),
+      ),
+      dividerTheme: DividerThemeData(
+        color: pt.border,
+        thickness: 1,
+        space: 1,
+      ),
+      listTileTheme: ListTileThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(R.md),
+        ),
+        iconColor: pt.textMuted,
+        textColor: pt.text,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: pt.accent,
+        foregroundColor: pt.accentText,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(R.lg),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: pt.surface,
+        hintStyle: PT.body(pt.textMuted),
+        labelStyle: PT.body(pt.textMuted),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(R.md),
+          borderSide: BorderSide(color: pt.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(R.md),
+          borderSide: BorderSide(color: pt.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(R.md),
+          borderSide: BorderSide(color: pt.accent, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: pt.accent,
+          foregroundColor: pt.accentText,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(R.md),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: pt.accent,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(R.md),
+          ),
+          side: BorderSide(color: pt.border),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: pt.accent,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(R.sm),
+          ),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: pt.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(R.xl)),
+        ),
+      ),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: pt.surface,
+          borderRadius: BorderRadius.circular(R.sm),
+          border: Border.all(color: pt.border),
+          boxShadow: pt.shadowFloat,
+        ),
+        textStyle: PT.caption(pt.text),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        waitDuration: const Duration(milliseconds: 400),
+        showDuration: const Duration(seconds: 3),
+      ),
     );
   }
 }
