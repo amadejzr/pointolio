@@ -37,6 +37,7 @@ class _GameTypesManagementView extends StatelessWidget {
           backgroundColor: cs.surface,
           body: _buildBody(context, state),
           floatingActionButton: FloatingActionButton(
+            heroTag: 'games_fab',
             onPressed: () => _showAddGameTypeDialog(context),
             child: const Icon(Icons.add),
           ),
