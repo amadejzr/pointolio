@@ -9,3 +9,10 @@ analyzer:
     # Notebook/Slate design reference module. Not compiled into the app (lives
     # outside lib/); kept as the visual spec while screens migrate one by one.
     - homepage/**
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**

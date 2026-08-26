@@ -112,7 +112,7 @@ class _SharePageView extends StatelessWidget {
 
     switch (outcome) {
       case ShareActionResult.success:
-        unawaited(Navigator.of(context).maybePop());
+        Navigator.of(context).maybePop();
       case ShareActionResult.failed:
         ToastMessage.error(context, 'Sharing failed, please try again');
       case ShareActionResult.cancelled:

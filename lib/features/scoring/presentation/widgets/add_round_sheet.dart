@@ -72,13 +72,11 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
     final fieldContext = _focusNodes[playerId]?.context;
     if (fieldContext == null) return;
 
-    unawaited(
-      Scrollable.ensureVisible(
-        fieldContext,
-        alignment: 0.5,
-        duration: Motion.slow,
-        curve: Motion.ease,
-      ),
+    Scrollable.ensureVisible(
+      fieldContext,
+      alignment: 0.5,
+      duration: Motion.slow,
+      curve: Motion.ease,
     );
   }
 
@@ -124,8 +122,9 @@ class _AddRoundSheetState extends State<AddRoundSheet> {
     final players = widget.state.playerScores;
     // Landscape phones are short and wide: use two columns so the inputs stay
     // compact above the keyboard instead of a tall single-column list.
-    final columns =
-        MediaQuery.orientationOf(context) == Orientation.landscape ? 2 : 1;
+    final columns = MediaQuery.orientationOf(context) == Orientation.landscape
+        ? 2
+        : 1;
 
     final bottomPadding = _isAnyFieldFocused
         ? keyboardHeight + MediaQuery.of(context).padding.bottom
