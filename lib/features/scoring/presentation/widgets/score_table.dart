@@ -98,12 +98,10 @@ class _ScoreTableState extends State<ScoreTable> {
     if (!mounted) return;
     for (final c in [_roundsV, _roundsH]) {
       if (c.hasClients) {
-        unawaited(
-          c.animateTo(
-            c.position.maxScrollExtent,
-            duration: Motion.slow,
-            curve: Motion.ease,
-          ),
+        c.animateTo(
+          c.position.maxScrollExtent,
+          duration: Motion.slow,
+          curve: Motion.ease,
         );
       }
     }
@@ -855,11 +853,13 @@ class _TotalCell extends StatelessWidget {
       child: AnimatedDefaultTextStyle(
         duration: Motion.base,
         curve: Motion.ease,
-        style: PT.number(
-          isLeader ? pt.accent : pt.text,
-          size: 20,
-          weight: isLeader ? FontWeight.w800 : FontWeight.w700,
-        ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+        style: PT
+            .number(
+              isLeader ? pt.accent : pt.text,
+              size: 20,
+              weight: isLeader ? FontWeight.w800 : FontWeight.w700,
+            )
+            .copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
         child: Text(ps.total.toString()),
       ),
     );
@@ -963,9 +963,7 @@ class _CornerToggle extends StatelessWidget {
           border: Border(right: BorderSide(color: pt.border)),
         ),
         child: Icon(
-          config.showNames
-              ? Icons.unfold_less_rounded
-              : Icons.badge_outlined,
+          config.showNames ? Icons.unfold_less_rounded : Icons.badge_outlined,
           size: 18,
           color: pt.textMuted,
         ),
@@ -1025,9 +1023,7 @@ class _ReorderablePlayerState extends State<_ReorderablePlayer> {
           curve: Motion.ease,
           decoration: BoxDecoration(
             color: _hovering ? pt.accentTint : Colors.transparent,
-            border: _hovering
-                ? Border.all(color: pt.accentBorder)
-                : null,
+            border: _hovering ? Border.all(color: pt.accentBorder) : null,
           ),
           child: AnimatedOpacity(
             duration: Motion.fast,

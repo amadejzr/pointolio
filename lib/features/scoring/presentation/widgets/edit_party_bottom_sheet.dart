@@ -297,7 +297,7 @@ class _EditPartyContentState extends State<_EditPartyContent> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: _selectedPlayers.length,
-                            onReorder: _onReorderPlayers,
+                            onReorderItem: _onReorderPlayers,
                             proxyDecorator: (child, index, animation) {
                               return Material(
                                 color: Colors.transparent,

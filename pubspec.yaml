@@ -2,7 +2,7 @@ name: pointolio
 description: "A new Flutter project."
 publish_to: 'none' 
 
-version: 2.0.0+10
+version: 2.1.0+11
 
 environment:
   sdk: ^3.10.3
@@ -16,7 +16,7 @@ dependencies:
     sdk: flutter
   flutter_bloc: ^9.1.1
   get_it: ^9.2.0
-  go_router: ^17.3.0
+  go_router: ^18.0.0
   intl: ^0.20.2
   package_info_plus: ^10.2.0
   path_provider: ^2.1.5
@@ -33,10 +33,6 @@ dev_dependencies:
   flutter_native_splash: ^2.4.7
   flutter_test:
     sdk: flutter
-  fm_lints:
-    git:
-      url: https://github.com/fizzymizzy/fm_lints.git
-      ref: main
   integration_test:
     sdk: flutter
   mocktail: ^1.0.4

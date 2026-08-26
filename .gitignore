@@ -64,3 +64,5 @@ app.*.map.json
 /screenshots/output
 
 /homepage
+# mise task runner: local overrides stay out of the repo
+mise.local.toml

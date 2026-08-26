@@ -35,7 +35,7 @@ class ToastMessage {
 
     _currentToast = entry;
     overlay.insert(entry);
-    unawaited(animationController.forward());
+    animationController.forward();
 
     _dismissTimer = Timer(duration, () {
       _dismissToast(entry, animationController, onDismissed);

@@ -1,0 +1,128 @@
+# Task runner for Pointolio.
+#
+# `mise tasks`          list everything
+# `mise run <task>`     run one
+# `mise run release`    the full pipeline, ending in fastlane
+#
+# The Flutter SDK is deliberately not pinned under [tools]: this machine uses a
+# manual install at ~/Developer/tools/flutter and mise would shadow it. Add a
+# [tools] block here if that ever moves to a managed toolchain.
+
+[env]
+FLUTTER_SUPPRESS_ANALYTICS = "true"
+
+# --- building blocks -------------------------------------------------------
+
+[tasks.deps]
+description = "Fetch Dart and Flutter packages"
+run = "flutter pub get"
+
+[tasks.codegen]
+description = "Run build_runner (drift DAOs and other generated sources)"
+run = "dart run build_runner build"
+
+[tasks."codegen:watch"]
+description = "Regenerate build_runner output on every change"
+run = "dart run build_runner watch"
+
+[tasks.analyze]
+description = "Static analysis, expected to stay at zero issues"
+run = "flutter analyze"
+
+[tasks.test]
+description = "Full Dart test suite"
+run = "flutter test"
+
+[tasks."ios:clean"]
+description = "Clear iOS build artifacts"
+run = """
+set -eu
+# CocoaPods was removed in 2.1.0 in favour of Swift Package Manager, so there
+# are normally no pods here. These paths are cleared anyway so a stale checkout
+# from before the migration cannot poison a release build.
+rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+# Flutter regenerates this on the next build; it holds the resolved SPM graph.
+rm -rf ios/Flutter/ephemeral
+rm -rf ios/build
+echo "iOS artifacts cleared"
+"""
+
+[tasks.clean]
+description = "flutter clean plus the iOS artifacts it leaves behind"
+run = [
+  "flutter clean",
+  "mise run ios:clean",
+]
+
+# --- checks ----------------------------------------------------------------
+
+[tasks.verify]
+description = "Analyze and test. Local replacement for the old CI workflow"
+run = [
+  "mise run analyze",
+  "mise run test",
+]
+
+[tasks."verify:release"]
+description = "Release gates: semver bumped, build number bumped, CHANGELOG entry present"
+run = """
+set -eu
+
+# Checks the semver increased past main. Note it does NOT look at the build
+# number, which is why the block below exists.
+bash .github/scripts/validate-version.sh
+
+CURRENT=$(grep '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')
+BASE=$(git show origin/main:pubspec.yaml | grep '^version:' | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')
+
+VERSION=${CURRENT%%+*}
+CURRENT_BUILD=${CURRENT##*+}
+BASE_BUILD=${BASE##*+}
+
+# App Store Connect rejects a build number it has already seen, so this has to
+# climb on every upload even when the semver does not.
+case "$CURRENT_BUILD$BASE_BUILD" in
+  *[!0-9]*)
+    echo "Could not read build numbers from '$CURRENT' and '$BASE'" >&2
+    exit 1
+    ;;
+esac
+
+if [ "$CURRENT_BUILD" -le "$BASE_BUILD" ]; then
+  echo "Build number must increase: main has +$BASE_BUILD, this branch has +$CURRENT_BUILD" >&2
+  exit 1
+fi
+echo "Build number properly incremented: +$BASE_BUILD -> +$CURRENT_BUILD"
+
+bash .github/scripts/validate-changelog.sh "$VERSION"
+"""
+
+# --- builds ----------------------------------------------------------------
+
+[tasks."build:ios"]
+description = "Unsigned release build, for checking the build is healthy"
+run = "flutter build ios --release --no-codesign"
+
+[tasks.prepare]
+description = "Clean rebuild: clean, deps, codegen. Run before a release"
+run = [
+  "mise run clean",
+  "mise run deps",
+  "mise run codegen",
+]
+
+# --- release ---------------------------------------------------------------
+
+[tasks."fastlane:beta"]
+description = "Upload a TestFlight build via the beta lane in ios/fastlane/Fastfile"
+dir = "ios"
+run = "bundle exec fastlane beta"
+
+[tasks.release]
+description = "Full release: clean, deps, codegen, checks, then fastlane"
+run = [
+  "mise run prepare",
+  "mise run verify",
+  "mise run verify:release",
+  "mise run fastlane:beta",
+]
