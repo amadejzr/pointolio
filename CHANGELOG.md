@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 26-08-26
+
+### Changed
+- Migrated iOS dependencies from CocoaPods to Swift Package Manager; the Podfile, Podfile.lock and Pods directory are gone and all plugins now link via SPM.
+- Updated dependencies to their latest major versions, including `go_router` 18.
+- Tightened lint rules and fixed the resulting violations across the scoring and sharing screens.
+
 ## [2.0.0] - 01-07-26
 
 ### Added
