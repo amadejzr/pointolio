@@ -40,7 +40,7 @@ class _AnimatedEntranceState extends State<AnimatedEntrance>
     super.initState();
     unawaited(
       Future.delayed(widget.delay, () {
-        if (mounted) unawaited(_controller.forward());
+        if (mounted) _controller.forward();
       }),
     );
   }
