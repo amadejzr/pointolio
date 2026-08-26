@@ -386,15 +386,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  fm_lints:
-    dependency: "direct dev"
-    description:
-      path: "."
-      ref: main
-      resolved-ref: "941ab4d30194722a8c6d680a4f0fcbac9dbf4b75"
-      url: "https://github.com/fizzymizzy/fm_lints.git"
-    source: git
-    version: "0.2.0"
   frontend_server_client:
     dependency: transitive
     description:

@@ -33,10 +33,6 @@ dev_dependencies:
   flutter_native_splash: ^2.4.7
   flutter_test:
     sdk: flutter
-  fm_lints:
-    git:
-      url: https://github.com/fizzymizzy/fm_lints.git
-      ref: main
   integration_test:
     sdk: flutter
   mocktail: ^1.0.4
