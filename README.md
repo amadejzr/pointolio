@@ -38,7 +38,7 @@ At the beginning, I didn't focus much on logging or error handling, proper reusa
 
 2. **Generate code** (for Drift database and Bloc)
    ```bash
-   dart run build_runner build --delete-conflicting-outputs
+   dart run build_runner build
    ```
 
 3. **Run the app**
@@ -51,8 +51,12 @@ At the beginning, I didn't focus much on logging or error handling, proper reusa
 When making changes to Drift database models or Bloc classes, run the build runner in watch mode:
 
 ```bash
-dart run build_runner watch --delete-conflicting-outputs
+dart run build_runner watch
 ```
+
+These steps are also wrapped as `mise` tasks: `mise run deps`, `mise run codegen`
+and `mise run codegen:watch`.
+Run `mise tasks` to see the rest, including the release pipeline.
 
 ## Screenshot Generation
 
